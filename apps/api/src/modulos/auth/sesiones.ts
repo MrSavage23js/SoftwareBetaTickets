@@ -82,6 +82,7 @@ export async function resolverSesion(token: string): Promise<ResultadoSesion> {
       'u.email',
       'u.activo',
       'u.eliminado_at',
+      'u.debe_cambiar_password',
       'u.rol_id',
       'r.codigo as rol_codigo',
       'r.nombre as rol_nombre',
@@ -116,6 +117,7 @@ export async function resolverSesion(token: string): Promise<ResultadoSesion> {
       rolCodigo: fila.rol_codigo,
       rolNombre: fila.rol_nombre,
       permisos: await permisosDeRol(fila.rol_id),
+      debeCambiarPassword: !!fila.debe_cambiar_password,
     },
   };
 }

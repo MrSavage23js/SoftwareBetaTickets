@@ -10,6 +10,7 @@ export interface UsuarioActual {
   rolCodigo: string;
   rolNombre: string;
   permisos: ReadonlySet<string>;
+  debeCambiarPassword: boolean;
 }
 
 export interface SesionActual {

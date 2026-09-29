@@ -178,6 +178,8 @@ export async function adminInicial(datos?: { usuario: string; email: string; pas
       rol_id: rol.id,
       activo: 1,
       password_cambiado_at: new Date(),
+      // El admin inicial de .env debe cambiar su contraseña al entrar por primera vez.
+      debe_cambiar_password: datos ? 0 : 1,
       id_anterior: null,
     })
     .execute();

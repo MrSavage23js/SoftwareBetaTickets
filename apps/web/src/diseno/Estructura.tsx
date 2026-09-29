@@ -1,9 +1,10 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { NavLink, Navigate, Outlet, useLocation } from 'react-router';
 import { PERMISOS } from '@mesa/shared';
 import { Icono, type NombreIcono } from '../componentes/Icono';
 import { Cargando, EstadoVacio } from '../componentes/ui';
 import { iniciales } from '../lib/formato';
+import { CambioObligatorio, VentanaCambiarPassword } from '../paginas/CambiarPassword';
 import { useSesion } from '../sesion/Sesion';
 
 interface ItemMenu {
@@ -25,7 +26,9 @@ const MENU: ItemMenu[] = [
 
 export function Estructura() {
   const { usuario, puede, salir } = useSesion();
+  const [cambiarPassword, setCambiarPassword] = useState(false);
   if (!usuario) return null;
+  if (usuario.debeCambiarPassword) return <CambioObligatorio />;
   const esSoporte = puede(PERMISOS.TICKETS_VER_TODOS);
 
   return (
@@ -57,7 +60,10 @@ export function Estructura() {
             <b title={usuario.nombre}>{usuario.nombre}</b>
             <span>{esSoporte ? usuario.rol.nombre : 'Usuario solicitante'}</span>
           </div>
-          <button className="out" aria-label="Cerrar sesión" title="Cerrar sesión" onClick={() => void salir()}>
+          <button className="out" aria-label="Cambiar contraseña" title="Cambiar contraseña" onClick={() => setCambiarPassword(true)} style={{ marginLeft: 'auto' }}>
+            <Icono n="lock" />
+          </button>
+          <button className="out" style={{ marginLeft: 0 }} aria-label="Cerrar sesión" title="Cerrar sesión" onClick={() => void salir()}>
             <Icono n="logout" />
           </button>
         </div>
@@ -65,6 +71,7 @@ export function Estructura() {
       <div className="main">
         <Outlet />
       </div>
+      {cambiarPassword && <VentanaCambiarPassword alCerrar={() => setCambiarPassword(false)} />}
     </div>
   );
 }

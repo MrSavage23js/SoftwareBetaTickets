@@ -8,6 +8,7 @@ import helmet from 'helmet';
 import { pinoHttp } from 'pino-http';
 import { env, RUTAS } from './config/env';
 import { bdDisponible } from './db/conexion';
+import { ErrorApp } from './lib/errores';
 import { logger } from './lib/logger';
 import { proteccionCsrf } from './middleware/csrf';
 import { manejarErrores, rutaNoEncontrada } from './middleware/errores';
@@ -93,6 +94,13 @@ export function crearApp() {
 
   api.use('/auth', rutasAuth);
   api.use(requiereSesion);
+  // Con contraseña asignada por el admin, solo se permite /auth (cambiarla o salir).
+  api.use((req, _res, next) => {
+    if (req.usuario?.debeCambiarPassword) {
+      throw new ErrorApp(403, 'CAMBIAR_PASSWORD', 'Debes cambiar tu contraseña antes de continuar.');
+    }
+    next();
+  });
   api.use('/usuarios', rutasUsuarios);
   api.use('/catalogos', rutasCatalogos);
   api.use('/tickets', rutasTickets);

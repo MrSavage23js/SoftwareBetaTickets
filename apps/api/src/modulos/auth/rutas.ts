@@ -1,6 +1,6 @@
 import { Router, type Request } from 'express';
 import argon2 from 'argon2';
-import { esquemaLogin, type RespuestaSesion, type UsuarioSesion } from '@mesa/shared';
+import { esquemaCambiarPassword, esquemaLogin, esquemaPassword, type RespuestaSesion, type UsuarioSesion } from '@mesa/shared';
 import { env } from '../../config/env';
 import { db } from '../../db/conexion';
 import { OPCIONES_ARGON2 } from '../../db/seeds';
@@ -12,7 +12,7 @@ import { opcionesCookie, requiereSesion } from '../../middleware/sesion';
 import { obtenerAjustes } from '../ajustes/servicio';
 import { auditar } from '../eventos/servicio';
 import { actor, ipDe, nombreVisible, type UsuarioActual } from './contexto';
-import { cerrarSesion, crearSesion, permisosDeRol, registrarActividad } from './sesiones';
+import { cerrarSesion, cerrarSesionesDeUsuario, crearSesion, permisosDeRol, registrarActividad } from './sesiones';
 
 export const rutasAuth = Router();
 
@@ -50,6 +50,7 @@ async function datosSesion(u: UsuarioActual): Promise<UsuarioSesion> {
     permisos: [...u.permisos].sort(),
     empresas,
     inactividadMin: ajustes['sesion.inactividad_min'],
+    debeCambiarPassword: u.debeCambiarPassword,
     adjuntos: {
       maxMb: ajustes['adjuntos.max_mb'],
       maxPorMensaje: ajustes['adjuntos.max_por_mensaje'],
@@ -75,6 +76,7 @@ rutasAuth.post('/login', limiteLogin, async (req: Request, res) => {
       'u.activo',
       'u.intentos_fallidos',
       'u.bloqueado_hasta',
+      'u.debe_cambiar_password',
       'u.rol_id',
       'r.codigo as rol_codigo',
       'r.nombre as rol_nombre',
@@ -161,6 +163,7 @@ rutasAuth.post('/login', limiteLogin, async (req: Request, res) => {
     rolCodigo: u.rol_codigo,
     rolNombre: u.rol_nombre,
     permisos: await permisosDeRol(u.rol_id),
+    debeCambiarPassword: !!u.debe_cambiar_password,
   };
   const cuerpo: RespuestaSesion = { usuario: await datosSesion(actual), csrfToken };
   res.json(cuerpo);
@@ -174,6 +177,43 @@ rutasAuth.post('/logout', async (req, res) => {
 
 rutasAuth.get('/yo', requiereSesion, async (req, res) => {
   const cuerpo: RespuestaSesion = { usuario: await datosSesion(actor(req)), csrfToken: req.sesion!.csrfToken };
+  res.json(cuerpo);
+});
+
+/**
+ * Cambio de la propia contraseña (obligatorio si el admin la asignó). Pide la actual,
+ * cierra las demás sesiones del usuario y mantiene abierta la actual.
+ */
+rutasAuth.post('/cambiar-password', limiteLogin, requiereSesion, async (req, res) => {
+  const d = validar(esquemaCambiarPassword, req.body);
+  const u = actor(req);
+  const min = (await obtenerAjustes())['password.min_caracteres'];
+  const r = esquemaPassword(min).safeParse(d.nueva);
+  if (!r.success) throw errores.validacion(r.error.issues[0]!.message, { nueva: r.error.issues[0]!.message });
+
+  const fila = await db.selectFrom('usuarios').select('password_hash').where('id', '=', u.id).executeTakeFirstOrThrow();
+  if (!(await argon2.verify(fila.password_hash, d.actual).catch(() => false))) {
+    await registrarIntento(u.username, u.id, ipDe(req), false, 'CAMBIO_PASSWORD');
+    throw errores.validacion('La contraseña actual no es correcta.', { actual: 'La contraseña actual no es correcta.' });
+  }
+
+  await db.transaction().execute(async (tx) => {
+    await tx
+      .updateTable('usuarios')
+      .set({
+        password_hash: await argon2.hash(d.nueva, OPCIONES_ARGON2),
+        password_cambiado_at: new Date(),
+        debe_cambiar_password: 0,
+      })
+      .where('id', '=', u.id)
+      .execute();
+    await cerrarSesionesDeUsuario(tx, u.id, 'PASSWORD', u.id, req.sesion!.id);
+    await auditar(tx, { actorId: u.id, entidad: 'usuario', entidadId: u.id, accion: 'CAMBIO_PASSWORD_PROPIO', ip: ipDe(req) });
+  });
+  const cuerpo: RespuestaSesion = {
+    usuario: await datosSesion({ ...u, debeCambiarPassword: false }),
+    csrfToken: req.sesion!.csrfToken,
+  };
   res.json(cuerpo);
 });
 

@@ -133,3 +133,8 @@ export function transporte(): Transporte {
   actual ??= env.MAIL_TRANSPORT === 'smtp' ? transporteSmtp() : env.MAIL_TRANSPORT === 'graph' ? transporteGraph() : transporteConsola();
   return actual;
 }
+
+/** Solo para pruebas: reemplaza el transporte (p. ej. uno que siempre falla). `undefined` vuelve al de .env. */
+export function usarTransporte(t: Transporte | undefined): void {
+  actual = t;
+}

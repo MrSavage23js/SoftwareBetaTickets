@@ -34,6 +34,16 @@ export const esquemaLogin = z.object({
 });
 export type LoginEntrada = z.infer<typeof esquemaLogin>;
 
+export const esquemaCambiarPassword = z
+  .object({
+    actual: z.string({ error: 'Escribe tu contraseña actual.' }).min(1, 'Escribe tu contraseña actual.').max(200),
+    nueva: z.string({ error: 'Escribe la contraseña nueva.' }).min(1, 'Escribe la contraseña nueva.').max(200),
+    confirmar: z.string().max(200),
+  })
+  .refine((d) => d.nueva === d.confirmar, { path: ['confirmar'], message: 'Las contraseñas no coinciden.' })
+  .refine((d) => d.nueva !== d.actual, { path: ['nueva'], message: 'La contraseña nueva debe ser distinta de la actual.' });
+export type CambiarPasswordEntrada = z.input<typeof esquemaCambiarPassword>;
+
 // ---------------------------------------------------------------- Usuarios
 export const USERNAME_REGEX = /^[A-Za-z0-9._-]{3,60}$/;
 

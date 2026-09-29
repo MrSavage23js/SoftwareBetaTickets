@@ -15,6 +15,8 @@ interface Sesion {
   motivo: string | null;
   puede: (permiso: string) => boolean;
   entrar: (username: string, password: string) => Promise<void>;
+  /** Aplica una respuesta de sesión nueva (p. ej. después de cambiar la contraseña). */
+  actualizar: (r: RespuestaSesion) => void;
   salir: () => Promise<void>;
   reintentar: () => void;
 }
@@ -113,6 +115,7 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
       motivo,
       puede: (p) => permisos.has(p),
       entrar: async (username, password) => aplicar(await api.post<RespuestaSesion>('/auth/login', { username, password })),
+      actualizar: aplicar,
       salir: async () => {
         await api.post('/auth/logout').catch(() => undefined);
         terminar(null);

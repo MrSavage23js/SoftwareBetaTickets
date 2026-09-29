@@ -1,8 +1,8 @@
 // Pantalla de tickets. Un solicitante ve "Mis tickets"; soporte ve la bandeja completa con filtros y Kanban.
 // Todo el estado de la vista (estatus, búsqueda, filtros, página, vista) vive en la URL:
 // se puede recargar, compartir el enlace o usar "atrás" sin perder nada.
-import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
 import { LISTA_ESTATUS, INFO_ESTATUS, PERMISOS, type Estatus } from '@mesa/shared';
 import { Icono } from '../../componentes/Icono';
 import { EstadoVacio } from '../../componentes/ui';
@@ -19,7 +19,12 @@ const FILTROS_AVANZADOS = ['tipoId', 'empresaId', 'moduloId', 'asignadoAId', 'de
 export function Tickets() {
   const { puede } = useSesion();
   const soporte = puede(PERMISOS.TICKETS_VER_TODOS);
-  const [params, setParams] = useSearchParams();
+  const [params] = useSearchParams();
+  const ubicacion = useLocation();
+  // Siempre la ubicación más reciente: la búsqueda se aplica con retraso y no debe
+  // regresar a una URL vieja (p. ej. quitar el ticket que se acaba de abrir).
+  const actual = useRef(ubicacion);
+  actual.current = ubicacion;
   const { id } = useParams();
   const navegar = useNavigate();
   const seleccionado = id && /^\d+$/.test(id) ? Number(id) : null;
@@ -32,19 +37,19 @@ export function Tickets() {
   const estatus = (params.get('estatus') ?? '') as Estatus | '';
 
   const cambiar = (cambios: Record<string, string | null>, reiniciarPagina = true) => {
-    const p = new URLSearchParams(params);
+    const p = new URLSearchParams(actual.current.search);
     for (const [k, v] of Object.entries(cambios)) {
       if (v === null || v === '') p.delete(k);
       else p.set(k, v);
     }
     if (reiniciarPagina) p.delete('pagina');
-    setParams(p, { replace: true });
+    navegar({ pathname: actual.current.pathname, search: p.toString() }, { replace: true });
   };
 
   // Búsqueda con espera corta: no se consulta en cada tecla.
   useEffect(() => {
     const t = window.setTimeout(() => {
-      if ((params.get('q') ?? '') !== texto.trim()) cambiar({ q: texto.trim() });
+      if ((new URLSearchParams(actual.current.search).get('q') ?? '') !== texto.trim()) cambiar({ q: texto.trim() });
     }, 350);
     return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps

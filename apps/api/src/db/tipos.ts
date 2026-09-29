@@ -41,6 +41,7 @@ export interface UsuariosTabla {
   bloqueado_hasta: FechaNula;
   ultimo_login_at: FechaNula;
   password_cambiado_at: Fecha;
+  debe_cambiar_password: Generated<number>;
   eliminado_at: FechaNula;
   origen: Generated<'SISTEMA' | 'IMPORTADO'>;
   id_anterior: number | null;

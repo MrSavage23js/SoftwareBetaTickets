@@ -135,6 +135,8 @@ export async function crearUsuario(entrada: UsuarioCrearEntrada, actorId: number
           rol_id: d.rolId,
           activo: d.activo ? 1 : 0,
           password_cambiado_at: new Date(),
+          // La contraseña la eligió el admin: el usuario la cambia en su primer inicio de sesión.
+          debe_cambiar_password: 1,
           id_anterior: null,
         })
         .executeTakeFirstOrThrow();
@@ -190,7 +192,15 @@ export async function editarUsuario(id: number, entrada: UsuarioEditarEntrada, a
           email: d.email,
           rol_id: d.rolId,
           activo: d.activo ? 1 : 0,
-          ...(hash ? { password_hash: hash, password_cambiado_at: new Date(), intentos_fallidos: 0, bloqueado_hasta: null } : {}),
+          ...(hash
+            ? {
+                password_hash: hash,
+                password_cambiado_at: new Date(),
+                intentos_fallidos: 0,
+                bloqueado_hasta: null,
+                debe_cambiar_password: id === actorId ? 0 : 1,
+              }
+            : {}),
         })
         .where('id', '=', id)
         .execute();
