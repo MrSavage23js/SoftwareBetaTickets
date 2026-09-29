@@ -16,5 +16,3 @@ e2e/.auth/
 # Capturas del sistema anterior: contienen datos reales de empleados
 referencia/*.png
 
-# Demo generada para GitHub Pages (npm run build:demo)
-demo-github-pages/

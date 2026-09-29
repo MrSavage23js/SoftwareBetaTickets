@@ -1,7 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router';
-import { mensajeDe, MODO_DEMO } from '../api/cliente';
-import { PASSWORD_DEMO, reiniciarDemo, USUARIOS_DEMO } from '../demo/datos-demo';
+import { mensajeDe } from '../api/cliente';
 import { Icono } from '../componentes/Icono';
 import { Cargando } from '../componentes/ui';
 import { useSesion } from '../sesion/Sesion';
@@ -93,34 +92,6 @@ export function Inicio() {
             {enviando ? 'Entrando…' : 'Iniciar sesión'}
           </button>
           <div className="foot">¿No tienes acceso? Solicítalo al administrador del sistema.</div>
-          {MODO_DEMO && (
-            <div className="box" style={{ gap: 10 }}>
-              <h3>Versión de demostración</h3>
-              <p style={{ fontSize: 13 }}>
-                Funciona sin servidor: los datos se guardan solo en este navegador y no se envían correos reales. Elige un usuario de prueba (contraseña <code>{PASSWORD_DEMO}</code>):
-              </p>
-              <div style={{ display: 'grid', gap: 6 }}>
-                {USUARIOS_DEMO.map((u) => (
-                  <button
-                    key={u.username}
-                    type="button"
-                    className="btn chico"
-                    style={{ justifyContent: 'space-between' }}
-                    onClick={() => {
-                      setUsername(u.username);
-                      setPassword(PASSWORD_DEMO);
-                    }}
-                  >
-                    <span>{u.username}</span>
-                    <span className="ph">{u.rol}</span>
-                  </button>
-                ))}
-              </div>
-              <button type="button" className="btn chico" onClick={reiniciarDemo}>
-                Reiniciar datos de la demo
-              </button>
-            </div>
-          )}
         </form>
       </div>
     </div>

@@ -40,23 +40,7 @@ export function aQuery(c?: Consulta): string {
   return s ? `?${s}` : '';
 }
 
-/** Versión de demostración (GitHub Pages): sin servidor, las peticiones las responde src/demo/servidor.ts. */
-export const MODO_DEMO = import.meta.env.MODE === 'demo';
-
-async function pedirDemo<T>(metodo: string, ruta: string, o: Opciones): Promise<T> {
-  const { atender } = await import('../demo/servidor');
-  try {
-    return await atender<T>(metodo, ruta, { json: o.json, form: o.form, consulta: o.consulta });
-  } catch (e) {
-    if (e instanceof ErrorCliente && e.estado === 401 && !ruta.startsWith('/auth/login')) {
-      window.dispatchEvent(new CustomEvent(EVENTO_SESION_EXPIRADA, { detail: e.message }));
-    }
-    throw e;
-  }
-}
-
 async function pedir<T>(metodo: string, ruta: string, o: Opciones = {}): Promise<T> {
-  if (MODO_DEMO) return pedirDemo<T>(metodo, ruta, o);
   const headers: Record<string, string> = { Accept: 'application/json' };
   if (metodo !== 'GET') headers['X-CSRF-Token'] = csrfToken;
   if (o.sinActividad) headers['X-Sin-Actividad'] = '1';

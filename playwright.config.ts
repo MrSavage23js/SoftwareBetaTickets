@@ -4,8 +4,6 @@ import { defineConfig, devices } from '@playwright/test';
 // Ejecutar:  npm run test:e2e          (E2E_COMPILAR=1 para recompilar la web antes)
 export default defineConfig({
   testDir: 'e2e',
-  // La demo estática tiene su propia configuración (e2e/demo/playwright.demo.config.ts).
-  testIgnore: '**/demo/**',
   fullyParallel: false,
   workers: 1,
   retries: process.env.CI ? 1 : 0,

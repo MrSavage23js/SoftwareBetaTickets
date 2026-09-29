@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, HashRouter, Navigate, Route, Routes } from 'react-router';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import '@fontsource/figtree/400.css';
 import '@fontsource/figtree/500.css';
@@ -10,7 +10,7 @@ import '@fontsource/bricolage-grotesque/600.css';
 import '@fontsource/bricolage-grotesque/700.css';
 import './estilos/app.css';
 import { PERMISOS } from '@mesa/shared';
-import { ErrorCliente, MODO_DEMO } from './api/cliente';
+import { ErrorCliente } from './api/cliente';
 import { ProveedorAvisos } from './componentes/ui';
 import { Estructura, NoEncontrado, Protegida } from './diseno/Estructura';
 import { ErrorDePagina } from './diseno/ErrorDePagina';
@@ -21,9 +21,6 @@ import { Inicio } from './paginas/Inicio';
 import { Tickets } from './paginas/tickets/Tickets';
 import { Usuarios } from './paginas/Usuarios';
 import { ProveedorSesion } from './sesion/Sesion';
-
-// En la demo de GitHub Pages las rutas van después de # (Pages no sabe servir /tickets/5).
-const Enrutador = MODO_DEMO ? HashRouter : BrowserRouter;
 
 const clienteConsultas = new QueryClient({
   defaultOptions: {
@@ -42,7 +39,7 @@ createRoot(document.getElementById('raiz')!).render(
     <ErrorDePagina>
       <QueryClientProvider client={clienteConsultas}>
         <ProveedorAvisos>
-          <Enrutador>
+          <BrowserRouter>
             <ProveedorSesion>
               <Routes>
                 <Route path="/inicio" element={<Inicio />} />
@@ -64,7 +61,7 @@ createRoot(document.getElementById('raiz')!).render(
                 </Route>
               </Routes>
             </ProveedorSesion>
-          </Enrutador>
+          </BrowserRouter>
         </ProveedorAvisos>
       </QueryClientProvider>
     </ErrorDePagina>

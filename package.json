@@ -29,9 +29,7 @@
     "test:e2e": "playwright test",
     "ci": "node scripts/ci-local.mjs",
     "respaldo": "node scripts/respaldo.mjs",
-    "restaurar": "node scripts/restaurar.mjs",
-    "build:demo": "node scripts/build-demo.mjs",
-    "test:demo": "npm run build:demo && playwright test --config e2e/demo/playwright.demo.config.ts"
+    "restaurar": "node scripts/restaurar.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.0",
