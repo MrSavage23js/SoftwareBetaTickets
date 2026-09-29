@@ -94,7 +94,7 @@ npm run build:demo      # genera la carpeta demo-github-pages/
 npm run test:demo       # (opcional) la compila y recorre completa en navegador
 ```
 
-1. En GitHub: **Add file → Upload files** y arrastra **el contenido** de `demo-github-pages/` (`index.html`, `404.html`, `favicon.svg` y la carpeta `assets`). Se puede subir al mismo repositorio del código (no reemplaza ningún archivo) o a uno nuevo.
+1. En GitHub: **Add file → Upload files**. Abre `demo-github-pages/`, selecciona **todos** los archivos (Ctrl+A) y arrástralos. Todo está en un solo nivel, sin subcarpetas, porque la subida web de GitHub no siempre acepta carpetas. Se puede subir al mismo repositorio del código (no reemplaza ningún archivo del proyecto) o a uno nuevo.
 2. **Settings → Pages → Build and deployment → Deploy from a branch → `main` / `(root)` → Save**.
 3. En uno o dos minutos queda en `https://<usuario>.github.io/<repositorio>/`.
 
