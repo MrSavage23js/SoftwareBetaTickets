@@ -30,7 +30,8 @@ export default tseslint.config(
     languageOptions: { globals: globals.node },
   },
   {
-    files: ['scripts/**/*.{js,mjs}'],
+    // Scripts de consola: su salida es para la persona que los ejecuta.
+    files: ['scripts/**/*.{js,mjs}', 'apps/api/test/carga.ts'],
     rules: { 'no-console': 'off' },
   },
   {

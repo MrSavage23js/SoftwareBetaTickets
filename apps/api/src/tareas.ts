@@ -5,6 +5,7 @@ import { sql } from 'kysely';
 import { env } from './config/env';
 import { db } from './db/conexion';
 import { logger } from './lib/logger';
+import { limpiarCarpetaTemporal } from './modulos/adjuntos/almacenamiento';
 import { limpiarTemporalesHuerfanos } from './modulos/adjuntos/servicio';
 import { limpiarSesionesVencidas } from './modulos/auth/sesiones';
 import { procesarCola } from './modulos/correos/trabajador';
@@ -33,7 +34,7 @@ const tareas: Tarea[] = [
     cadaMs: 10 * 60_000,
     ejecutar: async () => {
       const sesiones = await limpiarSesionesVencidas();
-      const temporales = await limpiarTemporalesHuerfanos();
+      const temporales = (await limpiarTemporalesHuerfanos()) + (await limpiarCarpetaTemporal());
       await db.deleteFrom('intentos_login').where('creado_at', '<', sql<Date>`NOW(3) - INTERVAL 90 DAY`).execute();
       if (sesiones || temporales) logger.info({ sesiones, temporales }, 'Limpieza periódica');
     },

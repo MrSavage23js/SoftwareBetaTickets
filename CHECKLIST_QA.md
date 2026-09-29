@@ -12,6 +12,8 @@ Marca cada punto: ✅ bien · ❌ falla (anota qué pasó).
 - [ ] U1 no ve en el menú Usuarios, Catálogos, Correos ni Ajustes.
 - [ ] U1 escribe a mano `/usuarios`, `/catalogos`, `/correos`, `/ajustes` → "No tienes acceso a esta sección".
 - [ ] U1 abre `/tickets/<id de un ticket de U2>` → "El ticket no existe" (no muestra nada ajeno).
+- [ ] Un usuario recién creado por el admin, al entrar, ve "Cambia tu contraseña" y no puede usar nada más hasta cambiarla.
+- [ ] Botón del candado (abajo a la izquierda) → cambiar la contraseña propia; la sesión abierta en otro navegador se cierra.
 
 ## 2. Solicitante
 - [ ] Nuevo ticket: sin elegir tipo solo aparece el mensaje "Selecciona un tipo…".

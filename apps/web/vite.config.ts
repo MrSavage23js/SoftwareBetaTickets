@@ -17,7 +17,18 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: true,
-    chunkSizeWarningLimit: 900,
+    // Sin mapas de código fuente en producción: no se publica el código original.
+    sourcemap: false,
+    chunkSizeWarningLimit: 600,
+    // Librerías en archivos aparte: cambian poco, así el navegador las conserva en caché entre versiones.
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ['react', 'react-dom', 'react-router', '@tanstack/react-query'],
+          editor: ['@tiptap/react', '@tiptap/starter-kit', '@tiptap/extension-image', '@tiptap/extension-text-style', '@tiptap/extensions'],
+          zod: ['zod'],
+        },
+      },
+    },
   },
 });

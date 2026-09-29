@@ -53,7 +53,69 @@ function consultaFulltext(q: string): string | null {
 
 const escaparLike = (s: string) => s.replace(/[\\%_]/g, (c) => '\\' + c);
 
-async function aplicarFiltros(q: Base, u: UsuarioActual, f: ReturnType<typeof filtrosValidados>, conEstatus: boolean): Promise<Base> {
+/** Consultas solo sobre `tickets` (sin uniones): para contar y paginar. Los filtros solo usan columnas de t. */
+type SoloTickets = SelectQueryBuilder<BD & { t: BD['tickets'] }, 't', object>;
+const soloTickets = () => db.selectFrom('tickets as t') as unknown as SoloTickets;
+
+interface Busqueda {
+  texto: string;
+  like: string;
+  usuarios: number[];
+  empresas: number[];
+  /** El texto tiene palabras que busca el índice FULLTEXT. */
+  hayPalabras: boolean;
+  /** Coincidencias FULLTEXT resueltas aparte (dentro de un OR, MySQL no usaría el índice FULLTEXT). */
+  fulltext: number[];
+  /** Expresión FULLTEXT; se usa directo en la consulta si hubo demasiadas coincidencias para la lista de ids. */
+  expresionFulltext: string | null;
+  fulltextTruncado: boolean;
+}
+
+const MAX_FULLTEXT = 5000;
+
+async function prepararBusqueda(q: string | undefined, u: UsuarioActual): Promise<Busqueda | null> {
+  if (!q?.trim()) return null;
+  const texto = q.trim();
+  const like = `%${escaparLike(texto)}%`;
+  const ft = consultaFulltext(texto);
+  // Usuarios y empresas son tablas pequeñas: se resuelven primero y se filtra por id (usa índices de tickets).
+  const [usuarios, empresas, fulltext] = await Promise.all([
+    db
+      .selectFrom('usuarios')
+      .select('id')
+      .where((eb) => eb.or([eb('username', 'like', like), eb('nombre', 'like', like)]))
+      .limit(200)
+      .execute(),
+    db.selectFrom('empresas').select('id').where('nombre', 'like', like).execute(),
+    ft
+      ? soloTickets()
+          .select('t.id')
+          // Solo entre los tickets que el usuario puede ver: el tope nunca deja fuera los suyos.
+          .where(filtroVisibles(u) as never)
+          .where(sql<SqlBool>`MATCH(t.concepto, t.folios_ref, t.descripcion_texto) AGAINST (${ft} IN BOOLEAN MODE)`)
+          .limit(MAX_FULLTEXT)
+          .execute()
+      : Promise.resolve([]),
+  ]);
+  return {
+    texto,
+    like,
+    hayPalabras: ft !== null,
+    usuarios: usuarios.map((x) => x.id),
+    empresas: empresas.map((x) => x.id),
+    fulltext: fulltext.map((x) => x.id),
+    expresionFulltext: ft,
+    fulltextTruncado: fulltext.length >= MAX_FULLTEXT,
+  };
+}
+
+function aplicarFiltros(
+  q: SoloTickets,
+  u: UsuarioActual,
+  f: ReturnType<typeof filtrosValidados>,
+  conEstatus: boolean,
+  b: Busqueda | null,
+): SoloTickets {
   q = q.where(filtroVisibles(u) as never);
   if (conEstatus && f.estatus) q = q.where('t.estatus', '=', f.estatus);
   if (f.tipoId) q = q.where('t.tipo_id', '=', f.tipoId);
@@ -65,29 +127,20 @@ async function aplicarFiltros(q: Base, u: UsuarioActual, f: ReturnType<typeof fi
   if (f.desde) q = q.where('t.creado_at', '>=', inicioDiaLocal(f.desde));
   if (f.hasta) q = q.where('t.creado_at', '<', finDiaLocal(f.hasta));
 
-  if (f.q) {
-    const texto = f.q.trim();
-    const like = `%${escaparLike(texto)}%`;
-    // Usuarios y empresas son tablas pequeñas: se resuelven primero y se filtra por id (usa índices de tickets).
-    const [usuarios, empresas] = await Promise.all([
-      db
-        .selectFrom('usuarios')
-        .select('id')
-        .where((eb) => eb.or([eb('username', 'like', like), eb('nombre', 'like', like)]))
-        .limit(200)
-        .execute(),
-      db.selectFrom('empresas').select('id').where('nombre', 'like', like).execute(),
-    ]);
-    const ft = consultaFulltext(texto);
+  if (b) {
     q = q.where((eb) => {
-      const o: Expression<SqlBool>[] = [
-        eb('t.folio', 'like', `${escaparLike(texto.toUpperCase())}%`),
-        eb('t.folios_ref', 'like', like),
-        eb('t.concepto', 'like', like),
-      ];
-      if (usuarios.length) o.push(eb('t.solicitante_id', 'in', usuarios.map((x) => x.id)));
-      if (empresas.length) o.push(eb('t.empresa_id', 'in', empresas.map((x) => x.id)));
-      if (ft) o.push(sql<SqlBool>`MATCH(t.concepto, t.folios_ref, t.descripcion_texto) AGAINST (${ft} IN BOOLEAN MODE)`);
+      const o: Expression<SqlBool>[] = [eb('t.folio', 'like', `${escaparLike(b.texto.toUpperCase())}%`)];
+      // Concepto y folio(s) están en el índice FULLTEXT. El LIKE (que recorre toda la tabla) solo se usa
+      // cuando el texto no tiene palabras indexables (menos de 3 caracteres, p. ej. "B1").
+      if (!b.hayPalabras) o.push(eb('t.folios_ref', 'like', b.like), eb('t.concepto', 'like', b.like));
+      if (b.usuarios.length) o.push(eb('t.solicitante_id', 'in', b.usuarios));
+      if (b.empresas.length) o.push(eb('t.empresa_id', 'in', b.empresas));
+      if (b.fulltextTruncado && b.expresionFulltext) {
+        // Palabra muy común (más coincidencias que el tope): consulta completa, más lenta pero sin perder resultados.
+        o.push(sql<SqlBool>`MATCH(t.concepto, t.folios_ref, t.descripcion_texto) AGAINST (${b.expresionFulltext} IN BOOLEAN MODE)`);
+      } else if (b.fulltext.length) {
+        o.push(eb('t.id', 'in', b.fulltext));
+      }
       return eb.or(o);
     });
   }
@@ -103,11 +156,28 @@ export async function listarTickets(
   entrada: Record<string, unknown>,
 ): Promise<Paginado<TicketResumen> & { contadores: ContadoresEstatus }> {
   const f = filtrosValidados(entrada);
-  const conFiltros = await aplicarFiltros(base(), u, f, true);
-  const sinEstatus = await aplicarFiltros(base(), u, f, false);
+  const busqueda = await prepararBusqueda(f.q, u);
+  const dir = f.orden === 'antiguos' ? 'asc' : 'desc';
 
-  const [filas, conteos] = await Promise.all([
-    conFiltros
+  // 1) Página de ids y contadores, solo sobre `tickets` (usa índices; sin uniones).
+  // 2) Las uniones con catálogos y usuarios se hacen después, solo para los ids de la página.
+  const [pagina, conteos] = await Promise.all([
+    aplicarFiltros(soloTickets(), u, f, true, busqueda)
+      .select('t.id')
+      .orderBy('t.creado_at', dir)
+      .orderBy('t.id', dir)
+      .limit(f.porPagina)
+      .offset((f.pagina - 1) * f.porPagina)
+      .execute(),
+    aplicarFiltros(soloTickets(), u, f, false, busqueda)
+      .select(['t.estatus', sql<number>`COUNT(*)`.as('n')])
+      .groupBy('t.estatus')
+      .execute(),
+  ]);
+  const ids = pagina.map((p) => p.id);
+  const orden = new Map(ids.map((id, i) => [id, i]));
+
+  const filas = await (ids.length ? base().where('t.id', 'in', ids) : base().where(sql<SqlBool>`FALSE`))
       .select([
         't.id',
         't.folio',
@@ -127,13 +197,8 @@ export async function listarTickets(
         'a.username as a_username',
         'a.nombre as a_nombre',
       ])
-      .orderBy('t.creado_at', f.orden === 'antiguos' ? 'asc' : 'desc')
-      .orderBy('t.id', f.orden === 'antiguos' ? 'asc' : 'desc')
-      .limit(f.porPagina)
-      .offset((f.pagina - 1) * f.porPagina)
-      .execute(),
-    sinEstatus.select(['t.estatus', sql<number>`COUNT(*)`.as('n')]).groupBy('t.estatus').execute(),
-  ]);
+      .execute();
+  filas.sort((x, y) => orden.get(x.id)! - orden.get(y.id)!);
 
   const contadores: ContadoresEstatus = { total: 0, PENDIENTE: 0, EN_PROCESO: 0, PAUSADO: 0, COMPLETADO: 0 };
   for (const c of conteos) {

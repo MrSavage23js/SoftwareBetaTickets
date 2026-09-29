@@ -108,3 +108,14 @@ test('sin sesión cualquier pantalla lleva al inicio de sesión y regresa a dond
   await page.getByRole('button', { name: 'Iniciar sesión' }).click();
   await expect(page).toHaveURL(/\/tickets\?estatus=PENDIENTE/);
 });
+
+test('el retorno después de iniciar sesión nunca lleva a otro sitio', async ({ page }) => {
+  for (const volver of ['//sitio-malo.com', '/\\sitio-malo.com', 'https://sitio-malo.com']) {
+    await page.context().clearCookies();
+    await page.goto(`/inicio?volver=${encodeURIComponent(volver)}`);
+    await page.getByLabel('Nombre de usuario').fill('usuario_uno');
+    await page.getByLabel('Contraseña').fill('Prueba12345');
+    await page.getByRole('button', { name: 'Iniciar sesión' }).click();
+    await expect(page).toHaveURL('http://localhost:3101/tickets');
+  }
+});

@@ -148,8 +148,13 @@ El usuario pidió continuar sin contestar las preguntas y **sin pruebas automati
 - **D26.** Las fuentes (Figtree y Bricolage Grotesque) van incluidas en el sistema (`@fontsource`), no desde Google Fonts: funcionan sin internet y la CSP no permite orígenes externos.
 - **D27.** `POST /auth/actividad` registra actividad sin límite de frecuencia. La web lo llama como máximo cada 30 s y solo si hubo actividad real.
 
+**Decisiones de la versión 0.2.0 (pruebas y preparación para producción):**
+- **D28.** Las pruebas usan la BD `DB_NAME_TEST` y carpetas `storage/pruebas` y `storage/e2e`. Se reinician con `DELETE` (no `TRUNCATE`, que en InnoDB tardaba 3 s por prueba). Los archivos de prueba corren uno tras otro porque comparten la BD.
+- **D29.** Cambio de contraseña obligatorio (migración 0002). Mientras esté pendiente, la API solo permite `/auth/*`.
+- **D30.** Listado en dos pasos: primero ids y contadores solo sobre `tickets`; luego uniones solo para los ids de la página. La búsqueda de texto se resuelve con FULLTEXT en una consulta aparte (hasta 5,000 coincidencias) y el `LIKE '%…%'` queda solo para textos de menos de 3 caracteres.
+- **D31.** Medidas contra el descubrimiento de usuarios, cookie `__Host-`, `robots.txt` y `noindex`, web sin *source maps* y registro de accesos. Detalle y riesgos aceptados en `docs/SEGURIDAD.md`.
+
 **Pendientes:**
-- **Pruebas automatizadas** (fases 1–7 del plan: unitarias, Supertest y Playwright). La estructura está lista (Vitest y Playwright instalados, `npm run ci` las corre). Se hicieron pruebas manuales equivalentes con `curl` y en el navegador (ver `CHANGELOG.md`).
 - Fase opcional: pantalla para editar permisos por rol.
 - Contestar las preguntas de §D.
 

@@ -1,6 +1,6 @@
 {
   "name": "mesa-de-ayuda",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Mesa de Ayuda — sistema de tickets de soporte de Grupo Aramo",
   "type": "module",

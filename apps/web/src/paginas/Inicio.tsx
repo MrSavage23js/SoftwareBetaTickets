@@ -5,6 +5,14 @@ import { Icono } from '../componentes/Icono';
 import { Cargando } from '../componentes/ui';
 import { useSesion } from '../sesion/Sesion';
 
+/**
+ * Solo rutas internas ('/tickets'): nunca '//sitio.com' ni '/\sitio.com', que el navegador
+ * interpreta como otro dominio (redirección abierta).
+ */
+export function esRutaInterna(ruta: string): boolean {
+  return ruta.startsWith('/') && ruta[1] !== '/' && ruta[1] !== '\\';
+}
+
 /** Pantalla "Inicio" de la maqueta: inicio de sesión con usuario y contraseña. */
 export function Inicio() {
   const { estado, entrar, motivo } = useSesion();
@@ -16,7 +24,7 @@ export function Inicio() {
   const [enviando, setEnviando] = useState(false);
 
   const volver = params.get('volver');
-  const destino = volver && volver.startsWith('/') && !volver.startsWith('//') ? volver : '/tickets';
+  const destino = volver && esRutaInterna(volver) ? volver : '/tickets';
 
   if (estado === 'cargando') return <Cargando />;
   if (estado === 'autenticado') return <Navigate to={destino} replace />;

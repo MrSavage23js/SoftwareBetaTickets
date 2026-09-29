@@ -93,6 +93,9 @@ const esquema = z
         if (!e[k]) ctx.addIssue({ code: 'custom', path: [k], message: 'es obligatorio con MAIL_TRANSPORT=graph' });
       }
     }
+    if (e.NODE_ENV === 'production' && !e.APP_URL.startsWith('https://')) {
+      ctx.addIssue({ code: 'custom', path: ['APP_URL'], message: 'debe empezar con https:// en producción' });
+    }
     if (e.NODE_ENV === 'production' && !e.COOKIE_SECURE) {
       ctx.addIssue({
         code: 'custom',
@@ -118,6 +121,12 @@ function cargar(): Env {
 }
 
 export const env = cargar();
+
+/**
+ * Nombre de la cookie de sesión. Con HTTPS lleva el prefijo __Host-: el navegador solo la acepta
+ * si es Secure, sin Domain y con Path=/, así ningún subdominio puede fijarla ni leerla.
+ */
+export const COOKIE_SESION = env.COOKIE_SECURE ? `__Host-${env.SESSION_COOKIE_NAME}` : env.SESSION_COOKIE_NAME;
 
 const abs = (p: string) => (isAbsolute(p) ? p : resolve(RAIZ, p));
 export const RUTAS = {

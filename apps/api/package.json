@@ -1,6 +1,6 @@
 {
   "name": "@mesa/api",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -12,7 +12,8 @@
     "db:migrar": "tsx src/db/cli.ts migrar",
     "db:seed": "tsx src/db/cli.ts seed",
     "db:estado": "tsx src/db/cli.ts estado",
-    "crear-admin": "tsx src/db/cli.ts crear-admin"
+    "crear-admin": "tsx src/db/cli.ts crear-admin",
+    "carga": "tsx test/carga.ts"
   },
   "dependencies": {
     "@mesa/shared": "*",

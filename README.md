@@ -10,6 +10,7 @@ Sistema de tickets de soporte. Tiene dos vistas: la del **solicitante** (Mis tic
 | `docs/EXTENDER.md` | Cómo agregar tipos, módulos, empresas, campos, estatus, roles y plantillas |
 | `docs/DESPLIEGUE.md` | Instalación en el servidor (Windows o Linux) |
 | `docs/CORREO_M365.md` | Qué pedirle al administrador de Microsoft 365 |
+| `docs/SEGURIDAD.md` | Controles de seguridad y **lista obligatoria antes de publicar** |
 | `CHECKLIST_QA.md` | Pruebas manuales antes de presentar |
 | `CHANGELOG.md` | Historial de cambios |
 
@@ -75,11 +76,27 @@ Lo que se configura **desde la pantalla** (menú Ajustes, Catálogos y Correos �
 | `npm run dev` | API y web con recarga automática |
 | `npm run build` | Compila la web y la API en `dist/` |
 | `npm start` | Inicia la versión compilada (producción) |
-| `npm run ci` | Lint, tipos, pruebas y build (hay que pasarlo antes de cada commit) |
+| `npm run ci` | Lint, tipos, pruebas, auditoría de dependencias y build (hay que pasarlo antes de cada commit); `-- --e2e` agrega los recorridos en navegador |
+| `npm test` | Pruebas unitarias y de API |
+| `npm run test:e2e` | Recorridos completos en navegador (Playwright); `E2E_COMPILAR=1` para recompilar la web antes |
+| `npm run carga -w @mesa/api` | Prueba de carga con 20,000 tickets en la BD de pruebas |
 | `npm run db:migrar` / `db:seed` | Aplica migraciones y datos iniciales (también se hacen solos al arrancar) |
 | `npm run crear-admin -- --usuario X --email Y --password Z` | Crea otro administrador |
 | `npm run respaldo` | Respalda la BD y los adjuntos |
 | `npm run restaurar -- <carpeta> --confirmar` | Restaura un respaldo |
+
+## Pruebas automatizadas
+
+Necesitan MySQL encendido. Usan **otra base de datos** (`DB_NAME_TEST`, por omisión `mesa_ayuda_test`) y otra carpeta de archivos (`storage/pruebas`, `storage/e2e`). **Nunca tocan los datos reales.**
+
+| Tipo | Dónde | Qué cubre |
+|---|---|---|
+| Unitarias | `packages/shared/test`, `apps/api/test/unitarias` | Máquina de estados, folio, validaciones, sanitización XSS, plantillas, reintentos, fechas |
+| API (Supertest) | `apps/api/test/api` | Cada endpoint: casos correctos, datos inválidos y acceso denegado (401/403/404); folio con 50 tickets simultáneos; "tomar" concurrente; flujo completo de soporte; adjuntos maliciosos; correo que falla y se reintenta; cabeceras de seguridad |
+| En navegador (Playwright) | `e2e/` | Iniciar sesión → crear ticket → verlo como admin → tomarlo → responder → cerrar → correo en la cola; alta, edición, cierre de sesión y baja de un usuario; un usuario no entra a pantallas de admin; retorno seguro después de iniciar sesión |
+| Carga | `apps/api/test/carga.ts` | 20,000 tickets: p95 de cada consulta por debajo de 100 ms (meta: 300 ms) |
+
+La primera vez: `npx playwright install chromium`.
 
 ## Respaldos
 

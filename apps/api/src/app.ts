@@ -37,14 +37,28 @@ export function crearApp() {
         res.setHeader('X-Request-Id', id);
         return id;
       },
-      customLogLevel: (_req, res, err) => (err || res.statusCode >= 500 ? 'error' : 'silent'),
-      autoLogging: { ignore: (req) => req.url === '/health' },
+      // Registro de accesos a la API (para investigar incidentes): quién, qué, resultado y duración.
+      // Los archivos de la web y /health no se registran. Nunca incluye cuerpos, cookies ni tokens.
+      customLogLevel: (_req, res, err) => (err || res.statusCode >= 500 ? 'error' : res.statusCode >= 400 ? 'warn' : 'info'),
+      autoLogging: { ignore: (req) => !req.url?.startsWith('/api/') },
+      customProps: (req) => ({ usuario: (req as express.Request).usuario?.id }),
       serializers: {
-        req: (req) => ({ id: req.id, method: req.method, url: req.url }),
+        // Solo la ruta, sin parámetros de búsqueda (pueden contener datos personales).
+        req: (req) => ({ id: req.id, method: req.method, url: String(req.url).split('?')[0], ip: req.remoteAddress }),
         res: (res) => ({ statusCode: res.statusCode }),
       },
     }),
   );
+
+  // El sistema es interno: que ningún buscador lo indexe aunque sea accesible desde internet.
+  app.use((_req, res, next) => {
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=()');
+    next();
+  });
+  app.get('/robots.txt', (_req, res) => {
+    res.type('text/plain').send('User-agent: *\nDisallow: /\n');
+  });
 
   app.use(
     helmet({

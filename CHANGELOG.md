@@ -2,6 +2,31 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado semántico.
 
+## [0.2.0] — 2026-09-29
+
+Pruebas automatizadas completas y preparación para uso en toda la empresa.
+
+### Agregado
+- **Pruebas**: 228 automatizadas, todas en verde: 51 unitarias (25 en shared y 26 en la API), 172 de API con Supertest y 5 recorridos en navegador con Playwright. Prueba de carga con 20,000 tickets (`npm run carga -w @mesa/api`).
+- **Cambio de contraseña obligatorio** cuando el admin la asigna o la restablece (migración `0002`), y botón para que cada usuario cambie la suya (cierra sus otras sesiones).
+- `docs/SEGURIDAD.md`: controles, riesgos aceptados y lista obligatoria antes de publicar.
+- Registro de accesos a la API en producción (usuario, ruta, estatus, duración e IP; sin datos sensibles).
+- Cabeceras `Permissions-Policy`, `X-Robots-Tag` y `robots.txt` para que ningún buscador indexe el sistema.
+- `npm run ci` incluye `npm audit` de dependencias de producción y, con `--e2e`, los recorridos en navegador.
+
+### Cambiado
+- **Rendimiento** con muchos tickets: los contadores y la paginación se calculan solo sobre `tickets` (las uniones se hacen solo para la página visible) y la búsqueda de texto usa el índice FULLTEXT. Con 20,000 tickets, la bandeja bajó de 329 a 40 ms y el Kanban de 658 a 40 ms (p95).
+- Cookie de sesión con prefijo `__Host-` cuando hay HTTPS.
+- En producción, `APP_URL` debe ser `https://`.
+- El inicio de sesión ya no dice cuántos intentos quedan: no revela qué usuarios existen.
+- La web se publica sin *source maps* y con las librerías en archivos aparte, que el navegador conserva en caché.
+
+### Corregido
+- Si alguien escribía en la búsqueda y abría un ticket de inmediato, la búsqueda (aplicada con retraso) cerraba el ticket recién abierto. Lo detectó la prueba en navegador.
+- Las subidas interrumpidas se quedaban en `storage/tmp`; ahora se limpian solas.
+- `?volver=/\sitio.com` podía llevar a otro dominio después de iniciar sesión.
+- La búsqueda de texto se cortaba en 5,000 coincidencias sin filtrar primero por visibilidad: con muchos tickets, un solicitante podía no encontrar los suyos.
+
 ## [0.1.0] — 2026-09-29
 
 Primera versión funcional completa, **sin suite de pruebas automatizadas** (se pospuso a petición del usuario; ver `DECISIONES.md` §E).

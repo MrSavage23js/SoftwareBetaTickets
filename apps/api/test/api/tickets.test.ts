@@ -136,6 +136,17 @@ describe('visibilidad: nadie ve tickets ajenos', () => {
     expect((await u2.get('/tickets?q=ASCA-0001')).body.total).toBe(0);
   });
 
+  it('la búsqueda de texto solo encuentra tickets visibles para quien busca', async () => {
+    const u2 = await entrar('usuario_dos');
+    await u1.form('/tickets', ticketValido(f, { concepto: 'Inventario de almacén' }));
+    await u2.form('/tickets', ticketValido(f, { empresaId: f.empresaMA, concepto: 'Inventario de planta' }));
+    const r = await u1.get('/tickets?q=inventario');
+    expect(r.body.total).toBe(1);
+    expect(r.body.datos[0].concepto).toBe('Inventario de almacén');
+    const admin = await entrar('admin_prueba');
+    expect((await admin.get('/tickets?q=inventario')).body.total).toBe(2);
+  });
+
   it('el admin ve todos', async () => {
     const u2 = await entrar('usuario_dos');
     await u1.form('/tickets', ticketValido(f));

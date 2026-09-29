@@ -1,5 +1,5 @@
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
-import { env } from '../config/env';
+import { COOKIE_SESION, env } from '../config/env';
 import { errores } from '../lib/errores';
 import { logger } from '../lib/logger';
 import { resolverSesion, tocarSesion } from '../modulos/auth/sesiones';
@@ -18,12 +18,12 @@ export function opcionesCookie() {
 
 /** Carga la sesión si hay cookie. No exige sesión (eso lo hace `requiereSesion`). */
 export const cargarSesion: RequestHandler = async (req, res, next) => {
-  const token: unknown = req.cookies?.[env.SESSION_COOKIE_NAME];
+  const token: unknown = req.cookies?.[COOKIE_SESION];
   if (typeof token !== 'string' || token.length < 20 || token.length > 100) return next();
 
   const r = await resolverSesion(token);
   if (!r.ok) {
-    res.clearCookie(env.SESSION_COOKIE_NAME, opcionesCookie());
+    res.clearCookie(COOKIE_SESION, opcionesCookie());
     res.locals.motivoSinSesion = r.motivo;
     return next();
   }

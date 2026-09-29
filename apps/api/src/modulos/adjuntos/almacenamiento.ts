@@ -2,7 +2,7 @@
 // tipo verificado por contenido (no por la extensión) y límites configurables desde Ajustes.
 import { createHash, randomUUID } from 'node:crypto';
 import { createReadStream } from 'node:fs';
-import { mkdir, open, rename, rm } from 'node:fs/promises';
+import { mkdir, open, readdir, rename, rm, stat } from 'node:fs/promises';
 import { extname, join } from 'node:path';
 import { fileTypeFromFile } from 'file-type';
 import multer from 'multer';
@@ -173,4 +173,19 @@ export function archivosDe(req: { files?: unknown }): Express.Multer.File[] {
   if (Array.isArray(f)) return f as Express.Multer.File[];
   if (f && typeof f === 'object') return Object.values(f as Record<string, Express.Multer.File[]>).flat();
   return [];
+}
+
+/** Tarea periódica: borra subidas interrumpidas que quedaron en storage/tmp (más de 1 hora). */
+export async function limpiarCarpetaTemporal(): Promise<number> {
+  const limite = Date.now() - 60 * 60_000;
+  let borrados = 0;
+  for (const nombre of await readdir(RUTAS.temporales).catch(() => [] as string[])) {
+    const ruta = join(RUTAS.temporales, nombre);
+    const s = await stat(ruta).catch(() => null);
+    if (s?.isFile() && s.mtimeMs < limite) {
+      await rm(ruta, { force: true }).catch(() => undefined);
+      borrados++;
+    }
+  }
+  return borrados;
 }

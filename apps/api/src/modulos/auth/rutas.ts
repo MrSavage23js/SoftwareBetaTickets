@@ -1,7 +1,7 @@
 import { Router, type Request } from 'express';
 import argon2 from 'argon2';
 import { esquemaCambiarPassword, esquemaLogin, esquemaPassword, type RespuestaSesion, type UsuarioSesion } from '@mesa/shared';
-import { env } from '../../config/env';
+import { COOKIE_SESION } from '../../config/env';
 import { db } from '../../db/conexion';
 import { OPCIONES_ARGON2 } from '../../db/seeds';
 import { ErrorApp, errores } from '../../lib/errores';
@@ -122,12 +122,8 @@ rutasAuth.post('/login', limiteLogin, async (req: Request, res) => {
         `Demasiados intentos fallidos. Tu cuenta quedó bloqueada ${ajustes['login.bloqueo_min']} minutos.`,
       );
     }
-    const restantes = ajustes['login.max_intentos'] - intentos;
-    throw errores.noAutenticado(
-      restantes <= 2
-        ? `${CREDENCIALES_INVALIDAS} Te quedan ${restantes} intento${restantes === 1 ? '' : 's'} antes del bloqueo temporal.`
-        : CREDENCIALES_INVALIDAS,
-    );
+    // Mismo mensaje que un usuario inexistente: no se revela qué nombres de usuario son válidos.
+    throw errores.noAutenticado(CREDENCIALES_INVALIDAS);
   }
 
   if (!u.activo) {
@@ -152,7 +148,7 @@ rutasAuth.post('/login', limiteLogin, async (req: Request, res) => {
   await registrarIntento(username, u.id, ip, true, null);
 
   const { token, csrfToken } = await crearSesion(u.id, ip, req.get('user-agent') ?? '');
-  res.cookie(env.SESSION_COOKIE_NAME, token, opcionesCookie());
+  res.cookie(COOKIE_SESION, token, opcionesCookie());
 
   const actual: UsuarioActual = {
     id: u.id,
@@ -171,7 +167,7 @@ rutasAuth.post('/login', limiteLogin, async (req: Request, res) => {
 
 rutasAuth.post('/logout', async (req, res) => {
   if (req.sesion) await cerrarSesion(req.sesion.id, 'LOGOUT');
-  res.clearCookie(env.SESSION_COOKIE_NAME, opcionesCookie());
+  res.clearCookie(COOKIE_SESION, opcionesCookie());
   res.status(204).end();
 });
 
