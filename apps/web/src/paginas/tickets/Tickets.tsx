@@ -36,14 +36,14 @@ export function Tickets() {
   const vista = soporte && params.get('vista') === 'kanban' ? 'kanban' : 'lista';
   const estatus = (params.get('estatus') ?? '') as Estatus | '';
 
-  const cambiar = (cambios: Record<string, string | null>, reiniciarPagina = true) => {
+  const cambiar = (cambios: Record<string, string | null>, reiniciarPagina = true, cerrarTicket = false) => {
     const p = new URLSearchParams(actual.current.search);
     for (const [k, v] of Object.entries(cambios)) {
       if (v === null || v === '') p.delete(k);
       else p.set(k, v);
     }
     if (reiniciarPagina) p.delete('pagina');
-    navegar({ pathname: actual.current.pathname, search: p.toString() }, { replace: true });
+    navegar({ pathname: cerrarTicket ? '/tickets' : actual.current.pathname, search: p.toString() }, { replace: true });
   };
 
   // Búsqueda con espera corta: no se consulta en cada tecla.
@@ -115,11 +115,11 @@ export function Tickets() {
         </div>
         {soporte && (
           <div className="seg" role="group" aria-label="Tipo de vista">
-            <button aria-pressed={vista === 'lista'} onClick={() => cambiar({ vista: null }, false)}>
+            <button aria-pressed={vista === 'lista'} onClick={() => cambiar({ vista: null }, false, true)}>
               <Icono n="list" t="s" />
               Lista
             </button>
-            <button aria-pressed={vista === 'kanban'} onClick={() => cambiar({ vista: 'kanban' }, false)}>
+            <button aria-pressed={vista === 'kanban'} onClick={() => cambiar({ vista: 'kanban' }, false, true)}>
               <Icono n="kanban" t="s" />
               Kanban
             </button>

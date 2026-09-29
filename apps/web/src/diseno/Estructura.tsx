@@ -60,10 +60,10 @@ export function Estructura() {
             <b title={usuario.nombre}>{usuario.nombre}</b>
             <span>{esSoporte ? usuario.rol.nombre : 'Usuario solicitante'}</span>
           </div>
-          <button className="out" aria-label="Cambiar contraseña" title="Cambiar contraseña" onClick={() => setCambiarPassword(true)} style={{ marginLeft: 'auto' }}>
+          <button className="out" aria-label="Cambiar contraseña" title="Cambiar contraseña" onClick={() => setCambiarPassword(true)}>
             <Icono n="lock" />
           </button>
-          <button className="out" style={{ marginLeft: 0 }} aria-label="Cerrar sesión" title="Cerrar sesión" onClick={() => void salir()}>
+          <button className="out" aria-label="Cerrar sesión" title="Cerrar sesión" onClick={() => void salir()}>
             <Icono n="logout" />
           </button>
         </div>

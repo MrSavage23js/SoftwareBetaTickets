@@ -4,6 +4,7 @@ coverage
 storage
 referencia
 playwright-report
+demo-github-pages
 test-results
 package-lock.json
 *.md

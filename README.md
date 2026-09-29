@@ -85,6 +85,21 @@ Lo que se configura **desde la pantalla** (menú Ajustes, Catálogos y Correos �
 | `npm run respaldo` | Respalda la BD y los adjuntos |
 | `npm run restaurar -- <carpeta> --confirmar` | Restaura un respaldo |
 
+## Demo en GitHub Pages (sin servidor)
+
+Para que cualquiera pruebe las pantallas desde un link, sin instalar nada:
+
+```bash
+npm run build:demo      # genera la carpeta demo-github-pages/
+npm run test:demo       # (opcional) la compila y recorre completa en navegador
+```
+
+1. En GitHub: **Add file → Upload files** y arrastra **el contenido** de `demo-github-pages/` (`index.html`, `404.html`, `favicon.svg` y la carpeta `assets`). Se puede subir al mismo repositorio del código (no reemplaza ningún archivo) o a uno nuevo.
+2. **Settings → Pages → Build and deployment → Deploy from a branch → `main` / `(root)` → Save**.
+3. En uno o dos minutos queda en `https://<usuario>.github.io/<repositorio>/`.
+
+La demo usa las mismas pantallas y las mismas reglas (máquina de estados, validaciones, permisos) que el sistema real, pero **no tiene servidor**. Los datos viven en el navegador de cada persona, no se envían correos y los archivos adjuntos no se conservan al recargar. Usuarios de prueba (contraseña `Demo1234`): `admin` y `tecnico` (soporte), `laura` y `pedro` (solicitantes). En la pantalla de inicio hay un botón para reiniciar los datos.
+
 ## Pruebas automatizadas
 
 Necesitan MySQL encendido. Usan **otra base de datos** (`DB_NAME_TEST`, por omisión `mesa_ayuda_test`) y otra carpeta de archivos (`storage/pruebas`, `storage/e2e`). **Nunca tocan los datos reales.**

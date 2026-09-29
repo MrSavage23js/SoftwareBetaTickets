@@ -13,6 +13,7 @@ export default tseslint.config(
       'referencia/**',
       'playwright-report/**',
       'test-results/**',
+      'demo-github-pages/**',
     ],
   },
   js.configs.recommended,

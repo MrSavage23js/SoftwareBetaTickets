@@ -7,7 +7,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import { Color, TextStyle } from '@tiptap/extension-text-style';
 import { Placeholder } from '@tiptap/extensions';
-import { api, mensajeDe } from '../api/cliente';
+import { api, mensajeDe, MODO_DEMO } from '../api/cliente';
 import { useSesion } from '../sesion/Sesion';
 import { Icono, type NombreIcono } from './Icono';
 import { useAvisos } from './ui';
@@ -40,7 +40,8 @@ export function Editor({ id, valor, alCambiar, placeholder, invalido, corto, eti
       }),
       TextStyle,
       Color,
-      Image.configure({ inline: false, allowBase64: false }),
+      // En la demo las imágenes pequeñas se guardan como data: (no hay servidor de archivos).
+      Image.configure({ inline: false, allowBase64: MODO_DEMO }),
       Placeholder.configure({ placeholder: placeholder ?? '' }),
     ],
     content: valor,
