@@ -2,6 +2,7 @@ import { sql } from 'kysely';
 import {
   INFO_ESTATUS,
   PERMISOS,
+  esquemaDepartamento,
   esquemaEmpresa,
   esquemaModulo,
   esquemaTipoSolicitud,
@@ -38,7 +39,11 @@ export async function catalogosPara(u: UsuarioActual, modoAdmin: boolean): Promi
     qModulos = qModulos.where('activo', '=', 1);
   }
 
-  const [empresas, tipos, modulos, estatus, conteos] = await Promise.all([
+  let qDepartamentos = db.selectFrom('departamentos').selectAll().orderBy('orden').orderBy('nombre');
+  if (!admin) qDepartamentos = qDepartamentos.where('activo', '=', 1);
+
+  const [departamentos, empresas, tipos, modulos, estatus, conteos] = await Promise.all([
+    qDepartamentos.execute(),
     qEmpresas.execute(),
     qTipos.execute(),
     qModulos.execute(),
@@ -47,6 +52,14 @@ export async function catalogosPara(u: UsuarioActual, modoAdmin: boolean): Promi
   ]);
 
   return {
+    departamentos: departamentos.map((d) => ({
+      id: d.id,
+      nombre: d.nombre,
+      codigo: d.codigo,
+      activo: b(d.activo),
+      orden: d.orden,
+      ...(conteos ? { tickets: conteos.departamentos.get(d.id) ?? 0, usuarios: conteos.usuariosDepto.get(d.id) ?? 0 } : {}),
+    })),
     empresas: empresas.map((e) => ({
       id: e.id,
       nombre: e.nombre,
@@ -85,7 +98,7 @@ export async function catalogosPara(u: UsuarioActual, modoAdmin: boolean): Promi
 }
 
 async function conteosDeUso() {
-  const conteo = async (col: 'empresa_id' | 'tipo_id' | 'modulo_id') => {
+  const conteo = async (col: 'departamento_id' | 'empresa_id' | 'tipo_id' | 'modulo_id') => {
     const filas = await db
       .selectFrom('tickets')
       .select([col, sql<number>`COUNT(*)`.as('n')])
@@ -100,7 +113,16 @@ async function conteosDeUso() {
     .where('u.eliminado_at', 'is', null)
     .groupBy('ue.empresa_id')
     .execute();
+  const usuariosDepto = await db
+    .selectFrom('usuarios')
+    .select(['departamento_id', sql<number>`COUNT(*)`.as('n')])
+    .where('eliminado_at', 'is', null)
+    .where('departamento_id', 'is not', null)
+    .groupBy('departamento_id')
+    .execute();
   return {
+    departamentos: await conteo('departamento_id'),
+    usuariosDepto: new Map(usuariosDepto.map((f) => [Number(f.departamento_id), Number(f.n)])),
     empresas: await conteo('empresa_id'),
     tipos: await conteo('tipo_id'),
     modulos: await conteo('modulo_id'),
@@ -109,11 +131,34 @@ async function conteosDeUso() {
 }
 
 const DUPLICADO = 'Ya existe un registro con ese nombre o código.';
-const ADVERTENCIA_CODIGO =
-  'El código cambió. Los folios ya emitidos no cambian; los tickets nuevos usarán el código nuevo.';
 
-async function hayTickets(col: 'empresa_id' | 'tipo_id', id: number) {
-  return !!(await db.selectFrom('tickets').select('id').where(col, '=', id).limit(1).executeTakeFirst());
+// ---------------------------------------------------------------- Departamentos (su código forma el folio)
+export async function guardarDepartamento(id: number | null, entrada: unknown, actorId: number, ip: string) {
+  const d = validar(esquemaDepartamento, entrada);
+  const valores = { nombre: d.nombre, codigo: d.codigo, activo: d.activo ? 1 : 0, orden: d.orden };
+  try {
+    if (id === null) {
+      const r = await db.insertInto('departamentos').values(valores).executeTakeFirstOrThrow();
+      const nuevo = Number(r.insertId);
+      await auditar(db, { actorId, entidad: 'departamento', entidadId: nuevo, accion: 'CREADO', ip, datos: valores });
+      return { id: nuevo, advertencia: null };
+    }
+    const antes = await db.selectFrom('departamentos').selectAll().where('id', '=', id).executeTakeFirst();
+    if (!antes) throw errores.noEncontrado('El departamento no existe.');
+    await db.updateTable('departamentos').set(valores).where('id', '=', id).execute();
+    await auditar(db, { actorId, entidad: 'departamento', entidadId: id, accion: 'EDITADO', ip, datos: { antes, despues: valores } });
+    const usado = !!(await db.selectFrom('tickets').select('id').where('departamento_id', '=', id).limit(1).executeTakeFirst());
+    return {
+      id,
+      advertencia:
+        antes.codigo !== d.codigo && usado
+          ? 'El código cambió. Los folios ya emitidos no cambian; los tickets nuevos usarán el código nuevo y empezarán en 0001.'
+          : null,
+    };
+  } catch (e) {
+    if (esDuplicado(e)) throw errores.conflicto(DUPLICADO, 'DUPLICADO');
+    throw e;
+  }
 }
 
 // ---------------------------------------------------------------- Empresas
@@ -131,8 +176,7 @@ export async function guardarEmpresa(id: number | null, entrada: unknown, actorI
     if (!antes) throw errores.noEncontrado('La empresa no existe.');
     await db.updateTable('empresas').set(valores).where('id', '=', id).execute();
     await auditar(db, { actorId, entidad: 'empresa', entidadId: id, accion: 'EDITADA', ip, datos: { antes, despues: valores } });
-    const advertencia = antes.codigo !== d.codigo && (await hayTickets('empresa_id', id)) ? ADVERTENCIA_CODIGO : null;
-    return { id, advertencia };
+    return { id, advertencia: null };
   } catch (e) {
     if (esDuplicado(e)) throw errores.conflicto(DUPLICADO, 'DUPLICADO');
     throw e;
@@ -163,8 +207,7 @@ export async function guardarTipo(id: number | null, entrada: unknown, actorId: 
     if (!antes) throw errores.noEncontrado('El tipo de solicitud no existe.');
     await db.updateTable('tipos_solicitud').set(valores).where('id', '=', id).execute();
     await auditar(db, { actorId, entidad: 'tipo_solicitud', entidadId: id, accion: 'EDITADO', ip, datos: { antes, despues: valores } });
-    const advertencia = antes.codigo !== d.codigo && (await hayTickets('tipo_id', id)) ? ADVERTENCIA_CODIGO : null;
-    return { id, advertencia };
+    return { id, advertencia: null };
   } catch (e) {
     if (esDuplicado(e)) throw errores.conflicto(DUPLICADO, 'DUPLICADO');
     throw e;

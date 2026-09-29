@@ -2,7 +2,8 @@
 // Variables: {{variable}} se escapa; {{{variable}}} inserta HTML ya sanitizado (solo las marcadas "html").
 
 const VARIABLES_TICKET = [
-  { nombre: 'folio', descripcion: 'Folio del ticket (ASCA-0063)' },
+  { nombre: 'folio', descripcion: 'Folio del ticket (SIS-2026-0001)' },
+  { nombre: 'departamento', descripcion: 'Departamento que creó el ticket' },
   { nombre: 'tipo', descripcion: 'Tipo de solicitud' },
   { nombre: 'empresa', descripcion: 'Empresa' },
   { nombre: 'modulo', descripcion: 'Módulo (o "—")' },
@@ -38,7 +39,7 @@ const boton = `
         <p style="margin:24px 0 0"><a href="{{url_ticket}}" style="display:inline-block;background:#0E7C7B;color:#FFFFFF;text-decoration:none;font-weight:600;padding:12px 22px;border-radius:8px">Ver ticket en el sistema</a></p>`;
 
 const tablaDatos = `
-        <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%">${fila('Folio', 'folio')}${fila('Tipo', 'tipo')}${fila('Empresa', 'empresa')}${fila('Módulo', 'modulo')}${fila('Concepto', 'concepto')}${fila('Folio(s)', 'folios')}${fila('Estatus', 'estatus')}
+        <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%">${fila('Folio', 'folio')}${fila('Departamento', 'departamento')}${fila('Tipo', 'tipo')}${fila('Empresa', 'empresa')}${fila('Módulo', 'modulo')}${fila('Concepto', 'concepto')}${fila('Folio(s)', 'folios')}${fila('Estatus', 'estatus')}
         </table>`;
 
 export const PLANTILLAS = [
@@ -46,7 +47,7 @@ export const PLANTILLAS = [
     codigo: 'TICKET_CREADO',
     nombre: 'Ticket creado',
     descripcion: 'Se envía al solicitante y a las personas en copia cuando se crea un ticket.',
-    asunto: 'Ticket {{folio}} creado · {{tipo}}',
+    asunto: '[{{folio}}] Ticket creado · {{tipo}}',
     variables: VARIABLES_TICKET,
     cuerpoHtml: envoltura(
       'Recibimos tu solicitud',
@@ -57,7 +58,7 @@ export const PLANTILLAS = [
     codigo: 'TICKET_CERRADO',
     nombre: 'Ticket cerrado',
     descripcion: 'Se envía al solicitante cuando soporte cierra el ticket.',
-    asunto: 'Ticket {{folio}} cerrado',
+    asunto: '[{{folio}}] Ticket cerrado',
     variables: [
       ...VARIABLES_TICKET,
       { nombre: 'tecnico', descripcion: 'Técnico que atendió el ticket' },
@@ -74,7 +75,7 @@ export const PLANTILLAS = [
     codigo: 'TICKET_RESPUESTA',
     nombre: 'Respuesta de soporte',
     descripcion: 'Se envía al solicitante cuando soporte responde (solo si el ajuste "correo.respuestas_activas" está encendido).',
-    asunto: 'Respuesta en tu ticket {{folio}}',
+    asunto: '[{{folio}}] Respuesta de soporte',
     variables: [
       ...VARIABLES_TICKET,
       { nombre: 'tecnico', descripcion: 'Técnico que respondió' },
@@ -90,7 +91,7 @@ export const PLANTILLAS = [
     codigo: 'TICKET_NUEVO_SOPORTE',
     nombre: 'Aviso de ticket nuevo a soporte',
     descripcion: 'Se envía al buzón de soporte cuando se crea un ticket (solo si el ajuste "correo.aviso_soporte_activo" está encendido).',
-    asunto: 'Nuevo ticket {{folio}} · {{empresa}} · {{tipo}}',
+    asunto: '[{{folio}}] Nuevo ticket · {{empresa}} · {{tipo}}',
     variables: [...VARIABLES_TICKET, { nombre: 'descripcion_html', descripcion: 'Descripción (HTML; usar con triple llave)' }],
     cuerpoHtml: envoltura(
       'Nuevo ticket pendiente',

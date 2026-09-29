@@ -1,5 +1,11 @@
-// Datos iniciales. Los códigos de empresa marcados PROVISIONAL deben confirmarse (DECISIONES.md P1);
-// se pueden cambiar después desde Catálogos sin tocar código.
+// Datos iniciales. Desde la migración 0003 el folio es DEPTO-AÑO-CONSECUTIVO: los códigos de empresa y tipo
+// ya no forman parte del folio (quedan como códigos cortos). Todo se cambia desde Catálogos.
+
+/** Departamentos: su código forma el folio (SIS-2026-0001). Se administran en Catálogos → Departamentos. */
+export const DEPARTAMENTOS: { nombre: string; codigo: string }[] = [
+  { nombre: 'Sistemas / TI', codigo: 'SIS' },
+  { nombre: 'Recursos Humanos', codigo: 'RH' },
+];
 
 export const EMPRESAS: { nombre: string; codigo: string }[] = [
   { nombre: 'Aram_Wax', codigo: 'AW' }, // PROVISIONAL

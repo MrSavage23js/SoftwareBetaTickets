@@ -25,9 +25,13 @@ async function validarPasswordConAjustes(password: string | undefined) {
   if (!r.success) throw errores.validacion(r.error.issues[0]!.message, { password: r.error.issues[0]!.message });
 }
 
-async function validarRelaciones(ex: Ejecutor, rolId: number, empresaIds: number[]) {
+async function validarRelaciones(ex: Ejecutor, rolId: number, empresaIds: number[], departamentoId: number | null = null) {
   const rol = await ex.selectFrom('roles').select('id').where('id', '=', rolId).executeTakeFirst();
   if (!rol) throw errores.validacion('El rol seleccionado no existe.', { rolId: 'El rol seleccionado no existe.' });
+  if (departamentoId !== null) {
+    const dep = await ex.selectFrom('departamentos').select('id').where('id', '=', departamentoId).executeTakeFirst();
+    if (!dep) throw errores.validacion('El departamento no existe.', { departamentoId: 'El departamento no existe.' });
+  }
   const unicas = [...new Set(empresaIds)];
   if (unicas.length) {
     const n = await ex
@@ -64,7 +68,10 @@ export async function listarUsuarios(q?: string): Promise<UsuarioFila[]> {
   let consulta = db
     .selectFrom('usuarios as u')
     .innerJoin('roles as r', 'r.id', 'u.rol_id')
+    .leftJoin('departamentos as dp', 'dp.id', 'u.departamento_id')
     .select([
+      'dp.id as dp_id',
+      'dp.nombre as dp_nombre',
       'u.id',
       'u.username',
       'u.nombre',
@@ -104,6 +111,7 @@ export async function listarUsuarios(q?: string): Promise<UsuarioFila[]> {
     nombre: f.nombre,
     email: f.email,
     rol: { id: f.rol_id, codigo: f.rol_codigo, nombre: f.rol_nombre },
+    departamento: f.dp_id === null ? null : { id: f.dp_id, nombre: f.dp_nombre! },
     empresas: empresas.filter((e) => e.usuario_id === f.id).map((e) => ({ id: e.id, nombre: e.nombre })),
     activo: !!f.activo,
     ultimoLoginAt: f.ultimo_login_at?.toISOString() ?? null,
@@ -124,7 +132,7 @@ export async function crearUsuario(entrada: UsuarioCrearEntrada, actorId: number
   const hash = await argon2.hash(d.password, OPCIONES_ARGON2);
   try {
     return await db.transaction().execute(async (tx) => {
-      const empresas = await validarRelaciones(tx, d.rolId, d.empresaIds);
+      const empresas = await validarRelaciones(tx, d.rolId, d.empresaIds, d.departamentoId);
       const r = await tx
         .insertInto('usuarios')
         .values({
@@ -133,6 +141,7 @@ export async function crearUsuario(entrada: UsuarioCrearEntrada, actorId: number
           email: d.email,
           password_hash: hash,
           rol_id: d.rolId,
+          departamento_id: d.departamentoId,
           activo: d.activo ? 1 : 0,
           password_cambiado_at: new Date(),
           // La contraseña la eligió el admin: el usuario la cambia en su primer inicio de sesión.
@@ -178,7 +187,7 @@ export async function editarUsuario(id: number, entrada: UsuarioEditarEntrada, a
         .executeTakeFirst();
       if (!actual) throw errores.noEncontrado('El usuario no existe o fue dado de baja.');
 
-      const empresas = await validarRelaciones(tx, d.rolId, d.empresaIds);
+      const empresas = await validarRelaciones(tx, d.rolId, d.empresaIds, d.departamentoId);
       const adminId = await rolAdminId(tx);
       const dejaDeSerAdmin = actual.rol_id === adminId && (d.rolId !== adminId || !d.activo);
       if (dejaDeSerAdmin) await asegurarOtroAdmin(tx, id);
@@ -191,6 +200,7 @@ export async function editarUsuario(id: number, entrada: UsuarioEditarEntrada, a
           nombre: d.nombre,
           email: d.email,
           rol_id: d.rolId,
+          departamento_id: d.departamentoId,
           activo: d.activo ? 1 : 0,
           ...(hash
             ? {

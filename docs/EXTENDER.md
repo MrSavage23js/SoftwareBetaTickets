@@ -13,10 +13,14 @@ Para que el tipo exista también en instalaciones nuevas, agrégalo a `apps/api/
 ## 2. Agregar un módulo
 **Catálogos → Módulos → Agregar.** El código es opcional y no forma parte del folio. Para instalaciones nuevas, agrégalo también a `MODULOS` en el mismo archivo de seeds.
 
+## 2 bis. Agregar un departamento (y su serie de folios)
+**Catálogos → Departamentos → Agregar**: nombre y código de 2 a 6 letras (p. ej. `CONTA`). Sus tickets tendrán folio `CONTA-2026-0001`, `CONTA-2026-0002`… y el consecutivo se reinicia cada 1 de enero. Asígnalo a los usuarios en **Usuarios → Editar → Departamento** para que venga preseleccionado al crear tickets.
+- No se borran: se desactivan (los tickets viejos conservan su departamento y folio).
+- Cambiar el código no cambia folios emitidos; los tickets nuevos usan el código nuevo empezando en 0001.
+
 ## 3. Agregar una empresa
-**Catálogos → Empresas → Agregar** con su código de folio (2 a 4 caracteres, único). Después asígnala a los usuarios en **Usuarios → Editar → Empresa / sucursal**.
+**Catálogos → Empresas → Agregar** con un código corto (2 a 4 caracteres, único; es para reportes, no forma el folio). Después asígnala a los usuarios en **Usuarios → Editar → Empresa / sucursal**.
 - Nunca se borran: se **desactivan**. Los tickets viejos la siguen mostrando.
-- Cambiar el código no modifica los folios emitidos: los tickets nuevos arrancan su propio consecutivo con el prefijo nuevo.
 
 ## 4. Agregar un campo nuevo al ticket (ejemplo: "Prioridad")
 1. **Migración**: crea `apps/api/src/db/migraciones/0002_prioridad.ts`:
@@ -80,4 +84,4 @@ El menú, los botones y el servidor se ajustan solos porque todo revisa **permis
 ## 8. Otros puntos de extensión
 - **Reportes y notificaciones**: `ticket_eventos` registra todo lo que le pasa a un ticket (tipo, actor, estatus antes y después, datos JSON). Un reporte de "tiempo en cada estatus" sale directo de esa tabla.
 - **Importar el sistema anterior**: ver `apps/api/src/modulos/importacion/README.md`.
-- **Formato del folio**: `packages/shared/src/folio.ts` (`prefijoFolio`, `formatearFolio`) es el único lugar donde se define.
+- **Formato del folio** (`DEPTO-AÑO-CONSECUTIVO`): `packages/shared/src/folio.ts` (`formatearFolio`) es el único lugar donde se define; el contador está en `apps/api/src/modulos/tickets/folio.ts`.

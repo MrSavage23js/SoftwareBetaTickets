@@ -71,7 +71,8 @@ Convención: **`CONFIRMAR`** = necesito tu respuesta · **`SUPUESTO`** = lo asum
 
 **Las que el prompt pide contestar antes de la fase 1:**
 
-- **P1 · Formato del folio.** Mi deducción es `[código empresa, 2 letras][código tipo, 2 letras]-[consecutivo de 4 dígitos]`, con el consecutivo **por combinación empresa + tipo** (`MACE-0045`, `MACE-0046`).
+- ~~**P1 · Formato del folio.**~~ **RESUELTA el 29/09/2026** con la especificación del usuario: `DEPTO-AÑO-CONSECUTIVO` (ver D32). Lo que sigue queda solo como historial:
+  - **P1 · Formato del folio (texto original).** Mi deducción es `[código empresa, 2 letras][código tipo, 2 letras]-[consecutivo de 4 dígitos]`, con el consecutivo **por combinación empresa + tipo** (`MACE-0045`, `MACE-0046`).
   - ¿Es correcto? ¿O el consecutivo es por empresa, o uno solo global?
   - ¿Qué pasa al llegar a 9999? Propongo que crezca a 5 dígitos (`ASCA-10000`).
   - Necesito la **tabla completa de códigos**. Propuesta para que la corrijas:
@@ -128,7 +129,7 @@ El usuario pidió continuar sin contestar las preguntas y **sin pruebas automati
 
 | Pregunta | Cómo quedó | Dónde se cambia |
 |---|---|---|
-| P1 códigos de folio | 3 empresas con código confirmado por folios reales (AS, MA, VP); las otras 14 con códigos **PROVISIONALES**; tipos CO, CA, CE confirmados, y AC, CG, MT provisionales. Consecutivo por prefijo empresa+tipo. | Catálogos |
+| P1 códigos de folio | **Reemplazada por D32** (folio por departamento). Texto anterior: | 3 empresas con código confirmado por folios reales (AS, MA, VP); las otras 14 con códigos **PROVISIONALES**; tipos CO, CA, CE confirmados, y AC, CG, MT provisionales. Consecutivo por prefijo empresa+tipo. | Catálogos |
 | P2 empresas | Las 17 de la lista, en lista plana. | Catálogos → Agregar |
 | P3 copias | Se aceptan usuarios del sistema **y** correos libres. Las copias reciben el correo de creación; **no** pueden ver el ticket en el sistema. | — |
 | P4 reabrir | Implementado, pero **nadie tiene el permiso** `tickets.reabrir`. | Migración o permiso |
@@ -154,7 +155,18 @@ El usuario pidió continuar sin contestar las preguntas y **sin pruebas automati
 - **D30.** Listado en dos pasos: primero ids y contadores solo sobre `tickets`; luego uniones solo para los ids de la página. La búsqueda de texto se resuelve con FULLTEXT en una consulta aparte (hasta 5,000 coincidencias) y el `LIKE '%…%'` queda solo para textos de menos de 3 caracteres.
 - **D31.** Medidas contra el descubrimiento de usuarios, cookie `__Host-`, `robots.txt` y `noindex`, web sin *source maps* y registro de accesos. Detalle y riesgos aceptados en `docs/SEGURIDAD.md`.
 
+**Decisión de la versión 0.3.0 (folio por departamento, especificación del usuario del 29/09/2026):**
+- **D32.** El folio es `[DEPTO]-[AÑO]-[CONSECUTIVO]`, p. ej. `SIS-2026-0001`:
+  - `DEPTO` sale del catálogo `departamentos` (configurable en pantalla; se siembran SIS y RH).
+  - `AÑO` es el año en curso en `APP_TZ`, no en UTC.
+  - `CONSECUTIVO` tiene 4 dígitos y se reinicia cada 1 de enero por departamento, con la tabla `folio_contadores (departamento, anio, ultimo_consecutivo)` y una sola sentencia atómica (`INSERT … ON DUPLICATE KEY UPDATE`). `INSERT IGNORE` + `UPDATE` se descartó porque causaba interbloqueos: lo detectó la prueba de 50 creaciones simultáneas.
+  - El departamento se elige en "Nuevo ticket", preseleccionado con el departamento del usuario (campo nuevo en Usuarios).
+  - Los asuntos de correo empiezan con `[folio]`, y el sistema lo antepone si una plantilla editada no lo trae. Guardar una plantilla de ticket sin `{{folio}}` en el asunto da error.
+  - Los tickets anteriores conservan su folio y quedaron en el departamento SIS.
+  - Los códigos de empresa y tipo ya no forman el folio; quedan como códigos cortos para reportes. Por eso **P1 ya no bloquea** y los códigos provisionales de empresas dejan de importar para el folio.
+
 **Pendientes:**
+- **Confirmar la lista de departamentos y sus códigos** (hoy: SIS = Sistemas / TI, RH = Recursos Humanos) y asignar el departamento a cada usuario.
 - Fase opcional: pantalla para editar permisos por rol.
 - Contestar las preguntas de §D.
 

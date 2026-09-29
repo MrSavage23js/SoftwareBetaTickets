@@ -36,6 +36,7 @@ export interface UsuariosTabla {
   email: string;
   password_hash: string;
   rol_id: number;
+  departamento_id: Generated<number | null>;
   activo: Bool;
   intentos_fallidos: Generated<number>;
   bloqueado_hasta: FechaNula;
@@ -122,15 +123,27 @@ export interface EstatusTicketTabla {
   orden: number;
 }
 
-export interface FolioConsecutivosTabla {
-  prefijo: string;
-  ultimo: number;
+export interface DepartamentosTabla {
+  id: Generated<number>;
+  nombre: string;
+  codigo: string;
+  activo: Bool;
+  orden: Generated<number>;
+  creado_at: Generated<Date>;
+  actualizado_at: Generated<Date>;
+}
+
+export interface FolioContadoresTabla {
+  departamento: string;
+  anio: number;
+  ultimo_consecutivo: number;
   actualizado_at: Generated<Date>;
 }
 
 export interface TicketsTabla {
   id: Generated<number>;
   folio: string;
+  departamento_id: number;
   tipo_id: number;
   empresa_id: number;
   modulo_id: number | null;
@@ -273,7 +286,8 @@ export interface BD {
   tipos_solicitud: TiposSolicitudTabla;
   modulos: ModulosTabla;
   estatus_ticket: EstatusTicketTabla;
-  folio_consecutivos: FolioConsecutivosTabla;
+  departamentos: DepartamentosTabla;
+  folio_contadores: FolioContadoresTabla;
   tickets: TicketsTabla;
   ticket_copias: TicketCopiasTabla;
   ticket_mensajes: TicketMensajesTabla;

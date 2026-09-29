@@ -102,6 +102,7 @@ function Contenido({ t }: { t: TicketDetalle }) {
         <Celda titulo="Estatus">
           <PillEstatus estatus={t.estatus} />
         </Celda>
+        <Celda titulo="Departamento">{t.departamento.nombre}</Celda>
         <Celda titulo="Empresa">{t.empresa.nombre}</Celda>
         <Celda titulo="Módulo">{t.modulo?.nombre ?? <span className="ph">—</span>}</Celda>
         <Celda titulo="Concepto">{t.concepto ?? <span className="ph">—</span>}</Celda>

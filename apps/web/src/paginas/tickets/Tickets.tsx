@@ -14,7 +14,7 @@ import { Kanban } from './Kanban';
 import { ListaTickets } from './Lista';
 import { NuevoTicket } from './NuevoTicket';
 
-const FILTROS_AVANZADOS = ['tipoId', 'empresaId', 'moduloId', 'asignadoAId', 'desde', 'hasta'] as const;
+const FILTROS_AVANZADOS = ['departamentoId', 'tipoId', 'empresaId', 'moduloId', 'asignadoAId', 'desde', 'hasta'] as const;
 
 export function Tickets() {
   const { puede } = useSesion();
@@ -196,6 +196,7 @@ function PanelFiltros({ params, cambiar }: { params: URLSearchParams; cambiar: (
   );
   return (
     <div className="panel panel-filtros" role="region" aria-label="Filtros avanzados">
+      {sel('departamentoId', 'Departamento', cat.data?.departamentos ?? [])}
       {sel('tipoId', 'Tipo', cat.data?.tipos ?? [])}
       {sel('empresaId', 'Empresa', cat.data?.empresas ?? [])}
       {sel('moduloId', 'Módulo', cat.data?.modulos ?? [])}

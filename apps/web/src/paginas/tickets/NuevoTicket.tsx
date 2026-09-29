@@ -18,6 +18,7 @@ export function NuevoTicket({ alCerrar, alCrear }: { alCerrar: () => void; alCre
 
   const [tipoId, setTipoId] = useState('');
   const [empresaId, setEmpresaId] = useState('');
+  const [departamentoId, setDepartamentoId] = useState('');
   const [moduloId, setModuloId] = useState('');
   const [concepto, setConcepto] = useState('');
   const [foliosRef, setFoliosRef] = useState('');
@@ -34,9 +35,16 @@ export function NuevoTicket({ alCerrar, alCrear }: { alCerrar: () => void; alCre
   const tipo = cat.data?.tipos.find((t) => String(t.id) === tipoId);
   // Si el usuario solo tiene una empresa, se preselecciona.
   const empresaEfectiva = empresaId || (empresas.length === 1 ? String(empresas[0]!.id) : '');
+  // Departamento: el del usuario (o el único que exista), pero se puede cambiar. Forma el folio: SIS-2026-0001.
+  const departamentos = cat.data?.departamentos ?? [];
+  const departamentoPropio = departamentos.find((d) => d.id === usuario?.departamento?.id);
+  const departamentoEfectivo =
+    departamentoId || (departamentoPropio ? String(departamentoPropio.id) : departamentos.length === 1 ? String(departamentos[0]!.id) : '');
+  const departamentoElegido = departamentos.find((d) => String(d.id) === departamentoEfectivo);
 
   function validarLocal(): Record<string, string> {
     const e: Record<string, string> = {};
+    if (!departamentoEfectivo) e.departamentoId = 'Selecciona el departamento.';
     if (!empresaEfectiva) e.empresaId = 'Selecciona la empresa.';
     if (tipo?.requiereModulo && !moduloId) e.moduloId = 'Selecciona el módulo.';
     if (tipo?.requiereConcepto && !concepto.trim()) e.concepto = 'Escribe el concepto.';
@@ -56,6 +64,7 @@ export function NuevoTicket({ alCerrar, alCrear }: { alCerrar: () => void; alCre
         '/tickets',
         {
           tipoId: Number(tipoId),
+          departamentoId: Number(departamentoEfectivo),
           empresaId: Number(empresaEfectiva),
           moduloId: moduloId ? Number(moduloId) : null,
           concepto: concepto.trim(),
@@ -196,6 +205,22 @@ export function NuevoTicket({ alCerrar, alCrear }: { alCerrar: () => void; alCre
                   {errores.solicitanteId ? error('solicitanteId') : <div className="help">Déjalo vacío para crearlo a tu nombre.</div>}
                 </div>
               )}
+              <div>
+                <label className="lbl" htmlFor="nt-depto">
+                  Departamento
+                </label>
+                <select id="nt-depto" className="inp" value={departamentoEfectivo} onChange={(e) => setDepartamentoId(e.target.value)} {...campo('departamentoId')}>
+                  <option value="">Selecciona…</option>
+                  {departamentos.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.nombre} ({d.codigo})
+                    </option>
+                  ))}
+                </select>
+                {errores.departamentoId
+                  ? error('departamentoId')
+                  : departamentoElegido && <div className="help">El folio será {departamentoElegido.codigo}-{new Date().getFullYear()}-####.</div>}
+              </div>
               <div className="g2">
                 <div>
                   <label className="lbl" htmlFor="nt-emp">

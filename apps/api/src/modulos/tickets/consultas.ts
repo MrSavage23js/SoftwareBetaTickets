@@ -26,14 +26,15 @@ const ref = (id: number | null, username: string | null, nombre: string | null):
   id === null || username === null ? null : { id, username, nombre: nombreVisible({ username, nombre }) };
 
 type Base = SelectQueryBuilder<
-  BD & { t: BD['tickets']; ti: BD['tipos_solicitud']; e: BD['empresas']; m: BD['modulos']; s: BD['usuarios']; a: BD['usuarios'] },
-  't' | 'ti' | 'e' | 'm' | 's' | 'a',
+  BD & { t: BD['tickets']; dp: BD['departamentos']; ti: BD['tipos_solicitud']; e: BD['empresas']; m: BD['modulos']; s: BD['usuarios']; a: BD['usuarios'] },
+  't' | 'dp' | 'ti' | 'e' | 'm' | 's' | 'a',
   object
 >;
 
 function base(): Base {
   return db
     .selectFrom('tickets as t')
+    .innerJoin('departamentos as dp', 'dp.id', 't.departamento_id')
     .innerJoin('tipos_solicitud as ti', 'ti.id', 't.tipo_id')
     .innerJoin('empresas as e', 'e.id', 't.empresa_id')
     .leftJoin('modulos as m', 'm.id', 't.modulo_id')
@@ -118,6 +119,7 @@ function aplicarFiltros(
 ): SoloTickets {
   q = q.where(filtroVisibles(u) as never);
   if (conEstatus && f.estatus) q = q.where('t.estatus', '=', f.estatus);
+  if (f.departamentoId) q = q.where('t.departamento_id', '=', f.departamentoId);
   if (f.tipoId) q = q.where('t.tipo_id', '=', f.tipoId);
   if (f.empresaId) q = q.where('t.empresa_id', '=', f.empresaId);
   if (f.moduloId) q = q.where('t.modulo_id', '=', f.moduloId);
@@ -184,6 +186,8 @@ export async function listarTickets(
         't.estatus',
         't.concepto',
         't.creado_at',
+        'dp.id as dp_id',
+        'dp.nombre as dp_nombre',
         'ti.id as tipo_id',
         'ti.nombre as tipo_nombre',
         'e.id as empresa_id',
@@ -213,6 +217,7 @@ export async function listarTickets(
       estatus: r.estatus as Estatus,
       concepto: r.concepto,
       creadoAt: r.creado_at.toISOString(),
+      departamento: { id: r.dp_id, nombre: r.dp_nombre },
       tipo: { id: r.tipo_id, nombre: r.tipo_nombre },
       empresa: { id: r.empresa_id, nombre: r.empresa_nombre },
       modulo: r.modulo_id === null ? null : { id: r.modulo_id, nombre: r.modulo_nombre! },
@@ -242,6 +247,7 @@ export async function detalleTicket(u: UsuarioActual, id: number): Promise<Ticke
     .leftJoin('usuarios as cp', 'cp.id', 't.cerrado_por_id')
     .selectAll('t')
     .select([
+      'dp.nombre as dp_nombre',
       'ti.nombre as tipo_nombre',
       'ti.titulo_detalle',
       'e.nombre as empresa_nombre',
@@ -284,6 +290,7 @@ export async function detalleTicket(u: UsuarioActual, id: number): Promise<Ticke
     id: r.id,
     folio: r.folio,
     estatus: r.estatus as Estatus,
+    departamento: { id: r.departamento_id, nombre: r.dp_nombre },
     tipo: { id: r.tipo_id, nombre: r.tipo_nombre },
     tituloDetalle: r.titulo_detalle,
     empresa: { id: r.empresa_id, nombre: r.empresa_nombre },

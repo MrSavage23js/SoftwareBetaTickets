@@ -6,7 +6,7 @@ import { RUTAS } from '../../src/config/env';
 import { db } from '../../src/db/conexion';
 import { procesarCola } from '../../src/modulos/correos/trabajador';
 import { usarTransporte, type Transporte } from '../../src/modulos/correos/transportes';
-import { entrar, reiniciarBD, ticketValido, type Cliente, type Fixtures } from '../ayudas';
+import { entrar, folio, reiniciarBD, ticketValido, type Cliente, type Fixtures } from '../ayudas';
 
 let f: Fixtures;
 let u1: Cliente;
@@ -38,7 +38,10 @@ describe('cola de salida', () => {
     expect(emls).toHaveLength(1);
     const eml = readFileSync(join(RUTAS.correosConsola, emls[0]!), 'utf8');
     expect(eml).toMatch(/^To: usuario_uno <usuario_uno@prueba\.local>/m);
-    expect(eml).toMatch(/Subject: .*ASCA-0001/);
+    // El folio va en el asunto del correo que llega a Outlook.
+    // (el asunto con acentos viaja codificado en el .eml; el folio queda legible)
+    expect(eml).toMatch(new RegExp(`Subject: .*${folio('SIS', 1)}`));
+    expect((await correo()).asunto).toBe(`[${folio('SIS', 1)}] Ticket creado · Cancelación`);
   });
 
   it('si el correo falla, el ticket se crea igual y se reintenta con espera progresiva', async () => {
@@ -113,10 +116,24 @@ describe('plantillas', () => {
 
     await u1.form('/tickets', ticketValido(f, { concepto: '<b>negritas</b>' }));
     const c = await correo();
-    expect(c.asunto).toBe('Nuevo ASCA-0001');
+    expect(c.asunto).toBe(`Nuevo ${folio('SIS', 1)}`);
 
     const previa = await admin.post('/correos/plantillas/vista-previa', { asunto: '{{folio}}', cuerpoHtml: '<p>{{concepto}}</p>' });
-    expect(previa.body).toEqual({ asunto: 'ASCA-0063', html: '<p>CARTA PORTE</p>' });
+    expect(previa.body).toEqual({ asunto: 'SIS-2026-0063', html: '<p>CARTA PORTE</p>' });
+  });
+
+  it('no se puede guardar una plantilla de ticket sin {{folio}} en el asunto', async () => {
+    const lista = (await admin.get('/correos/plantillas')).body as { id: number; codigo: string; cuerpoHtml: string }[];
+    const cerrado = lista.find((p) => p.codigo === 'TICKET_CERRADO')!;
+    const r = await admin.put(`/correos/plantillas/${cerrado.id}`, { asunto: 'Tu ticket fue cerrado', cuerpoHtml: cerrado.cuerpoHtml, activa: true });
+    expect(r.status).toBe(400);
+    expect(r.body.error.campos).toHaveProperty('asunto');
+  });
+
+  it('aunque la plantilla guardada no traiga el folio, el asunto siempre lo incluye', async () => {
+    await db.updateTable('plantillas_correo').set({ asunto: 'Ticket creado' }).where('codigo', '=', 'TICKET_CREADO').execute();
+    await u1.form('/tickets', ticketValido(f));
+    expect((await correo()).asunto).toBe(`[${folio('SIS', 1)}] Ticket creado`);
   });
 
   it('el concepto escrito por el usuario llega escapado al correo', async () => {

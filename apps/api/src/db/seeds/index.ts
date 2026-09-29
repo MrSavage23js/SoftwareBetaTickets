@@ -13,7 +13,7 @@ import {
 import { env } from '../../config/env';
 import { logger } from '../../lib/logger';
 import { db } from '../conexion';
-import { EMPRESAS, MODULOS, TIPOS } from './datos-iniciales';
+import { DEPARTAMENTOS, EMPRESAS, MODULOS, TIPOS } from './datos-iniciales';
 import { PLANTILLAS } from './plantillas-iniciales';
 
 export const OPCIONES_ARGON2 = { type: argon2.argon2id, memoryCost: 19_456, timeCost: 2, parallelism: 1 };
@@ -64,6 +64,12 @@ async function catalogos() {
         orden: i + 1,
       })),
     )
+    .execute();
+
+  await db
+    .insertInto('departamentos')
+    .ignore()
+    .values(DEPARTAMENTOS.map((d, i) => ({ nombre: d.nombre, codigo: d.codigo, activo: 1, orden: i + 1 })))
     .execute();
 
   await db

@@ -41,8 +41,12 @@ export async function encolarCorreo(
   if (!para.length) return false;
   const cc = depurar(c.cc ?? [], new Set(para.map((d) => d.email)));
 
-  const variables = { empresa_sistema: env.APP_NOMBRE_EMPRESA, ...c.variables };
+  const variables: Variables = { empresa_sistema: env.APP_NOMBRE_EMPRESA, ...c.variables };
   const html = renderizarHtml(p.cuerpo_html, variables);
+  // El folio SIEMPRE va en el asunto (para identificarlo y buscarlo en Outlook), aunque se edite la plantilla.
+  let asunto = renderizarTexto(p.asunto, variables);
+  const folio = typeof variables.folio === 'string' ? variables.folio : null;
+  if (folio && !asunto.includes(folio)) asunto = `[${folio}] ${asunto}`.slice(0, 250);
   await ex
     .insertInto('correos_salida')
     .values({
@@ -50,7 +54,7 @@ export async function encolarCorreo(
       ticket_id: c.ticketId ?? null,
       para: JSON.stringify(para),
       cc: cc.length ? JSON.stringify(cc) : null,
-      asunto: renderizarTexto(p.asunto, variables),
+      asunto,
       cuerpo_html: html,
       cuerpo_texto: htmlATexto(html),
       estado: 'PENDIENTE',

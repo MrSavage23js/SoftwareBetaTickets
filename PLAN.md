@@ -151,5 +151,5 @@ Pantalla para crear roles (por ejemplo "Consulta") y marcar sus permisos. Las ta
 |---|---|
 | Permisos de Microsoft 365 tardan en aprobarse | El transporte "consola" permite terminar y probar todo sin credenciales; Graph se conecta al final. |
 | Importar 2,566+ tickets del sistema actual | El modelo trae `origen` y `id_anterior`; la importación queda como fase aparte y necesita acceso a la BD vieja. |
-| Cambiar el código de una empresa después de usarlo | El consecutivo se lleva por prefijo de texto; los folios viejos no cambian y no puede haber choques (`UNIQUE` en `tickets.folio`). |
+| Cambiar el código de un departamento después de usarlo | El contador se lleva por código + año; los folios viejos no cambian y no puede haber choques (`UNIQUE` en `tickets.folio`). |
 | Servidor Windows sin Docker | Se documentan las dos rutas: Node como servicio de Windows y MySQL nativo. |

@@ -76,6 +76,7 @@ export function Usuarios() {
                     <th>ID</th>
                     <th>Usuario</th>
                     <th>Rol</th>
+                    <th>Departamento</th>
                     <th>Empresas</th>
                     <th>Último inicio de sesión</th>
                     <th>Estatus</th>
@@ -103,6 +104,7 @@ export function Usuarios() {
                       <td>
                         <span className="count">{u.rol.nombre}</span>
                       </td>
+                      <td className="ph">{u.departamento?.nombre ?? '—'}</td>
                       <td className="ph" title={u.empresas.map((e) => e.nombre).join(', ')}>
                         {u.empresas.length ? plural(u.empresas.length, 'empresa', 'empresas') : 'Ninguna'}
                       </td>
@@ -207,6 +209,7 @@ function FormUsuario({ usuario, alCerrar, alGuardar }: { usuario: UsuarioFila | 
   const [password, setPassword] = useState('');
   const [confirmar, setConfirmar] = useState('');
   const [rolId, setRolId] = useState(usuario ? String(usuario.rol.id) : '');
+  const [departamentoId, setDepartamentoId] = useState(usuario?.departamento ? String(usuario.departamento.id) : '');
   const [activo, setActivo] = useState(usuario?.activo ?? true);
   const [empresas, setEmpresas] = useState<Set<number>>(new Set(usuario?.empresas.map((e) => e.id) ?? []));
   const [filtroEmpresa, setFiltroEmpresa] = useState('');
@@ -235,6 +238,7 @@ function FormUsuario({ usuario, alCerrar, alGuardar }: { usuario: UsuarioFila | 
       nombre: nombre.trim(),
       email: email.trim(),
       rolId: Number(rolEfectivo),
+      departamentoId: departamentoId ? Number(departamentoId) : null,
       empresaIds: [...empresas],
       activo,
       password,
@@ -319,6 +323,18 @@ function FormUsuario({ usuario, alCerrar, alGuardar }: { usuario: UsuarioFila | 
             ))}
           </select>
           {err('rolId')}
+        </div>
+        <div>
+          <label className="lbl" htmlFor="u-depto">Departamento</label>
+          <select id="u-depto" className="inp" value={departamentoId} onChange={(e) => setDepartamentoId(e.target.value)} aria-invalid={!!errores.departamentoId}>
+            <option value="">Sin departamento</option>
+            {(cat.data?.departamentos ?? []).filter((d) => d.activo || String(d.id) === departamentoId).map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.nombre} ({d.codigo})
+              </option>
+            ))}
+          </select>
+          {errores.departamentoId ? err('departamentoId') : <div className="help">Se propone al crear sus tickets y forma el folio.</div>}
         </div>
         {!nuevo && (
           <label className="check" style={{ alignSelf: 'end' }}>

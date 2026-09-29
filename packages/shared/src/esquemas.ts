@@ -2,7 +2,7 @@
 // Los mensajes están en español porque se muestran tal cual al usuario.
 import { z } from 'zod';
 import { LISTA_ESTATUS } from './estatus';
-import { CODIGO_CATALOGO_REGEX } from './folio';
+import { CODIGO_CATALOGO_REGEX, CODIGO_DEPARTAMENTO_REGEX } from './folio';
 
 const texto = (campo: string, max: number) =>
   z
@@ -63,6 +63,8 @@ const baseUsuario = z.object({
   nombre: textoOpcional('El nombre', 120),
   email: z.string({ error: 'El correo es obligatorio.' }).trim().toLowerCase().pipe(z.email('El correo electrónico no es válido.')),
   rolId: idEntero,
+  /** Departamento del usuario: se propone al crear sus tickets (forma el folio). */
+  departamentoId: idEntero.optional().nullable().transform((v) => v ?? null),
   empresaIds: z.array(idEntero).max(200).default([]),
   activo: booleano.optional().default(true),
 });
@@ -92,6 +94,18 @@ const codigo = z
   .trim()
   .toUpperCase()
   .regex(CODIGO_CATALOGO_REGEX, 'El código debe tener de 2 a 4 letras o números, sin espacios.');
+
+export const esquemaDepartamento = z.object({
+  nombre: texto('El nombre', 80),
+  codigo: z
+    .string({ error: 'El código es obligatorio.' })
+    .trim()
+    .toUpperCase()
+    .regex(CODIGO_DEPARTAMENTO_REGEX, 'El código debe tener de 2 a 6 letras o números en mayúsculas (p. ej. SIS).'),
+  activo: booleano.optional().default(true),
+  orden: z.coerce.number().int().min(0).max(9999).optional().default(0),
+});
+export type DepartamentoEntrada = z.input<typeof esquemaDepartamento>;
 
 export const esquemaEmpresa = z.object({
   nombre: texto('El nombre', 120),
@@ -143,6 +157,8 @@ const copia = z.union([
 
 export const esquemaTicketCrear = z.object({
   tipoId: idEntero,
+  /** Departamento que crea el ticket: forma el folio (SIS-2026-0001). */
+  departamentoId: idEntero,
   empresaId: idEntero,
   moduloId: idEntero.optional().nullable(),
   concepto: textoOpcional('El concepto', 200),
@@ -162,6 +178,7 @@ export const esquemaListarTickets = z.object({
   estatus: z.enum(LISTA_ESTATUS as [string, ...string[]]).optional(),
   q: z.string().trim().max(100).optional(),
   tipoId: idEntero.optional(),
+  departamentoId: idEntero.optional(),
   empresaId: idEntero.optional(),
   moduloId: idEntero.optional(),
   asignadoAId: z.union([idEntero, z.literal('ninguno')]).optional(),

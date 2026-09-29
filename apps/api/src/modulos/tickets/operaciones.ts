@@ -12,7 +12,6 @@ import {
   esquemaReasignar,
   esquemaTicketCrear,
   esquemaVersion,
-  prefijoFolio,
   validarAccion,
   type Accion,
   type Estatus,
@@ -33,7 +32,7 @@ import { CODIGOS_PLANTILLA, encolarCorreo } from '../correos/cola';
 import type { Variables } from '../correos/plantillas';
 import { registrarEvento, TIPOS_EVENTO, type TipoEvento } from '../eventos/servicio';
 import { empresasDe, puedeVerTicket } from './acceso';
-import { siguienteFolio } from './folio';
+import { anioActual, siguienteFolio } from './folio';
 
 const urlTicket = (id: number) => `${env.APP_URL.replace(/\/$/, '')}/tickets/${id}`;
 
@@ -42,10 +41,12 @@ async function variablesTicket(tx: Tx, ticketId: number): Promise<{ vars: Variab
   const t = await tx
     .selectFrom('tickets as t')
     .innerJoin('tipos_solicitud as ti', 'ti.id', 't.tipo_id')
+    .innerJoin('departamentos as dp', 'dp.id', 't.departamento_id')
     .innerJoin('empresas as e', 'e.id', 't.empresa_id')
     .leftJoin('modulos as m', 'm.id', 't.modulo_id')
     .innerJoin('usuarios as s', 's.id', 't.solicitante_id')
     .select([
+      'dp.nombre as departamento',
       't.id',
       't.folio',
       't.concepto',
@@ -68,6 +69,7 @@ async function variablesTicket(tx: Tx, ticketId: number): Promise<{ vars: Variab
   return {
     vars: {
       folio: t.folio,
+      departamento: t.departamento,
       tipo: t.tipo,
       empresa: t.empresa,
       modulo: t.modulo,
@@ -94,6 +96,14 @@ export async function crearTicket(u: UsuarioActual, entrada: unknown, archivos: 
   if (!tipo) throw errores.validacion('Selecciona un tipo de solicitud válido.', { tipoId: 'Selecciona un tipo de solicitud válido.' });
   const empresa = await db.selectFrom('empresas').selectAll().where('id', '=', d.empresaId).where('activa', '=', 1).executeTakeFirst();
   if (!empresa) campos.empresaId = 'Selecciona una empresa válida.';
+  // El departamento forma el folio: SIS-2026-0001.
+  const departamento = await db
+    .selectFrom('departamentos')
+    .select(['id', 'codigo'])
+    .where('id', '=', d.departamentoId)
+    .where('activo', '=', 1)
+    .executeTakeFirst();
+  if (!departamento) campos.departamentoId = 'Selecciona el departamento.';
 
   let moduloId: number | null = null;
   if (d.moduloId) {
@@ -149,17 +159,18 @@ export async function crearTicket(u: UsuarioActual, entrada: unknown, archivos: 
   const guardados = await procesarArchivos(archivos);
   try {
     return await db.transaction().execute(async (tx) => {
-      const prefijo = prefijoFolio(empresa!.codigo, tipo.codigo);
+      const anio = anioActual();
       let ticketId = 0;
       let folio = '';
       // Si un folio ya existe (p. ej. importado del sistema anterior) se toma el siguiente.
       for (let intento = 0; intento < 20 && !ticketId; intento++) {
-        folio = await siguienteFolio(tx, prefijo);
+        folio = await siguienteFolio(tx, departamento!.codigo, anio);
         try {
           const r = await tx
             .insertInto('tickets')
             .values({
               folio,
+              departamento_id: departamento!.id,
               tipo_id: tipo.id,
               empresa_id: empresa!.id,
               modulo_id: moduloId,
@@ -180,7 +191,7 @@ export async function crearTicket(u: UsuarioActual, entrada: unknown, archivos: 
           if (!esDuplicado(e)) throw e;
         }
       }
-      if (!ticketId) throw new Error(`No se pudo asignar un folio libre para ${prefijo}`);
+      if (!ticketId) throw new Error(`No se pudo asignar un folio libre para ${departamento!.codigo}-${anio}`);
 
       if (unicas.length) await tx.insertInto('ticket_copias').values(unicas.map((c) => ({ ...c, ticket_id: ticketId }))).execute();
       await insertarAdjuntos(tx, guardados, { ticketId, mensajeId: null, subidoPorId: u.id, enLinea: false });

@@ -1,7 +1,7 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db/conexion';
-import { siguienteConsecutivo } from '../../src/modulos/tickets/folio';
-import { entrar, reiniciarBD, ticketValido, type Cliente, type Fixtures } from '../ayudas';
+import { anioActual, siguienteConsecutivo } from '../../src/modulos/tickets/folio';
+import { ANIO, entrar, folio, reiniciarBD, ticketValido, type Cliente, type Fixtures } from '../ayudas';
 
 let f: Fixtures;
 let u1: Cliente;
@@ -17,7 +17,7 @@ describe('crear ticket', () => {
   it('ticket + folio + historial + correo en cola, todo en una operación', async () => {
     const r = await u1.form('/tickets', { ...ticketValido(f), copias: [{ usuarioId: f.u2 }, { email: 'Externo@Proveedor.com' }] });
     expect(r.status).toBe(201);
-    expect(r.body).toEqual({ id: expect.any(Number), folio: 'ASCA-0001', correosEncolados: 1 });
+    expect(r.body).toEqual({ id: expect.any(Number), folio: folio('SIS', 1), correosEncolados: 1 });
 
     const t = await db.selectFrom('tickets').selectAll().where('id', '=', r.body.id).executeTakeFirstOrThrow();
     expect(t).toMatchObject({ estatus: 'PENDIENTE', solicitante_id: f.u1, creado_por_id: f.u1, asignado_a_id: null });
@@ -26,8 +26,9 @@ describe('crear ticket', () => {
     const correo = await db.selectFrom('correos_salida').selectAll().where('ticket_id', '=', t.id).executeTakeFirstOrThrow();
     expect(correo.para).toEqual([{ email: 'usuario_uno@prueba.local', nombre: 'usuario_uno' }]);
     expect(correo.cc?.map((c) => c.email).sort()).toEqual(['externo@proveedor.com', 'usuario_dos@prueba.local']);
-    expect(correo.asunto).toBe('Ticket ASCA-0001 creado · Cancelación');
-    for (const texto of ['ASCA-0001', 'Cancelación', 'Autotransportes Asturcones', 'Compras', 'CARTA PORTE', 'B12345', 'Pendiente', 'Ver ticket en el sistema']) {
+    // El folio va al inicio del asunto, para identificarlo y buscarlo en Outlook.
+    expect(correo.asunto).toBe(`[${folio('SIS', 1)}] Ticket creado · Cancelación`);
+    for (const texto of [folio('SIS', 1), 'Sistemas / TI', 'Cancelación', 'Autotransportes Asturcones', 'Compras', 'CARTA PORTE', 'B12345', 'Pendiente', 'Ver ticket en el sistema']) {
       expect(correo.cuerpo_html).toContain(texto);
     }
     expect(correo.cuerpo_html).toContain(`http://localhost:3100/tickets/${t.id}`);
@@ -39,12 +40,41 @@ describe('crear ticket', () => {
     expect(d.body.descripcionHtml).toBe('<p>Hola</p>');
   });
 
-  it('los consecutivos son independientes por prefijo (empresa + tipo)', async () => {
-    expect((await u1.form('/tickets', ticketValido(f))).body.folio).toBe('ASCA-0001');
-    expect((await u1.form('/tickets', ticketValido(f))).body.folio).toBe('ASCA-0002');
-    expect((await u1.form('/tickets', { ...ticketValido(f), tipoId: f.tipoCG })).body.folio).toBe('ASCG-0001');
+  it('folio DEPTO-AÑO-CONSECUTIVO: consecutivo independiente por departamento, sin importar empresa ni tipo', async () => {
+    expect((await u1.form('/tickets', ticketValido(f))).body.folio).toBe(folio('SIS', 1));
+    expect((await u1.form('/tickets', ticketValido(f))).body.folio).toBe(folio('SIS', 2));
+    expect((await u1.form('/tickets', { ...ticketValido(f), tipoId: f.tipoCG })).body.folio).toBe(folio('SIS', 3));
+    expect((await u1.form('/tickets', ticketValido(f, { departamentoId: f.deptoRH }))).body.folio).toBe(folio('RH', 1));
     const u2 = await entrar('usuario_dos');
-    expect((await u2.form('/tickets', { ...ticketValido(f), empresaId: f.empresaMA })).body.folio).toBe('MACA-0001');
+    expect((await u2.form('/tickets', ticketValido(f, { departamentoId: f.deptoRH, empresaId: f.empresaMA }))).body.folio).toBe(folio('RH', 2));
+    expect(folio('SIS', 1)).toMatch(/^SIS-\d{4}-0001$/);
+  });
+
+  it('un registro de contador por departamento + año', async () => {
+    await u1.form('/tickets', ticketValido(f));
+    await u1.form('/tickets', ticketValido(f));
+    await u1.form('/tickets', ticketValido(f, { departamentoId: f.deptoRH }));
+    const contadores = await db.selectFrom('folio_contadores').selectAll().orderBy('departamento').execute();
+    expect(contadores.map((c) => [c.departamento, c.anio, c.ultimo_consecutivo])).toEqual([
+      ['RH', ANIO, 1],
+      ['SIS', ANIO, 2],
+    ]);
+  });
+
+  it('el consecutivo se reinicia en 0001 al cambiar de año', async () => {
+    // Así queda el contador al terminar el año anterior.
+    await db.insertInto('folio_contadores').values({ departamento: 'SIS', anio: ANIO - 1, ultimo_consecutivo: 47 }).execute();
+    expect((await u1.form('/tickets', ticketValido(f))).body.folio).toBe(folio('SIS', 1));
+    // El del año anterior no se toca (sirve para reportes).
+    const anterior = await db.selectFrom('folio_contadores').selectAll().where('anio', '=', ANIO - 1).executeTakeFirstOrThrow();
+    expect(anterior.ultimo_consecutivo).toBe(47);
+  });
+
+  it('el año se toma en la hora de México, no en UTC', () => {
+    // 31 dic 2026, 11:30 p. m. en México = 1 ene 2027, 05:30 UTC.
+    expect(anioActual(new Date('2027-01-01T05:30:00Z'))).toBe(2026);
+    // 1 ene 2027, 12:30 a. m. en México.
+    expect(anioActual(new Date('2027-01-01T06:30:00Z'))).toBe(2027);
   });
 
   it('50 tickets creados al mismo tiempo reciben 50 folios distintos y consecutivos', async () => {
@@ -52,32 +82,40 @@ describe('crear ticket', () => {
     expect(respuestas.every((r) => r.status === 201)).toBe(true);
     const folios = respuestas.map((r) => r.body.folio as string).sort();
     expect(new Set(folios).size).toBe(50);
-    expect(folios[0]).toBe('ASCA-0001');
-    expect(folios[49]).toBe('ASCA-0050');
+    expect(folios[0]).toBe(folio('SIS', 1));
+    expect(folios[49]).toBe(folio('SIS', 50));
   });
 
   it('si la transacción se revierte, el consecutivo también (no quedan huecos)', async () => {
     await db
       .transaction()
       .execute(async (tx) => {
-        expect(await siguienteConsecutivo(tx, 'ZZZZ')).toBe(1);
+        expect(await siguienteConsecutivo(tx, 'ZZZ', ANIO)).toBe(1);
         throw new Error('revertir');
       })
       .catch(() => undefined);
     await db.transaction().execute(async (tx) => {
-      expect(await siguienteConsecutivo(tx, 'ZZZZ')).toBe(1);
+      expect(await siguienteConsecutivo(tx, 'ZZZ', ANIO)).toBe(1);
     });
   });
 
   it('si ya existe el folio (p. ej. importado), toma el siguiente libre', async () => {
-    await db.insertInto('folio_consecutivos').values({ prefijo: 'ASCA', ultimo: 0 }).execute();
     await u1.form('/tickets', ticketValido(f));
-    await db.updateTable('folio_consecutivos').set({ ultimo: 0 }).where('prefijo', '=', 'ASCA').execute();
-    expect((await u1.form('/tickets', ticketValido(f))).body.folio).toBe('ASCA-0002');
+    await db.updateTable('folio_contadores').set({ ultimo_consecutivo: 0 }).where('departamento', '=', 'SIS').execute();
+    expect((await u1.form('/tickets', ticketValido(f))).body.folio).toBe(folio('SIS', 2));
+  });
+
+  it('un departamento desactivado ya no se puede usar', async () => {
+    await db.updateTable('departamentos').set({ activo: 0 }).where('id', '=', f.deptoRH).execute();
+    const r = await u1.form('/tickets', ticketValido(f, { departamentoId: f.deptoRH }));
+    expect(r.status).toBe(400);
+    expect(r.body.error.campos).toHaveProperty('departamentoId');
   });
 
   it.each([
     ['sin tipo', { tipoId: undefined }, 'tipoId'],
+    ['sin departamento', { departamentoId: undefined }, 'departamentoId'],
+    ['departamento inexistente', { departamentoId: 9999 }, 'departamentoId'],
     ['tipo inexistente', { tipoId: 9999 }, 'tipoId'],
     ['sin módulo en un tipo que lo exige', { moduloId: null }, 'moduloId'],
     ['sin concepto', { concepto: '' }, 'concepto'],
@@ -123,7 +161,7 @@ describe('visibilidad: nadie ve tickets ajenos', () => {
     const lista = await u2.get('/tickets');
     expect(lista.body.total).toBe(1);
     expect(lista.body.contadores.total).toBe(1);
-    expect(lista.body.datos[0].folio).toBe('MACA-0001');
+    expect(lista.body.datos[0].folio).toBe(folio('SIS', 2));
 
     for (const r of [
       await u2.get(`/tickets/${propio.body.id}`),
@@ -133,7 +171,7 @@ describe('visibilidad: nadie ve tickets ajenos', () => {
     }
     // Ni filtrando por su id ni buscando su folio.
     expect((await u2.get(`/tickets?solicitanteId=${f.u1}`)).body.total).toBe(0);
-    expect((await u2.get('/tickets?q=ASCA-0001')).body.total).toBe(0);
+    expect((await u2.get(`/tickets?q=${folio('SIS', 1)}`)).body.total).toBe(0);
   });
 
   it('la búsqueda de texto solo encuentra tickets visibles para quien busca', async () => {
@@ -160,14 +198,15 @@ describe('lista, búsqueda y filtros', () => {
   beforeEach(async () => {
     await u1.form('/tickets', ticketValido(f, { concepto: 'CARTA PORTE', foliosRef: 'B12345' }));
     await u1.form('/tickets', ticketValido(f, { concepto: 'Ajuste de inventario', foliosRef: 'INV-1024', descripcionHtml: '<p>Nómina de septiembre</p>' }));
-    await u1.form('/tickets', { tipoId: f.tipoCG, empresaId: f.empresaAS, concepto: 'Duda de bancos', descripcionHtml: '<p>pregunta</p>' });
+    await u1.form('/tickets', { tipoId: f.tipoCG, departamentoId: f.deptoRH, empresaId: f.empresaAS, concepto: 'Duda de bancos', descripcionHtml: '<p>pregunta</p>' });
   });
 
   it('búsqueda por folio, concepto, folio(s), texto (sin acentos) y empresa', async () => {
     const admin = await entrar('admin_prueba');
     const total = async (q: string) => (await admin.get(`/tickets?q=${encodeURIComponent(q)}`)).body.total;
-    expect(await total('ASCA-0002')).toBe(1);
-    expect(await total('asca')).toBe(2);
+    expect(await total(folio('SIS', 2))).toBe(1);
+    expect(await total(`sis-${ANIO}`)).toBe(2);
+    expect(await total(folio('RH', 1))).toBe(1);
     expect(await total('carta')).toBe(1);
     expect(await total('INV-1024')).toBe(1);
     expect(await total('nomina')).toBe(1);
@@ -186,6 +225,8 @@ describe('lista, búsqueda y filtros', () => {
     expect(r.body.total).toBe(2);
     expect(r.body.contadores).toEqual({ total: 3, PENDIENTE: 2, EN_PROCESO: 1, PAUSADO: 0, COMPLETADO: 0 });
     expect((await admin.get(`/tickets?tipoId=${f.tipoCG}`)).body.total).toBe(1);
+    expect((await admin.get(`/tickets?departamentoId=${f.deptoSIS}`)).body.total).toBe(2);
+    expect((await admin.get(`/tickets?departamentoId=${f.deptoRH}`)).body.datos[0].departamento.nombre).toBe('Recursos Humanos');
     expect((await admin.get(`/tickets?asignadoAId=${f.admin}`)).body.total).toBe(1);
     expect((await admin.get('/tickets?asignadoAId=ninguno')).body.total).toBe(2);
     const hoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Mexico_City' });

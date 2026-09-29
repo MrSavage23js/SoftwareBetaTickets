@@ -121,6 +121,12 @@ rutasCorreos.put('/plantillas/:id', permisoPlantillas, async (req, res) => {
   const d = validar(esquemaPlantilla, req.body);
   const antes = await db.selectFrom('plantillas_correo').selectAll().where('id', '=', id).executeTakeFirst();
   if (!antes) throw errores.noEncontrado('La plantilla no existe.');
+  // Los correos de tickets deben llevar el folio en el asunto para buscarlos en Outlook.
+  if (antes.codigo.startsWith('TICKET_') && !/{{s*folios*}}/.test(d.asunto)) {
+    throw errores.validacion('El asunto debe incluir {{folio}} para poder identificar el ticket en Outlook.', {
+      asunto: 'El asunto debe incluir {{folio}}.',
+    });
+  }
   const cuerpo = sanitizarPlantillaCorreo(d.cuerpoHtml);
   await db
     .updateTable('plantillas_correo')

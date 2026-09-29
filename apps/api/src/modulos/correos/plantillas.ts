@@ -34,7 +34,8 @@ export function renderizarTexto(plantilla: string, vars: Variables): string {
 }
 
 export const VARIABLES_EJEMPLO: Variables = {
-  folio: 'ASCA-0063',
+  folio: 'SIS-2026-0063',
+  departamento: 'Sistemas / TI',
   tipo: 'Cancelación',
   empresa: 'Autotransportes Asturcones',
   modulo: 'Compras',

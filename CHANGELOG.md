@@ -2,6 +2,21 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado semántico.
 
+## [0.3.0] — 2026-09-29
+
+### Cambiado
+- **Folio nuevo `DEPTO-AÑO-CONSECUTIVO`** (`SIS-2026-0001`, `RH-2026-0001`), según la especificación. El consecutivo es de 4 dígitos y se reinicia en 0001 cada 1 de enero, por departamento. Se genera en una sola sentencia atómica y el año se toma en la hora de México. Los tickets anteriores conservan su folio.
+- El asunto de todos los correos de tickets empieza con `[folio]`. El sistema lo garantiza aunque se edite la plantilla, y no deja guardar una plantilla de ticket sin `{{folio}}`.
+- Los códigos de empresa y tipo ya no forman el folio (quedan como códigos cortos).
+
+### Agregado
+- Catálogo **Departamentos** (Catálogos → Departamentos), con los iniciales SIS y RH. Migración `0003`.
+- Campo **Departamento** en el usuario (se propone al crear sus tickets), en "Nuevo ticket", en el detalle, en la lista de usuarios y como filtro de la bandeja.
+- Pruebas: formato, reinicio anual, contador por departamento y año, año en zona horaria, 50 creaciones simultáneas, departamento desactivado, catálogo de departamentos y folio en el asunto.
+
+### Corregido
+- Al pasar entre Lista y Kanban se cierra el ticket abierto; el botón de cerrar sesión ya no se corta; `/health` reporta la versión real.
+
 ## [0.2.0] — 2026-09-29
 
 Pruebas automatizadas completas y preparación para uso en toda la empresa.

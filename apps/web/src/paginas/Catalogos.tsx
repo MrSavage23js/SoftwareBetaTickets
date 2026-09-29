@@ -2,22 +2,23 @@
 // (los tickets viejos siguen mostrando su empresa/tipo/módulo aunque ya no aparezca en "Nuevo ticket").
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import type { Catalogos as DatosCatalogos, EmpresaFila, ModuloFila, TipoSolicitudFila } from '@mesa/shared';
+import type { Catalogos as DatosCatalogos, DepartamentoFila, EmpresaFila, ModuloFila, TipoSolicitudFila } from '@mesa/shared';
 import { api, camposDe, mensajeDe } from '../api/cliente';
 import { Icono } from '../componentes/Icono';
 import { Cargando, EstadoError, Modal, useAvisos } from '../componentes/ui';
 
-type Pestana = 'empresas' | 'tipos' | 'modulos';
-type Fila = EmpresaFila | TipoSolicitudFila | ModuloFila;
+type Pestana = 'departamentos' | 'empresas' | 'tipos' | 'modulos';
+type Fila = DepartamentoFila | EmpresaFila | TipoSolicitudFila | ModuloFila;
 
 const TITULOS: Record<Pestana, { plural: string; singular: string; ayuda: string }> = {
-  empresas: { plural: 'Empresas', singular: 'empresa', ayuda: 'El código (2 a 4 caracteres) forma el inicio del folio: AS + CA → ASCA-0063.' },
-  tipos: { plural: 'Tipos de solicitud', singular: 'tipo de solicitud', ayuda: 'El código forma la segunda parte del folio. El título es el encabezado de la sección en "Nuevo ticket".' },
-  modulos: { plural: 'Módulos', singular: 'módulo', ayuda: 'El código es opcional (para reportes); no forma parte del folio.' },
+  departamentos: { plural: 'Departamentos', singular: 'departamento', ayuda: 'El código (2 a 6 letras) forma el folio: SIS → SIS-2026-0001. El consecutivo se reinicia cada 1 de enero.' },
+  empresas: { plural: 'Empresas', singular: 'empresa', ayuda: 'El usuario solo puede crear tickets de sus empresas asignadas. El código es corto, para reportes.' },
+  tipos: { plural: 'Tipos de solicitud', singular: 'tipo de solicitud', ayuda: 'El título es el encabezado de la sección en "Nuevo ticket". El código es corto, para reportes.' },
+  modulos: { plural: 'Módulos', singular: 'módulo', ayuda: 'El código es opcional (para reportes).' },
 };
 
 export function Catalogos() {
-  const [pestana, setPestana] = useState<Pestana>('empresas');
+  const [pestana, setPestana] = useState<Pestana>('departamentos');
   const [editando, setEditando] = useState<Fila | 'nuevo' | null>(null);
   const qc = useQueryClient();
   const avisar = useAvisos();
@@ -81,7 +82,7 @@ export function Catalogos() {
                     <th>Código</th>
                     {pestana === 'tipos' && <th>Título de la sección</th>}
                     {pestana === 'tipos' && <th>Campos obligatorios</th>}
-                    {pestana === 'empresas' && <th>Usuarios</th>}
+                    {(pestana === 'empresas' || pestana === 'departamentos') && <th>Usuarios</th>}
                     <th>Tickets</th>
                     <th>Estatus</th>
                     <th style={{ textAlign: 'right' }}>Acciones</th>
@@ -99,7 +100,7 @@ export function Catalogos() {
                         {'tituloDetalle' in f && (
                           <td className="ph">{[f.requiereModulo && 'Módulo', f.requiereConcepto && 'Concepto', f.requiereFolios && 'Folio(s)'].filter(Boolean).join(', ') || 'Solo descripción'}</td>
                         )}
-                        {'usuarios' in f && pestana === 'empresas' && <td className="ph">{(f as EmpresaFila).usuarios ?? 0}</td>}
+                        {(pestana === 'empresas' || pestana === 'departamentos') && <td className="ph">{(f as EmpresaFila | DepartamentoFila).usuarios ?? 0}</td>}
                         <td className="ph">{(f.tickets ?? 0).toLocaleString('es-MX')}</td>
                         <td>{activo ? <span className="pill on">Activo</span> : <span className="pill off">Inactivo</span>}</td>
                         <td className="acc">
@@ -207,7 +208,7 @@ function FormCatalogo({ pestana, fila, alCerrar, alGuardar }: { pestana: Pestana
       <div className="g2">
         <div>
           <label className="lbl" htmlFor="c-codigo">Código{pestana === 'modulos' ? ' (opcional)' : ''}</label>
-          <input id="c-codigo" className="inp folio" maxLength={pestana === 'modulos' ? 6 : 4} value={v.codigo} onChange={(e) => setV({ ...v, codigo: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '') })} aria-invalid={!!errores.codigo} />
+          <input id="c-codigo" className="inp folio" maxLength={pestana === 'modulos' || pestana === 'departamentos' ? 6 : 4} value={v.codigo} onChange={(e) => setV({ ...v, codigo: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '') })} aria-invalid={!!errores.codigo} />
           {err('codigo')}
         </div>
         <div>
@@ -230,10 +231,10 @@ function FormCatalogo({ pestana, fila, alCerrar, alGuardar }: { pestana: Pestana
           </div>
         </>
       )}
-      {fila && pestana !== 'modulos' && (
+      {fila && pestana === 'departamentos' && (
         <div className="notice gray">
           <Icono n="alert" t="l" />
-          <span>Si cambias el código, los folios ya emitidos no cambian; solo los tickets nuevos usarán el código nuevo.</span>
+          <span>Si cambias el código, los folios ya emitidos no cambian; los tickets nuevos usarán el código nuevo y empezarán en 0001.</span>
         </div>
       )}
     </Modal>

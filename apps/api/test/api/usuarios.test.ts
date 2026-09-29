@@ -129,7 +129,7 @@ describe('cerrar sesión de otro usuario', () => {
 describe('baja', () => {
   it('baja lógica: no entra, se cierran sus sesiones, conserva sus tickets y el nombre no se reutiliza', async () => {
     const u1 = await entrar('usuario_uno');
-    await u1.form('/tickets', { tipoId: f.tipoCA, empresaId: f.empresaAS, moduloId: f.moduloCompras, concepto: 'x', foliosRef: '1', descripcionHtml: '<p>x</p>' }).expect(201);
+    await u1.form('/tickets', { tipoId: f.tipoCA, departamentoId: f.deptoSIS, empresaId: f.empresaAS, moduloId: f.moduloCompras, concepto: 'x', foliosRef: '1', descripcionHtml: '<p>x</p>' }).expect(201);
 
     expect((await admin.del(`/usuarios/${f.u1}`)).status).toBe(204);
     expect((await u1.get('/auth/yo')).status).toBe(401);

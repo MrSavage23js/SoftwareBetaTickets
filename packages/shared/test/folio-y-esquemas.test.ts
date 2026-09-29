@@ -8,32 +8,35 @@ import {
   esquemaPassword,
   esquemaTicketCrear,
   esquemaUsuarioCrear,
+  anioEnZona,
   formatearFolio,
-  prefijoFolio,
 } from '../src';
 
-describe('folio', () => {
-  it('arma el prefijo con los códigos de empresa y tipo', () => {
-    expect(prefijoFolio('AS', 'CA')).toBe('ASCA');
-    expect(prefijoFolio(' ma ', 'ce')).toBe('MACE');
+describe('folio DEPTO-AÑO-CONSECUTIVO', () => {
+  it('formato de la especificación: SIS-2026-0001, RH-2026-0001', () => {
+    expect(formatearFolio('SIS', 2026, 1)).toBe('SIS-2026-0001');
+    expect(formatearFolio('SIS', 2026, 2)).toBe('SIS-2026-0002');
+    expect(formatearFolio('RH', 2026, 1)).toBe('RH-2026-0001');
+    expect(formatearFolio(' sis ', 2027, 47)).toBe('SIS-2027-0047');
   });
 
-  it('rechaza códigos inválidos', () => {
-    expect(() => prefijoFolio('A', 'CA')).toThrow();
-    expect(() => prefijoFolio('AS-', 'CA')).toThrow();
-    expect(() => prefijoFolio('ABCDE', 'CA')).toThrow();
+  it('rellena a 4 dígitos y crece después de 9999', () => {
+    expect(formatearFolio('SIS', 2026, 9999)).toBe('SIS-2026-9999');
+    expect(formatearFolio('SIS', 2026, 10000)).toBe('SIS-2026-10000');
   });
 
-  it('rellena el consecutivo a 4 dígitos y crece después de 9999', () => {
-    expect(formatearFolio('ASCA', 63)).toBe('ASCA-0063');
-    expect(formatearFolio('VPCO', 170)).toBe('VPCO-0170');
-    expect(formatearFolio('ASCA', 9999)).toBe('ASCA-9999');
-    expect(formatearFolio('ASCA', 10000)).toBe('ASCA-10000');
+  it('rechaza códigos, años o consecutivos inválidos', () => {
+    expect(() => formatearFolio('S', 2026, 1)).toThrow();
+    expect(() => formatearFolio('SI-S', 2026, 1)).toThrow();
+    expect(() => formatearFolio('DEMASIADO', 2026, 1)).toThrow();
+    expect(() => formatearFolio('SIS', 26, 1)).toThrow();
+    expect(() => formatearFolio('SIS', 2026, 0)).toThrow();
+    expect(() => formatearFolio('SIS', 2026, 1.5)).toThrow();
   });
 
-  it('rechaza consecutivos no válidos', () => {
-    expect(() => formatearFolio('ASCA', 0)).toThrow();
-    expect(() => formatearFolio('ASCA', 1.5)).toThrow();
+  it('el año es el de la zona horaria indicada (cambio de año en México)', () => {
+    expect(anioEnZona(new Date('2027-01-01T05:59:00Z'), 'America/Mexico_City')).toBe(2026);
+    expect(anioEnZona(new Date('2027-01-01T06:00:00Z'), 'America/Mexico_City')).toBe(2027);
   });
 });
 
@@ -74,7 +77,7 @@ describe('esquemas de validación', () => {
   });
 
   it('ticket: acepta copias por usuario o por correo y rechaza correos inválidos', () => {
-    const base = { tipoId: '1', empresaId: 2, descripcionHtml: '<p>x</p>' };
+    const base = { tipoId: '1', departamentoId: 1, empresaId: 2, descripcionHtml: '<p>x</p>' };
     const r = esquemaTicketCrear.parse({ ...base, copias: [{ usuarioId: 3 }, { email: 'X@Y.COM' }] });
     expect(r.tipoId).toBe(1);
     expect(r.copias).toEqual([{ usuarioId: 3 }, { email: 'x@y.com' }]);

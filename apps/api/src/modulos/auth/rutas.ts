@@ -32,6 +32,13 @@ async function registrarIntento(username: string, usuarioId: number | null, ip: 
 
 async function datosSesion(u: UsuarioActual): Promise<UsuarioSesion> {
   const ajustes = await obtenerAjustes();
+  const departamento = await db
+    .selectFrom('usuarios as u')
+    .innerJoin('departamentos as dp', 'dp.id', 'u.departamento_id')
+    .select(['dp.id', 'dp.nombre'])
+    .where('u.id', '=', u.id)
+    .where('dp.activo', '=', 1)
+    .executeTakeFirst();
   const empresas = await db
     .selectFrom('usuario_empresas as ue')
     .innerJoin('empresas as e', 'e.id', 'ue.empresa_id')
@@ -47,6 +54,7 @@ async function datosSesion(u: UsuarioActual): Promise<UsuarioSesion> {
     nombre: nombreVisible(u),
     email: u.email,
     rol: { codigo: u.rolCodigo, nombre: u.rolNombre },
+    departamento: departamento ?? null,
     permisos: [...u.permisos].sort(),
     empresas,
     inactividadMin: ajustes['sesion.inactividad_min'],

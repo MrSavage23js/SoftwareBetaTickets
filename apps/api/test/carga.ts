@@ -9,10 +9,12 @@ const N = Number(process.env.CARGA_TICKETS ?? 20_000);
 const { sql } = await import('kysely');
 const { db, cerrarBD } = await import('../src/db/conexion');
 const { migrarAlUltimo } = await import('../src/db/migrador');
-const { reiniciarBD, entrar } = await import('./ayudas');
+const { reiniciarBD, entrar, ANIO } = await import('./ayudas');
+const { anioEnZona, formatearFolio } = await import('@mesa/shared');
 
 await migrarAlUltimo();
 const f = await reiniciarBD();
+const departamentos = (await db.selectFrom('departamentos').select(['id', 'codigo']).execute()) as { id: number; codigo: string }[];
 const empresas = (await db.selectFrom('empresas').select(['id', 'codigo']).execute()) as { id: number; codigo: string }[];
 const tipos = (await db.selectFrom('tipos_solicitud').select(['id', 'codigo']).execute()) as { id: number; codigo: string }[];
 const modulos = (await db.selectFrom('modulos').select('id').execute()).map((m) => m.id);
@@ -28,13 +30,17 @@ for (let i = 0; i < N; i += LOTE) {
   for (let j = i; j < Math.min(i + LOTE, N); j++) {
     const e = empresas[j % empresas.length]!;
     const t = tipos[(j * 7) % tipos.length]!;
-    const prefijo = e.codigo + t.codigo;
-    const n = (consecutivo.get(prefijo) ?? 0) + 1;
-    consecutivo.set(prefijo, n);
+    const dep = departamentos[j % departamentos.length]!;
+    const creado = new Date(Date.now() - (N - j) * 20 * 60_000);
+    const anio = anioEnZona(creado, 'America/Mexico_City');
+    const clave = `${dep.codigo}|${anio}`;
+    const n = (consecutivo.get(clave) ?? 0) + 1;
+    consecutivo.set(clave, n);
     const est = estatus[j % estatus.length]!;
     const texto = Array.from({ length: 12 }, (_, k) => palabras[(j + k * 3) % palabras.length]).join(' ');
     filas.push({
-      folio: `${prefijo}-${String(n).padStart(4, '0')}`,
+      folio: formatearFolio(dep.codigo, anio, n),
+      departamento_id: dep.id,
       tipo_id: t.id,
       empresa_id: e.id,
       modulo_id: modulos[j % modulos.length]!,
@@ -48,14 +54,14 @@ for (let i = 0; i < N; i += LOTE) {
       asignado_a_id: est === 'PENDIENTE' ? null : j % 3 ? f.admin : f.tecnico,
       cerrado_por_id: null,
       id_anterior: null,
-      creado_at: new Date(Date.now() - (N - j) * 20 * 60_000),
+      creado_at: creado,
     });
   }
   await db.insertInto('tickets').values(filas).execute();
 }
 await db
-  .insertInto('folio_consecutivos')
-  .values([...consecutivo].map(([prefijo, ultimo]) => ({ prefijo, ultimo })))
+  .insertInto('folio_contadores')
+  .values([...consecutivo].map(([clave, ultimo]) => ({ departamento: clave.split('|')[0]!, anio: Number(clave.split('|')[1]), ultimo_consecutivo: ultimo })))
   .execute();
 await sql`ANALYZE TABLE tickets`.execute(db);
 console.log(`Listo en ${((Date.now() - t0) / 1000).toFixed(1)} s\n`);
@@ -70,7 +76,8 @@ const casos: [string, () => Promise<{ status: number }>][] = [
   ['Bandeja página 200', () => admin.get('/tickets?pagina=200')],
   ['Filtro empresa + tipo + fechas', () => admin.get(`/tickets?empresaId=${f.empresaAS}&tipoId=${f.tipoCA}&desde=2025-01-01&hasta=2026-12-31`)],
   ['Filtro por técnico', () => admin.get(`/tickets?asignadoAId=${f.tecnico}&estatus=EN_PROCESO`)],
-  ['Búsqueda por folio', () => admin.get('/tickets?q=ASCA-0100')],
+  ['Búsqueda por folio', () => admin.get(`/tickets?q=SIS-${ANIO}-0100`)],
+  ['Filtro por departamento', () => admin.get(`/tickets?departamentoId=${departamentos[0]!.id}`)],
   ['Búsqueda por texto (fulltext)', () => admin.get('/tickets?q=inventario%20proveedor')],
   ['Búsqueda por empresa', () => admin.get('/tickets?q=Asturcones')],
   ['Kanban: columna Completado (50)', () => admin.get('/tickets?estatus=COMPLETADO&porPagina=50')],

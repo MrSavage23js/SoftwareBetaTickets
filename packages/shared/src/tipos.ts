@@ -34,6 +34,8 @@ export interface UsuarioSesion {
   rol: { codigo: string; nombre: string };
   permisos: string[];
   empresas: Ref[];
+  /** Departamento del usuario (se propone al crear un ticket). */
+  departamento: Ref | null;
   /** Minutos de inactividad antes del cierre (la web avisa 1 minuto antes). */
   inactividadMin: number;
   /** El admin asignó o restableció la contraseña: hay que cambiarla antes de usar el sistema. */
@@ -53,11 +55,22 @@ export interface UsuarioFila {
   nombre: string | null;
   email: string;
   rol: { id: number; codigo: string; nombre: string };
+  departamento: Ref | null;
   empresas: Ref[];
   activo: boolean;
   ultimoLoginAt: string | null;
   enLinea: boolean;
   creadoAt: string;
+}
+
+export interface DepartamentoFila {
+  id: number;
+  nombre: string;
+  codigo: string;
+  activo: boolean;
+  orden: number;
+  tickets?: number;
+  usuarios?: number;
 }
 
 export interface EmpresaFila {
@@ -93,6 +106,7 @@ export interface ModuloFila {
 }
 
 export interface Catalogos {
+  departamentos: DepartamentoFila[];
   empresas: EmpresaFila[];
   tipos: TipoSolicitudFila[];
   modulos: ModuloFila[];
@@ -114,6 +128,7 @@ export interface TicketResumen {
   estatus: Estatus;
   tipo: Ref;
   modulo: Ref | null;
+  departamento: Ref;
   empresa: Ref;
   concepto: string | null;
   solicitante: UsuarioRef;

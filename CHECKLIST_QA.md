@@ -23,7 +23,9 @@ Marca cada punto: ✅ bien · ❌ falla (anota qué pasó).
 - [ ] Editor: negrita, cursiva, subrayado, listas, color, enlace, pegar una imagen (se sube y aparece), quitar formato.
 - [ ] Adjuntar un PDF y una imagen; intentar un `.exe` → rechazado con mensaje; intentar un archivo mayor al límite → rechazado.
 - [ ] "Enviar copia a": buscar un compañero por nombre y además escribir un correo externo.
-- [ ] Crear → ventana con el **folio** y el aviso de correo; el folio sigue el formato (p. ej. ASCA-0001).
+- [ ] Crear → ventana con el **folio** y el aviso de correo; el folio sigue el formato `DEPTO-AÑO-CONSECUTIVO` (p. ej. SIS-2026-0001) y el departamento viene preseleccionado con el del usuario.
+- [ ] Crear otro ticket en otro departamento (p. ej. RH) → su consecutivo empieza en 0001, independiente de SIS.
+- [ ] El correo llega con el folio al inicio del asunto (`[SIS-2026-0001] Ticket creado · …`) y se encuentra buscando el folio en Outlook.
 - [ ] En `storage/correos-consola` (o Mailpit) está el correo con folio, tipo, empresa, módulo, concepto, folio(s), estatus y el botón "Ver ticket en el sistema"; las copias van en CC.
 - [ ] Mis tickets: agrupados por día ("Hoy", "Ayer", fecha); filtros por estatus con contadores; búsqueda por folio y por concepto.
 - [ ] Detalle: barra de avance en "Creado"; comentar con adjunto funciona; en un ticket Completado ya no aparece la caja de comentario.
@@ -53,7 +55,9 @@ Marca cada punto: ✅ bien · ❌ falla (anota qué pasó).
 
 ## 5. Catálogos, plantillas y ajustes
 - [ ] Agregar empresa con código; código repetido → error. Desactivarla → ya no aparece en Nuevo ticket, pero los tickets viejos la siguen mostrando.
-- [ ] Cambiar el código de un tipo → aviso; el siguiente ticket usa el prefijo nuevo.
+- [ ] Catálogos → Departamentos: agregar uno nuevo (p. ej. CONTA) y crear un ticket con él → CONTA-AÑO-0001.
+- [ ] Cambiar el código de un departamento con tickets → aviso; el siguiente ticket usa el código nuevo desde 0001; los folios viejos no cambian.
+- [ ] Correos → Plantillas: quitar `{{folio}}` del asunto de una plantilla de ticket → no deja guardar.
 - [ ] Tipo con "Módulo" no obligatorio → en Nuevo ticket el módulo dice "(opcional)".
 - [ ] Plantillas: editar el asunto y el cuerpo; la vista previa se actualiza; un `<script>` en el cuerpo se elimina al guardar.
 - [ ] Ajustes: activar "correo en respuestas" → al responder se encola un correo al solicitante.

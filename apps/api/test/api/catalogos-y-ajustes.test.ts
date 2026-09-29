@@ -1,6 +1,6 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db/conexion';
-import { entrar, reiniciarBD, ticketValido, type Cliente, type Fixtures } from '../ayudas';
+import { entrar, folio, reiniciarBD, ticketValido, type Cliente, type Fixtures } from '../ayudas';
 
 let f: Fixtures;
 let admin: Cliente;
@@ -58,20 +58,47 @@ describe('catálogos', () => {
     expect(nuevo.body.error.campos).toHaveProperty('tipoId');
   });
 
-  it('cambiar el código de una empresa con tickets avisa y el siguiente folio usa el código nuevo', async () => {
+  it('departamentos iniciales SIS y RH; se agregan nuevos sin tocar código y su código forma el folio', async () => {
+    const cat = (await admin.get('/catalogos?admin=1')).body;
+    expect(cat.departamentos.map((d: { codigo: string }) => d.codigo)).toEqual(['SIS', 'RH']);
+    const r = await admin.post('/catalogos/departamentos', { nombre: 'Contabilidad', codigo: 'conta' });
+    expect(r.status).toBe(201);
     const u1 = await entrar('usuario_uno');
-    expect((await u1.form('/tickets', ticketValido(f))).body.folio).toBe('ASCA-0001');
-    const r = await admin.put(`/catalogos/empresas/${f.empresaAS}`, { nombre: 'Autotransportes Asturcones', codigo: 'AT', activa: true, orden: 3 });
+    expect((await u1.form('/tickets', ticketValido(f, { departamentoId: r.body.id }))).body.folio).toBe(folio('CONTA', 1));
+  });
+
+  it.each([
+    [{ nombre: 'Otro', codigo: 'S' }, 400],
+    [{ nombre: 'Otro', codigo: 'S I S' }, 400],
+    [{ nombre: 'Otro', codigo: 'DEMASIADO' }, 400],
+    [{ nombre: 'Otro', codigo: 'SIS' }, 409],
+    [{ nombre: 'Sistemas / TI', codigo: 'NUE' }, 409],
+  ])('departamento inválido o duplicado %j → %i', async (datos, estado) => {
+    expect((await admin.post('/catalogos/departamentos', datos)).status).toBe(estado);
+  });
+
+  it('cambiar el código de un departamento con tickets avisa; el siguiente folio usa el código nuevo desde 0001', async () => {
+    const u1 = await entrar('usuario_uno');
+    expect((await u1.form('/tickets', ticketValido(f))).body.folio).toBe(folio('SIS', 1));
+    const r = await admin.put(`/catalogos/departamentos/${f.deptoSIS}`, { nombre: 'Sistemas / TI', codigo: 'TI', activo: true, orden: 1 });
     expect(r.body.advertencia).toMatch(/folios ya emitidos no cambian/);
-    expect((await u1.form('/tickets', ticketValido(f))).body.folio).toBe('ATCA-0001');
-    expect((await u1.get('/tickets?q=ASCA-0001')).body.total).toBe(1);
+    expect((await u1.form('/tickets', ticketValido(f))).body.folio).toBe(folio('TI', 1));
+    expect((await u1.get(`/tickets?q=${folio('SIS', 1)}`)).body.total).toBe(1);
+  });
+
+  it('desactivar un departamento lo quita del formulario; sus tickets siguen igual', async () => {
+    const u1 = await entrar('usuario_uno');
+    const t = await u1.form('/tickets', ticketValido(f, { departamentoId: f.deptoRH }));
+    await admin.put(`/catalogos/departamentos/${f.deptoRH}`, { nombre: 'Recursos Humanos', codigo: 'RH', activo: false, orden: 2 }).expect(200);
+    expect((await u1.get('/catalogos')).body.departamentos.map((d: { codigo: string }) => d.codigo)).toEqual(['SIS']);
+    expect((await u1.get(`/tickets/${t.body.id}`)).body.departamento.nombre).toBe('Recursos Humanos');
   });
 
   it('tipo con módulo opcional permite crear sin módulo', async () => {
     const u1 = await entrar('usuario_uno');
-    const r = await u1.form('/tickets', { tipoId: f.tipoCG, empresaId: f.empresaAS, concepto: 'Duda', descripcionHtml: '<p>¿Cómo…?</p>' });
+    const r = await u1.form('/tickets', { tipoId: f.tipoCG, departamentoId: f.deptoSIS, empresaId: f.empresaAS, concepto: 'Duda', descripcionHtml: '<p>¿Cómo…?</p>' });
     expect(r.status).toBe(201);
-    expect(r.body.folio).toBe('ASCG-0001');
+    expect(r.body.folio).toBe(folio('SIS', 1));
   });
 });
 
