@@ -36,6 +36,8 @@ export interface UsuarioSesion {
   empresas: Ref[];
   /** Minutos de inactividad antes del cierre (la web avisa 1 minuto antes). */
   inactividadMin: number;
+  /** Límites de adjuntos vigentes (la web valida antes de subir; el servidor vuelve a validar). */
+  adjuntos: { maxMb: number; maxPorMensaje: number; tipos: string[] };
 }
 
 export interface RespuestaSesion {

@@ -123,6 +123,11 @@ export async function resolverSesion(token: string): Promise<ResultadoSesion> {
 /** Registra actividad del usuario (como máximo una escritura por minuto por sesión). */
 export async function tocarSesion(sesionId: string, ultimaActividad: Date): Promise<void> {
   if (Date.now() - ultimaActividad.getTime() < 60_000) return;
+  await registrarActividad(sesionId);
+}
+
+/** Actividad explícita (la web avisa que el usuario movió el ratón o escribió): sin límite de frecuencia. */
+export async function registrarActividad(sesionId: string): Promise<void> {
   await db
     .updateTable('sesiones')
     .set({ ultima_actividad_at: new Date() })

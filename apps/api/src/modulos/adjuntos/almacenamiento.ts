@@ -85,6 +85,8 @@ function sha256De(ruta: string): Promise<string> {
 export function nombreSeguro(nombre: string): string {
   const limpio = nombre
     .replace(/^.*[\\/]/, '')
+    // Caracteres de control y los que Windows no permite en nombres de archivo.
+    // eslint-disable-next-line no-control-regex
     .replace(/[\u0000-\u001f\u007f<>:"|?*]/g, '_')
     .trim()
     .slice(-200);

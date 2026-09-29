@@ -20,7 +20,9 @@ async function iniciar() {
   await sembrar();
 
   const app = crearApp();
-  servidor = app.listen(env.PORT, () => {
+  servidor = app.listen(env.PORT, (error?: Error) => {
+    // Express 5 llama este callback también cuando falla; el error se atiende en servidor.on('error').
+    if (error) return;
     logger.info(`Mesa de Ayuda escuchando en el puerto ${env.PORT} (${env.NODE_ENV}) — ${env.APP_URL}`);
   });
   servidor.on('error', (e: NodeJS.ErrnoException) => {

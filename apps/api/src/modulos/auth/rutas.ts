@@ -12,7 +12,7 @@ import { opcionesCookie, requiereSesion } from '../../middleware/sesion';
 import { obtenerAjustes } from '../ajustes/servicio';
 import { auditar } from '../eventos/servicio';
 import { actor, ipDe, nombreVisible, type UsuarioActual } from './contexto';
-import { cerrarSesion, crearSesion, permisosDeRol } from './sesiones';
+import { cerrarSesion, crearSesion, permisosDeRol, registrarActividad } from './sesiones';
 
 export const rutasAuth = Router();
 
@@ -50,6 +50,11 @@ async function datosSesion(u: UsuarioActual): Promise<UsuarioSesion> {
     permisos: [...u.permisos].sort(),
     empresas,
     inactividadMin: ajustes['sesion.inactividad_min'],
+    adjuntos: {
+      maxMb: ajustes['adjuntos.max_mb'],
+      maxPorMensaje: ajustes['adjuntos.max_por_mensaje'],
+      tipos: ajustes['adjuntos.tipos'],
+    },
   };
 }
 
@@ -173,6 +178,7 @@ rutasAuth.get('/yo', requiereSesion, async (req, res) => {
 });
 
 /** La web lo llama (máx. 1 vez por minuto) cuando el usuario movió el ratón o escribió: mantiene viva la sesión. */
-rutasAuth.post('/actividad', requiereSesion, (_req, res) => {
+rutasAuth.post('/actividad', requiereSesion, async (req, res) => {
+  await registrarActividad(req.sesion!.id);
   res.status(204).end();
 });
