@@ -1,12 +1,12 @@
 // Arma la aplicación Express sin abrir el puerto (así la pueden usar las pruebas con Supertest).
 import { randomUUID } from 'node:crypto';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join, sep } from 'node:path';
 import cookieParser from 'cookie-parser';
 import express, { Router } from 'express';
 import helmet from 'helmet';
 import { pinoHttp } from 'pino-http';
-import { env, RUTAS } from './config/env';
+import { env, RAIZ, RUTAS } from './config/env';
 import { bdDisponible } from './db/conexion';
 import { ErrorApp } from './lib/errores';
 import { logger } from './lib/logger';
@@ -22,7 +22,14 @@ import { rutasCorreos } from './modulos/correos/rutas';
 import { rutasTickets } from './modulos/tickets/rutas';
 import { rutasUsuarios } from './modulos/usuarios/rutas';
 
-const VERSION = process.env.npm_package_version ?? '0.1.0';
+// Versión del package.json raíz (funciona igual si se arranca con npm, node o como servicio).
+const VERSION = (() => {
+  try {
+    return (JSON.parse(readFileSync(join(RAIZ, 'package.json'), 'utf8')) as { version: string }).version;
+  } catch {
+    return 'desconocida';
+  }
+})();
 
 export function crearApp() {
   const app = express();
