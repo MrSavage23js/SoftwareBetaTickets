@@ -1,0 +1,17 @@
+node_modules/
+dist/
+coverage/
+.env
+.env.local
+.env.test.local
+storage/
+!storage/.gitkeep
+test-results/
+playwright-report/
+e2e/.auth/
+*.log
+.DS_Store
+.vite/
+
+# Capturas del sistema anterior: contienen datos reales de empleados
+referencia/*.png

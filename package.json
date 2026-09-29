@@ -1,0 +1,43 @@
+{
+  "name": "mesa-de-ayuda",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Mesa de Ayuda — sistema de tickets de soporte de Grupo Aramo",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "dev:api": "npm run dev -w @mesa/api",
+    "dev:web": "npm run dev -w @mesa/web",
+    "build": "npm run build -w @mesa/web && npm run build -w @mesa/api",
+    "start": "npm run start -w @mesa/api",
+    "db:local": "node scripts/mysql-local.mjs",
+    "db:migrar": "npm run db:migrar -w @mesa/api",
+    "db:seed": "npm run db:seed -w @mesa/api",
+    "crear-admin": "npm run crear-admin -w @mesa/api",
+    "lint": "eslint . --max-warnings=0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "test:e2e": "playwright test",
+    "ci": "node scripts/ci-local.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "@playwright/test": "^1.56.0",
+    "@types/node": "^24.0.0",
+    "eslint": "^9.39.0",
+    "eslint-plugin-react-hooks": "^7.0.0",
+    "globals": "^16.4.0",
+    "prettier": "^3.6.0",
+    "typescript": "^5.9.0",
+    "typescript-eslint": "^8.46.0"
+  }
+}
