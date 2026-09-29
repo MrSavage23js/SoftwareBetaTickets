@@ -25,7 +25,7 @@ apps/web         Aplicación web (React)
 packages/shared  Reglas compartidas: estatus, máquina de estados, permisos, validaciones
 scripts/         MySQL portátil, desarrollo, CI local, respaldo y restauración
 docs/            Documentación técnica
-referencia/      Maqueta y capturas del sistema anterior
+referencia/      Maqueta de diseño (las capturas del sistema anterior no se publican: tienen datos reales)
 storage/         (no va en git) adjuntos, correos de consola, respaldos
 ```
 
