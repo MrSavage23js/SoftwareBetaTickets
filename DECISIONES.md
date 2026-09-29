@@ -120,5 +120,39 @@ Convención: **`CONFIRMAR`** = necesito tu respuesta · **`SUPUESTO`** = lo asum
 
 ---
 
+## E. Estado de la implementación (29/09/2026)
+
+El usuario pidió continuar sin contestar las preguntas y **sin pruebas automatizadas por ahora**. Lo que se hizo en consecuencia:
+
+**Respuestas provisionales aplicadas.** Todas se cambian en pantalla, en un ajuste o en un permiso, sin reescribir nada:
+
+| Pregunta | Cómo quedó | Dónde se cambia |
+|---|---|---|
+| P1 códigos de folio | 3 empresas con código confirmado por folios reales (AS, MA, VP); las otras 14 con códigos **PROVISIONALES**; tipos CO, CA, CE confirmados, y AC, CG, MT provisionales. Consecutivo por prefijo empresa+tipo. | Catálogos |
+| P2 empresas | Las 17 de la lista, en lista plana. | Catálogos → Agregar |
+| P3 copias | Se aceptan usuarios del sistema **y** correos libres. Las copias reciben el correo de creación; **no** pueden ver el ticket en el sistema. | — |
+| P4 reabrir | Implementado, pero **nadie tiene el permiso** `tickets.reabrir`. | Migración o permiso |
+| P5 visibilidad | Cada usuario ve **solo sus tickets**. `tickets.ver_empresa` ya existe y funciona si se asigna. | Permiso |
+| P6 historial | Empezar de cero; la importación queda prevista (`modulos/importacion/README.md`). | — |
+| P7 correo | `MAIL_TRANSPORT=consola` hasta tener credenciales. | `.env` |
+| P9 aviso a soporte | Implementado y apagado. | Ajustes |
+| P12 a nombre de otro | Sí, para Admin soporte. | Permiso |
+| P13 barra de avance | "En proceso" se marca con la primera respuesta de soporte. | `pasosCompletados` |
+| P14 campos por tipo | Módulo opcional en Consulta General y Mantenimiento; folio(s) obligatorio solo en Corrección y Cancelación. | Catálogos → Tipos |
+| P18 nombre | Se agregó un campo opcional "Nombre completo"; si está vacío se muestra el nombre de usuario. | Usuarios |
+
+**Decisiones técnicas nuevas:**
+- **D23.** Puertos 3100 (API y web) y 5180 (Vite en desarrollo): en este equipo el 3000 y el 5173 los usa otro proyecto (`sistema-fichas-tecnicas`).
+- **D24.** La pantalla de inicio de sesión vive en `/inicio`, como la llama la maqueta.
+- **D25.** Se actualizaron nodemailer (10), kysely (0.29) y file-type (22) por seguridad y compatibilidad. TypeScript 7, ESLint 10, Vite 8 y React Router 8 se dejaron para después, por la compatibilidad de las herramientas.
+- **D26.** Las fuentes (Figtree y Bricolage Grotesque) van incluidas en el sistema (`@fontsource`), no desde Google Fonts: funcionan sin internet y la CSP no permite orígenes externos.
+- **D27.** `POST /auth/actividad` registra actividad sin límite de frecuencia. La web lo llama como máximo cada 30 s y solo si hubo actividad real.
+
+**Pendientes:**
+- **Pruebas automatizadas** (fases 1–7 del plan: unitarias, Supertest y Playwright). La estructura está lista (Vitest y Playwright instalados, `npm run ci` las corre). Se hicieron pruebas manuales equivalentes con `curl` y en el navegador (ver `CHANGELOG.md`).
+- Fase opcional: pantalla para editar permisos por rol.
+- Contestar las preguntas de §D.
+
 ## Bitácora de cambios a este documento
 - 2026-09-28 — Versión inicial (propuesta previa a la fase 0).
+- 2026-09-29 — §E: respuestas provisionales, decisiones D23–D27 y pendientes.
