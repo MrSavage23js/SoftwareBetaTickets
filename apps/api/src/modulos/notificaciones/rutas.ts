@@ -8,11 +8,11 @@ export const rutasNotificaciones = Router();
 
 /** ?no_leidas=1 → solo las no leídas. Siempre incluye el contador `noLeidas`. */
 rutasNotificaciones.get('/', async (req, res) => {
-  res.json(await listarNotificaciones(actor(req).id, req.query.no_leidas === '1'));
+  res.json(await listarNotificaciones(actor(req), req.query.no_leidas === '1'));
 });
 
 rutasNotificaciones.post('/leer-todas', async (req, res) => {
-  res.json({ marcadas: await marcarTodasLeidas(actor(req).id) });
+  res.json({ marcadas: await marcarTodasLeidas(actor(req)) });
 });
 
 rutasNotificaciones.post('/:id/leida', async (req, res) => {

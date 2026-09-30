@@ -19,6 +19,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado
   - Un ticket nuevo avisa a cada admin.
   - Respuestas y cambios de soporte (tomado, pausado, reanudado, reasignado, cerrado) avisan al solicitante.
   - Se puede marcar una o todas como leídas. Cada quien solo ve y marca las suyas.
+  - Reglas por rol: el admin ve solo los `nuevo_ticket` y el usuario solo los `ticket_contestado` de sus tickets. Un admin que también reporta ve ambos, y nadie recibe aviso de sus propios cambios.
 - Migración `0004`: columna `urgencia`, tabla `notificaciones` y permiso `panel.ver` para el rol de administración existente.
 - Pruebas: 15 de API nuevas (urgencia, dashboard, notificaciones y endpoints nuevos en la matriz de permisos) y 2 recorridos en navegador.
 

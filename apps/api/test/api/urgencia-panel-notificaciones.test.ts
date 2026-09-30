@@ -156,6 +156,41 @@ describe('notificaciones', () => {
     expect((await lista(admin)).noLeidas).toBe(0);
   });
 
+  it('admin que reporta su ticket: no se avisa a sí mismo al crearlo; recibe "ticket_contestado" cuando otro admin responde', async () => {
+    const tecnico = await entrar('tecnico_prueba');
+    const t = (await tecnico.form('/tickets', ticketValido(f)).expect(201)).body as { id: number };
+    // Solo el otro admin recibe el "nuevo_ticket"; los usuarios normales no reciben nada.
+    expect((await lista(tecnico)).noLeidas).toBe(0);
+    expect((await lista(admin)).datos.map((n) => n.tipo)).toEqual(['nuevo_ticket']);
+    expect((await lista(u1)).noLeidas).toBe(0);
+
+    await admin.post(`/tickets/${t.id}/tomar`).expect(204);
+    await admin.form(`/tickets/${t.id}/respuestas`, { html: '<p>va</p>' }).expect(204);
+    const l = await lista(tecnico);
+    expect(l.noLeidas).toBe(2);
+    expect(l.datos.every((n) => n.tipo === 'ticket_contestado')).toBe(true);
+    // Y como admin sigue viendo los "nuevo_ticket" de otros.
+    await crear();
+    expect((await lista(tecnico)).datos.map((n) => n.tipo)).toEqual(['nuevo_ticket', 'ticket_contestado', 'ticket_contestado']);
+  });
+
+  it('un admin que responde su propio ticket no se notifica a sí mismo', async () => {
+    const t = (await admin.form('/tickets', ticketValido(f)).expect(201)).body as { id: number };
+    await admin.post(`/tickets/${t.id}/tomar`).expect(204);
+    await admin.form(`/tickets/${t.id}/respuestas`, { html: '<p>yo mismo</p>' }).expect(204);
+    expect((await lista(admin)).noLeidas).toBe(0);
+  });
+
+  it('la campana aplica las reglas por rol: quien deja de ser admin deja de ver los "nuevo_ticket"', async () => {
+    await crear();
+    const rolUsuario = await db.selectFrom('roles').select('id').where('codigo', '=', 'USUARIO').executeTakeFirstOrThrow();
+    await db.updateTable('usuarios').set({ rol_id: rolUsuario.id }).where('id', '=', f.tecnico).execute();
+    const tecnico = await entrar('tecnico_prueba');
+    expect(await lista(tecnico)).toEqual({ noLeidas: 0, datos: [] });
+    // "Marcar todas" tampoco toca las que no ve.
+    expect((await tecnico.post('/notificaciones/leer-todas')).body).toEqual({ marcadas: 0 });
+  });
+
   it('un usuario dado de baja no recibe notificaciones', async () => {
     const t = await crear();
     await admin.del(`/usuarios/${f.u1}`).expect(204);

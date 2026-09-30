@@ -3,9 +3,14 @@
 //   - Ticket nuevo            → a cada admin que atiende tickets (menos a quien lo creó).
 //   - Ticket contestado/actualizado (respuesta, tomado, pausado, reanudado, reasignado, cerrado)
 //                             → al solicitante (menos si él mismo hizo el cambio).
-import { sql } from 'kysely';
+// No hay otros casos. Al leer, la campana también aplica las reglas: "nuevo_ticket" solo le aparece a
+// quien HOY atiende tickets, y "ticket_contestado" solo si el ticket sigue siendo suyo. Así, un admin
+// que también reporta tickets ve ambos tipos, y quien deja de ser admin deja de ver los "nuevo_ticket".
+import { sql, type ExpressionBuilder } from 'kysely';
 import { PERMISOS, type ListaNotificaciones, type TipoNotificacion } from '@mesa/shared';
 import { db, type Ejecutor } from '../../db/conexion';
+import type { BD } from '../../db/tipos';
+import { tienePermiso, type UsuarioActual } from '../auth/contexto';
 import { errores } from '../../lib/errores';
 
 const MAX_MENSAJE = 255;
@@ -49,25 +54,33 @@ export async function notificarSolicitante(ex: Ejecutor, t: { id: number; solici
   if (s) await insertar(ex, [s.id], t.id, 'ticket_contestado', mensaje);
 }
 
+/** Filtro de las notificaciones del usuario que le tocan según su rol actual (ver reglas arriba). */
+function visibles(u: UsuarioActual) {
+  const esAdmin = tienePermiso(u, PERMISOS.TICKETS_ATENDER);
+  return (eb: ExpressionBuilder<BD & { n: BD['notificaciones']; t: BD['tickets'] }, 'n' | 't'>) =>
+    eb.and([
+      eb('n.usuario_id', '=', u.id),
+      eb.or([
+        ...(esAdmin ? [eb('n.tipo', '=', 'nuevo_ticket')] : []),
+        eb.and([eb('n.tipo', '=', 'ticket_contestado'), eb('t.solicitante_id', '=', u.id)]),
+      ]),
+    ]);
+}
+
+const deUsuario = (u: UsuarioActual) =>
+  db.selectFrom('notificaciones as n').innerJoin('tickets as t', 't.id', 'n.ticket_id').where(visibles(u));
+
 /** Las más recientes (leídas y no leídas) y el número de no leídas del usuario. */
-export async function listarNotificaciones(usuarioId: number, soloNoLeidas = false): Promise<ListaNotificaciones> {
-  let q = db
-    .selectFrom('notificaciones as n')
-    .innerJoin('tickets as t', 't.id', 'n.ticket_id')
+export async function listarNotificaciones(u: UsuarioActual, soloNoLeidas = false): Promise<ListaNotificaciones> {
+  let q = deUsuario(u)
     .select(['n.id', 'n.tipo', 'n.mensaje', 'n.leida', 'n.creado_at', 't.id as ticket_id', 't.folio'])
-    .where('n.usuario_id', '=', usuarioId)
     .orderBy('n.creado_at', 'desc')
     .orderBy('n.id', 'desc')
     .limit(RECIENTES);
   if (soloNoLeidas) q = q.where('n.leida', '=', 0);
   const [filas, cuenta] = await Promise.all([
     q.execute(),
-    db
-      .selectFrom('notificaciones')
-      .select(sql<number>`COUNT(*)`.as('n'))
-      .where('usuario_id', '=', usuarioId)
-      .where('leida', '=', 0)
-      .executeTakeFirstOrThrow(),
+    deUsuario(u).select(sql<number>`COUNT(*)`.as('n')).where('n.leida', '=', 0).executeTakeFirstOrThrow(),
   ]);
   return {
     noLeidas: Number(cuenta.n),
@@ -89,8 +102,11 @@ export async function marcarLeida(usuarioId: number, id: number): Promise<void> 
   await db.updateTable('notificaciones').set({ leida: 1 }).where('id', '=', id).execute();
 }
 
-export async function marcarTodasLeidas(usuarioId: number): Promise<number> {
-  const r = await db.updateTable('notificaciones').set({ leida: 1 }).where('usuario_id', '=', usuarioId).where('leida', '=', 0).executeTakeFirst();
+/** Marca las que el usuario ve en su campana (las que ocultan las reglas no cuentan). */
+export async function marcarTodasLeidas(u: UsuarioActual): Promise<number> {
+  const ids = (await deUsuario(u).select('n.id').where('n.leida', '=', 0).execute()).map((n) => n.id);
+  if (!ids.length) return 0;
+  const r = await db.updateTable('notificaciones').set({ leida: 1 }).where('id', 'in', ids).executeTakeFirst();
   return Number(r.numUpdatedRows);
 }
 
