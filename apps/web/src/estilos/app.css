@@ -413,3 +413,59 @@ table.tabla { width: 100%; border-collapse: collapse; font-size: 14px; }
 .notif-panel { font-family: var(--body); font-size: 14px; font-weight: 400; line-height: 1.4; text-align: left; }
 .notif-panel header b { font-size: 15px; font-weight: 700; }
 div.tarjeta { cursor: default; }
+
+/* ---------- menú lateral colapsable ----------
+   Pantalla ancha: la flecha del borde contrae la barra a solo íconos (se recuerda en este navegador).
+   Pantalla angosta: el botón de tres rayas despliega y oculta el menú. El texto de cada opción sigue
+   en la página (solo se oculta a la vista) para lectores de pantalla y pruebas. */
+.side { position: sticky; }
+.side-cuerpo { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.side-cuerpo-in { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 28px; }
+.marca-txt { overflow: hidden; max-height: 96px; }
+.navbtn .txt { white-space: nowrap; overflow: hidden; }
+.navbtn .txt { min-width: 0; }
+.menu-movil { display: none; }
+.side-toggle { position: absolute; top: 34px; right: -14px; z-index: 2; width: 28px; height: 28px; padding: 0; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18); }
+.side-toggle:hover { color: var(--ink-strong); border-color: var(--field-line); }
+.side-toggle .ic { width: 16px; height: 16px; }
+
+.app.contraido { grid-template-columns: 76px minmax(0, 1fr); }
+.app.contraido .side { padding-left: 16px; padding-right: 16px; }
+.app.contraido .side .logo { flex-direction: column; gap: 10px; padding: 0 2px; }
+.app.contraido .marca-txt { white-space: nowrap; max-height: 0; }
+.app.contraido .campana { margin-left: 0; }
+.app.contraido .marca-txt, .app.contraido .navbtn .txt, .app.contraido .navbtn .tag { max-width: 0; opacity: 0; }
+.app.contraido .navbtn .tag { padding: 0; margin: 0; }
+.app.contraido .navbtn { gap: 0; padding: 0 11px; }
+.app.contraido .side nav h3 { opacity: 0; }
+.app.contraido .side-toggle .ic { transform: rotate(180deg); }
+.app.contraido .me { flex-direction: column; padding: 10px 0; gap: 6px; background: transparent; }
+.app.contraido .me > div { display: none; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .app { transition: grid-template-columns 0.28s cubic-bezier(0.4, 0, 0.2, 1); }
+  .marca-txt, .navbtn .txt, .navbtn .tag { transition: opacity 0.18s ease, max-width 0.28s cubic-bezier(0.4, 0, 0.2, 1), max-height 0.28s cubic-bezier(0.4, 0, 0.2, 1); }
+  .navbtn, .side nav h3 { transition: padding 0.28s cubic-bezier(0.4, 0, 0.2, 1), gap 0.28s, opacity 0.18s, background-color 0.15s; }
+  .side-toggle .ic { transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1); }
+  .side-cuerpo { transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+  .side-cuerpo-in { transition: opacity 0.2s ease, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+}
+.marca-txt, .navbtn .txt { max-width: 200px; }
+.navbtn .tag { max-width: 60px; overflow: hidden; }
+
+@media (max-width: 900px) {
+  .side-toggle { display: none; }
+  .menu-movil { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: 0; border-radius: 10px; background: transparent; color: #c3d0da; }
+  .menu-movil:hover { background: var(--side-2); }
+  .side { flex-direction: column; align-items: stretch; flex-wrap: nowrap; gap: 0; position: sticky; top: 0; }
+  .side .logo { flex-wrap: nowrap; }
+  .campana { margin-left: auto; }
+  .side-cuerpo { display: grid; grid-template-rows: 0fr; flex: none; }
+  .side.abierto .side-cuerpo { grid-template-rows: 1fr; }
+  .side-cuerpo-in { overflow: hidden; gap: 12px; opacity: 0; transform: translateY(-8px); }
+  .side.abierto .side-cuerpo-in { opacity: 1; transform: none; padding-top: 12px; }
+  .side nav { flex-direction: column; flex: none; }
+  .navbtn { width: 100%; }
+  .me { margin-top: 0; }
+  .me div { display: block; }
+}

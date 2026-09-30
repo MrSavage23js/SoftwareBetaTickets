@@ -2,6 +2,16 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado semántico.
 
+## [0.4.1] — 2026-09-30
+
+### Agregado
+- **Menú lateral colapsable con animación.**
+  - En pantalla ancha, la flecha del borde lo contrae a una barra de solo íconos y lo vuelve a expandir. Al pasar el cursor, cada ícono muestra su nombre, y el navegador recuerda la elección.
+  - En pantallas angostas y celular, el botón de tres rayas despliega y oculta el menú, que se cierra solo al elegir una opción.
+  - Sin animación para quien la tenga desactivada en su sistema (`prefers-reduced-motion`).
+- Comando `npm run tunel`: publica el sistema de la PC con un enlace https temporal para pruebas de QA.
+- Pruebas en navegador del menú (pantalla ancha y celular).
+
 ## [0.4.0] — 2026-09-30
 
 ### Agregado

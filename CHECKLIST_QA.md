@@ -54,6 +54,12 @@ Marca cada punto: ✅ bien · ❌ falla (anota qué pasó).
 - [ ] Al crear un ticket, en menos de 20 s la campana del admin muestra el contador. El aviso lleva al ticket y se marca como leído.
 - [ ] Al responder, tomar o cerrar, la campana del solicitante avisa. "Marcar todas como leídas" deja el contador en cero.
 
+## 3 ter. Menú lateral
+- [ ] Clic en la flecha del borde del menú → se contrae con animación a solo íconos. Al pasar el cursor por un ícono se ve su nombre.
+- [ ] Recargar la página → el menú sigue contraído. Clic otra vez → se expande.
+- [ ] Contraído, la campana abre su panel completo por encima de la página.
+- [ ] En celular (o con la ventana angosta), el botón de tres rayas abre y cierra el menú. Al elegir una opción, el menú se cierra.
+
 ## 4. Usuarios
 - [ ] Tabla: ID, usuario, rol, empresas, último inicio ("Nunca" si no ha entrado), En línea/Desconectado.
 - [ ] Alta: usuario duplicado → error; contraseñas distintas → error; correo inválido → error; alta correcta con varias empresas.

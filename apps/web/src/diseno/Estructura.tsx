@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { NavLink, Navigate, Outlet, useLocation } from 'react-router';
 import { PERMISOS } from '@mesa/shared';
 import { Campana } from '../componentes/Campana';
@@ -26,49 +26,114 @@ const MENU: ItemMenu[] = [
   { a: '/ajustes', texto: 'Ajustes', icono: 'settings', permisos: [PERMISOS.AJUSTES_ADMINISTRAR], etiqueta: 'Admin' },
 ];
 
+const CLAVE_CONTRAIDO = 'mesa.menuContraido';
+const PANTALLA_ANGOSTA = '(max-width: 900px)';
+
+function leerContraido(): boolean {
+  try {
+    return localStorage.getItem(CLAVE_CONTRAIDO) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function useAngosta(): boolean {
+  const [angosta, setAngosta] = useState(() => window.matchMedia(PANTALLA_ANGOSTA).matches);
+  useEffect(() => {
+    const mq = window.matchMedia(PANTALLA_ANGOSTA);
+    const cambio = () => setAngosta(mq.matches);
+    mq.addEventListener('change', cambio);
+    return () => mq.removeEventListener('change', cambio);
+  }, []);
+  return angosta;
+}
+
 export function Estructura() {
   const { usuario, puede, salir } = useSesion();
   const [cambiarPassword, setCambiarPassword] = useState(false);
+  // Pantalla ancha: barra contraída a solo íconos (se recuerda). Pantalla angosta: menú desplegable.
+  const [contraido, setContraido] = useState(leerContraido);
+  const [abierto, setAbierto] = useState(false);
+  const angosta = useAngosta();
   if (!usuario) return null;
   if (usuario.debeCambiarPassword) return <CambioObligatorio />;
   const esSoporte = puede(PERMISOS.TICKETS_VER_TODOS);
+  const iconos = contraido && !angosta;
+
+  const alternarContraido = () => {
+    const nuevo = !contraido;
+    setContraido(nuevo);
+    try {
+      localStorage.setItem(CLAVE_CONTRAIDO, nuevo ? '1' : '0');
+    } catch {
+      /* sin almacenamiento: solo dura esta visita */
+    }
+  };
 
   return (
-    <div className="app">
-      <aside className="side">
+    <div className={`app${iconos ? ' contraido' : ''}`}>
+      <aside className={`side${abierto ? ' abierto' : ''}`}>
+        <button
+          type="button"
+          className="side-toggle"
+          aria-label={contraido ? 'Expandir menú' : 'Contraer menú'}
+          title={contraido ? 'Expandir menú' : 'Contraer menú'}
+          aria-expanded={!contraido}
+          aria-controls="menu-lateral"
+          onClick={alternarContraido}
+        >
+          <Icono n="chevron" />
+        </button>
         <div className="logo">
           <span className="mark">
             <Icono n="ticket" t="l" />
           </span>
-          <span>
+          <span className="marca-txt">
             Mesa de Ayuda<small>Soporte técnico</small>
           </span>
           <Campana />
+          <button
+            type="button"
+            className="menu-movil"
+            aria-label={abierto ? 'Cerrar menú' : 'Abrir menú'}
+            aria-expanded={abierto}
+            aria-controls="menu-lateral"
+            onClick={() => setAbierto((a) => !a)}
+          >
+            <Icono n={abierto ? 'x' : 'menu'} t="l" />
+          </button>
         </div>
-        <nav aria-label="Menú">
-          <h3>Menú</h3>
-          {MENU.filter((m) => m.permisos.some(puede)).map((m) => (
-            <NavLink key={m.a} to={m.a} className="navbtn">
-              <Icono n={m.icono} t="l" />
-              {m.a === '/tickets' && !esSoporte ? 'Mis tickets' : m.texto}
-              {m.etiqueta && <span className="tag">{m.etiqueta}</span>}
-            </NavLink>
-          ))}
-        </nav>
-        <div className="me">
-          <span className="face" aria-hidden="true">
-            {iniciales(usuario.nombre)}
-          </span>
-          <div>
-            <b title={usuario.nombre}>{usuario.nombre}</b>
-            <span>{esSoporte ? usuario.rol.nombre : 'Usuario solicitante'}</span>
+        <div className="side-cuerpo" id="menu-lateral" inert={angosta && !abierto}>
+          <div className="side-cuerpo-in">
+            <nav aria-label="Menú">
+              <h3>Menú</h3>
+              {MENU.filter((m) => m.permisos.some(puede)).map((m) => {
+                const texto = m.a === '/tickets' && !esSoporte ? 'Mis tickets' : m.texto;
+                return (
+                  <NavLink key={m.a} to={m.a} className="navbtn" title={iconos ? texto : undefined} onClick={() => setAbierto(false)}>
+                    <Icono n={m.icono} t="l" />
+                    <span className="txt">{texto}</span>
+                    {m.etiqueta && <span className="tag">{m.etiqueta}</span>}
+                  </NavLink>
+                );
+              })}
+            </nav>
+            <div className="me">
+              <span className="face" aria-hidden="true" title={iconos ? usuario.nombre : undefined}>
+                {iniciales(usuario.nombre)}
+              </span>
+              <div>
+                <b title={usuario.nombre}>{usuario.nombre}</b>
+                <span>{esSoporte ? usuario.rol.nombre : 'Usuario solicitante'}</span>
+              </div>
+              <button className="out" aria-label="Cambiar contraseña" title="Cambiar contraseña" onClick={() => setCambiarPassword(true)}>
+                <Icono n="lock" />
+              </button>
+              <button className="out" aria-label="Cerrar sesión" title="Cerrar sesión" onClick={() => void salir()}>
+                <Icono n="logout" />
+              </button>
+            </div>
           </div>
-          <button className="out" aria-label="Cambiar contraseña" title="Cambiar contraseña" onClick={() => setCambiarPassword(true)}>
-            <Icono n="lock" />
-          </button>
-          <button className="out" aria-label="Cerrar sesión" title="Cerrar sesión" onClick={() => void salir()}>
-            <Icono n="logout" />
-          </button>
         </div>
       </aside>
       <div className="main">
