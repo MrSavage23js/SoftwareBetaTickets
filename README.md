@@ -76,6 +76,7 @@ Lo que se configura **desde la pantalla** (menú Ajustes, Catálogos y Correos �
 | `npm run dev` | API y web con recarga automática |
 | `npm run build` | Compila la web y la API en `dist/` |
 | `npm start` | Inicia la versión compilada (producción) |
+| `npm run tunel` | Publica el sistema de esta PC con un enlace https temporal (Cloudflare) para que alguien de fuera lo pruebe. Necesita `cloudflared.exe` en `%LOCALAPPDATA%mesa-ayuda`; el enlace cambia en cada ejecución y solo funciona mientras la ventana esté abierta |
 | `npm run ci` | Lint, tipos, pruebas, auditoría de dependencias y build (hay que pasarlo antes de cada commit); `-- --e2e` agrega los recorridos en navegador |
 | `npm test` | Pruebas unitarias y de API |
 | `npm run test:e2e` | Recorridos completos en navegador (Playwright); `E2E_COMPILAR=1` para recompilar la web antes |
