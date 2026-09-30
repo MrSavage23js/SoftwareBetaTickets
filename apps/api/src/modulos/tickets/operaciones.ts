@@ -5,6 +5,7 @@
 import {
   ESTATUS,
   INFO_ESTATUS,
+  INFO_URGENCIA,
   PERMISOS,
   esquemaCerrar,
   esquemaMensaje,
@@ -33,6 +34,7 @@ import type { Variables } from '../correos/plantillas';
 import { registrarEvento, TIPOS_EVENTO, type TipoEvento } from '../eventos/servicio';
 import { empresasDe, puedeVerTicket } from './acceso';
 import { anioActual, siguienteFolio } from './folio';
+import { notificarNuevoTicket, notificarSolicitante } from '../notificaciones/servicio';
 
 const urlTicket = (id: number) => `${env.APP_URL.replace(/\/$/, '')}/tickets/${id}`;
 
@@ -52,6 +54,7 @@ async function variablesTicket(tx: Tx, ticketId: number): Promise<{ vars: Variab
       't.concepto',
       't.folios_ref',
       't.estatus',
+      't.urgencia',
       't.creado_at',
       't.descripcion_html',
       'ti.nombre as tipo',
@@ -70,6 +73,7 @@ async function variablesTicket(tx: Tx, ticketId: number): Promise<{ vars: Variab
     vars: {
       folio: t.folio,
       departamento: t.departamento,
+      urgencia: INFO_URGENCIA[t.urgencia].nombre,
       tipo: t.tipo,
       empresa: t.empresa,
       modulo: t.modulo,
@@ -179,6 +183,7 @@ export async function crearTicket(u: UsuarioActual, entrada: unknown, archivos: 
               descripcion_html: descripcionHtml,
               descripcion_texto: htmlATexto(descripcionHtml).slice(0, 60_000),
               estatus: ESTATUS.PENDIENTE,
+              urgencia: d.urgencia,
               solicitante_id: solicitanteId,
               creado_por_id: u.id,
               asignado_a_id: null,
@@ -213,6 +218,8 @@ export async function crearTicket(u: UsuarioActual, entrada: unknown, archivos: 
           correos++;
       }
 
+      await notificarNuevoTicket(tx, { id: ticketId, folio, creadoPorId: u.id, urgencia: d.urgencia, tipo: tipo.nombre });
+
       await registrarEvento(tx, {
         ticketId,
         actorId: u.id,
@@ -220,6 +227,7 @@ export async function crearTicket(u: UsuarioActual, entrada: unknown, archivos: 
         estatusDespues: ESTATUS.PENDIENTE,
         datos: {
           folio,
+          urgencia: d.urgencia,
           adjuntos: guardados.length,
           copias: unicas.map((c) => c.email),
           correosEncolados: correos,
@@ -297,6 +305,29 @@ async function actualizar(c: Contexto, cambios: CambioTicket) {
     .execute();
 }
 
+/** Qué se le avisa al solicitante (campana) en cada acción de soporte. */
+function mensajeParaSolicitante(tipo: TipoEvento, folio: string, u: UsuarioActual, datos?: Record<string, unknown>): string | null {
+  const quien = nombreVisible(u);
+  switch (tipo) {
+    case TIPOS_EVENTO.TOMADO:
+      return `${quien} tomó tu ticket ${folio}`;
+    case TIPOS_EVENTO.RESPONDIDO:
+      return `Soporte respondió tu ticket ${folio}`;
+    case TIPOS_EVENTO.PAUSADO:
+      return `Tu ticket ${folio} se pausó${datos?.motivo ? `: ${String(datos.motivo)}` : ''}`;
+    case TIPOS_EVENTO.REANUDADO:
+      return `Tu ticket ${folio} se reanudó`;
+    case TIPOS_EVENTO.REASIGNADO:
+      return `Tu ticket ${folio} se reasignó a otro técnico`;
+    case TIPOS_EVENTO.CERRADO:
+      return `Tu ticket ${folio} fue cerrado`;
+    case TIPOS_EVENTO.REABIERTO:
+      return `Tu ticket ${folio} se reabrió`;
+    default:
+      return null;
+  }
+}
+
 async function evento(c: Contexto, u: UsuarioActual, tipo: TipoEvento, datos?: Record<string, unknown>) {
   await registrarEvento(c.tx, {
     ticketId: c.t.id,
@@ -306,6 +337,9 @@ async function evento(c: Contexto, u: UsuarioActual, tipo: TipoEvento, datos?: R
     estatusDespues: c.estatusNuevo,
     datos: datos ?? null,
   });
+  // Ticket contestado/actualizado → notificación al solicitante (en la misma transacción).
+  const mensaje = mensajeParaSolicitante(tipo, c.t.folio, u, datos);
+  if (mensaje) await notificarSolicitante(c.tx, { id: c.t.id, solicitanteId: c.t.solicitante_id }, u.id, mensaje);
 }
 
 function htmlDeMensaje(entrada: string, campo: string, mensajeVacio: string): string {

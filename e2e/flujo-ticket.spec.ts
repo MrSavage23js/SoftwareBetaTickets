@@ -40,6 +40,9 @@ test('ciclo de vida completo de un ticket', async ({ page }) => {
 
   // ---------------------------------------------------------------- Soporte lo atiende
   await iniciarSesion(page, 'admin_prueba');
+  // Los admins entran al dashboard; la bandeja está en el menú "Tickets".
+  await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
+  await page.getByRole('link', { name: /^Tickets/ }).click();
   await expect(page.getByRole('heading', { name: 'Tickets', exact: true })).toBeVisible();
   await page.getByLabel('Buscar tickets').fill(folio);
   await page.getByRole('button', { name: new RegExp(folio) }).click();

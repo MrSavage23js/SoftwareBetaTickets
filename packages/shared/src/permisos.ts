@@ -21,6 +21,7 @@ export const PERMISOS = {
   CORREOS_PLANTILLAS: 'correos.plantillas',
   CORREOS_COLA: 'correos.cola',
   AJUSTES_ADMINISTRAR: 'ajustes.administrar',
+  PANEL_VER: 'panel.ver',
 } as const;
 
 export type Permiso = (typeof PERMISOS)[keyof typeof PERMISOS];
@@ -52,6 +53,7 @@ export const DESCRIPCION_PERMISOS: Record<Permiso, { grupo: string; descripcion:
   'correos.plantillas': { grupo: 'Administración', descripcion: 'Editar plantillas de correo' },
   'correos.cola': { grupo: 'Administración', descripcion: 'Ver y reintentar la cola de correos' },
   'ajustes.administrar': { grupo: 'Administración', descripcion: 'Cambiar los ajustes del sistema' },
+  'panel.ver': { grupo: 'Administración', descripcion: 'Ver el dashboard de administración' },
 };
 
 const TODOS = Object.values(PERMISOS) as Permiso[];

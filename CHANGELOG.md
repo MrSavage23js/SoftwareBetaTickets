@@ -2,6 +2,29 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado semántico.
 
+## [0.4.0] — 2026-09-30
+
+### Agregado
+- **Urgencia** del ticket: `baja` (verde `#22c55e`), `media` (amarillo `#eab308`), `alta` (naranja `#f97316`) y `crítica` (rojo `#ef4444`).
+  - Se elige en "Nuevo ticket"; por omisión es "media".
+  - Se ve como distintivo y franja de color en la lista, el Kanban, el detalle y la tabla del dashboard.
+  - La bandeja y el dashboard se pueden ordenar por urgencia (crítica arriba) y filtrar por ella.
+- **Dashboard** (`/panel`, solo admins): los admins entran directo aquí.
+  - Tarjetas: abiertos, en proceso, cerrados hoy, cerrados esta semana, críticos y altos sin atender. Las de urgencia filtran la tabla con un clic.
+  - Gráficas de abiertos por urgencia y por departamento. Un clic en una barra filtra la tabla.
+  - Tabla con filtros por estado, urgencia, departamento y fechas, más el orden.
+  - Se refresca cada 30 s.
+  - El acceso se verifica en el servidor con el permiso `panel.ver`: un solicitante recibe 403 aunque conozca la ruta.
+- **Notificaciones dentro del sistema**: campana con contador de no leídas y panel con las recientes y enlace directo al ticket. Se actualiza cada 20 s.
+  - Un ticket nuevo avisa a cada admin.
+  - Respuestas y cambios de soporte (tomado, pausado, reanudado, reasignado, cerrado) avisan al solicitante.
+  - Se puede marcar una o todas como leídas. Cada quien solo ve y marca las suyas.
+- Migración `0004`: columna `urgencia`, tabla `notificaciones` y permiso `panel.ver` para el rol de administración existente.
+- Pruebas: 15 de API nuevas (urgencia, dashboard, notificaciones y endpoints nuevos en la matriz de permisos) y 2 recorridos en navegador.
+
+### Notas de diseño
+- Los colores de urgencia de la especificación no se distinguen solos: naranja y rojo se parecen, y verde y amarillo se confunden con daltonismo (validado con el script de la guía de gráficas). Por eso la urgencia **siempre** se muestra con su nombre y un indicador de nivel de 1 a 4 barras, y el texto va en tinta, no en el color.
+
 ## [0.3.0] — 2026-09-29
 
 ### Cambiado

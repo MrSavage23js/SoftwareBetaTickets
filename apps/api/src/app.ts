@@ -19,6 +19,8 @@ import { rutasAjustes } from './modulos/ajustes/rutas';
 import { rutasAuth } from './modulos/auth/rutas';
 import { rutasCatalogos } from './modulos/catalogos/rutas';
 import { rutasCorreos } from './modulos/correos/rutas';
+import { rutasNotificaciones } from './modulos/notificaciones/rutas';
+import { rutasPanel } from './modulos/panel/rutas';
 import { rutasTickets } from './modulos/tickets/rutas';
 import { rutasUsuarios } from './modulos/usuarios/rutas';
 
@@ -128,6 +130,8 @@ export function crearApp() {
   api.use('/adjuntos', rutasAdjuntos);
   api.use('/correos', rutasCorreos);
   api.use('/ajustes', rutasAjustes);
+  api.use('/panel', rutasPanel);
+  api.use('/notificaciones', rutasNotificaciones);
   api.use(rutaNoEncontrada);
 
   app.use('/api', api);

@@ -45,6 +45,15 @@ Marca cada punto: ✅ bien · ❌ falla (anota qué pasó).
 - [ ] Historial muestra todo en orden: creó, tomó, respondió, pausó (con motivo), reasignó (de → a), cerró.
 - [ ] Cambios simultáneos: con el ticket abierto en dos pestañas, pausar en una y luego cerrar en la otra → aviso "El ticket cambió…" y la pantalla se actualiza.
 
+## 3 bis. Urgencia, dashboard y notificaciones
+- [ ] Nuevo ticket: la urgencia viene en "Media"; elegir "Crítica" → el ticket la muestra con su nombre y nivel en la lista, el Kanban y el detalle.
+- [ ] Bandeja → "Ordenar: Urgencia" → las críticas quedan arriba. El filtro "Urgencia" funciona.
+- [ ] Un admin entra y aterriza en el **Dashboard**. Las tarjetas cuadran con la bandeja. Clic en "Críticos sin atender" → la tabla muestra solo esos.
+- [ ] Gráficas: pasar el cursor por una barra muestra el detalle; un clic filtra la tabla.
+- [ ] Un solicitante no ve "Dashboard" en el menú; si escribe `/panel` ve "No tienes acceso".
+- [ ] Al crear un ticket, en menos de 20 s la campana del admin muestra el contador. El aviso lleva al ticket y se marca como leído.
+- [ ] Al responder, tomar o cerrar, la campana del solicitante avisa. "Marcar todas como leídas" deja el contador en cero.
+
 ## 4. Usuarios
 - [ ] Tabla: ID, usuario, rol, empresas, último inicio ("Nunca" si no ha entrado), En línea/Desconectado.
 - [ ] Alta: usuario duplicado → error; contraseñas distintas → error; correo inválido → error; alta correcta con varias empresas.

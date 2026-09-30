@@ -196,6 +196,7 @@ Dentro de la transacción de creación del ticket:
 | descripcion_html | MEDIUMTEXT | Ya sanitizado |
 | descripcion_texto | TEXT | Versión en texto plano, para búsqueda y correos |
 | estatus | VARCHAR(20) FK → estatus_ticket | |
+| urgencia | ENUM('BAJA','MEDIA','ALTA','CRITICA') DEFAULT 'MEDIA' | Migración 0004. El orden del ENUM permite `ORDER BY urgencia DESC` (crítica primero) |
 | solicitante_id | INT UNSIGNED FK | |
 | creado_por_id | INT UNSIGNED FK | Igual al solicitante, salvo P12 |
 | asignado_a_id | INT UNSIGNED NULL FK | |
@@ -212,6 +213,7 @@ Dentro de la transacción de creación del ticket:
 Índices (pensados para las consultas reales):
 - `UNIQUE(folio)`: búsqueda exacta y por prefijo.
 - `(estatus, creado_at)`: pestañas y columnas del Kanban.
+- `(urgencia, estatus, creado_at)`: filtro por urgencia y tarjetas "sin atender" del dashboard.
 - `(solicitante_id, estatus, creado_at)`: Mis tickets.
 - `(asignado_a_id, estatus, creado_at)`: filtro por técnico.
 - `(empresa_id, creado_at)`, `(tipo_id, creado_at)`, `(modulo_id, creado_at)`: filtros de la bandeja.
@@ -275,6 +277,19 @@ Dentro de la transacción de creación del ticket:
 | creado_at | DATETIME(3) | |
 
 Índices `(ticket_id, creado_at)` y `(tipo, creado_at)` (para reportes).
+
+### `notificaciones` (campana, migración 0004)
+| Campo | Tipo | Notas |
+|---|---|---|
+| id | BIGINT UNSIGNED PK | |
+| usuario_id | INT UNSIGNED FK (CASCADE) | Destinatario |
+| ticket_id | BIGINT UNSIGNED FK (CASCADE) | Adonde lleva el aviso |
+| tipo | ENUM('nuevo_ticket','ticket_contestado') | |
+| mensaje | VARCHAR(255) | Texto ya armado ("Soporte respondió tu ticket SIS-2026-0004") |
+| leida | TINYINT(1) DEFAULT 0 | |
+| creado_at | DATETIME(3) | La "fecha_creacion" de la especificación |
+
+Índices: `(usuario_id, leida, creado_at)` para la campana y `(leida, creado_at)` para depurar las leídas de más de 90 días. La migración 0004 también agrega el permiso `panel.ver` (dashboard) al rol de administración.
 
 ## 4. Correo
 

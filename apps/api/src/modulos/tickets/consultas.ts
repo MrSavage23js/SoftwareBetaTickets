@@ -120,6 +120,7 @@ function aplicarFiltros(
   q = q.where(filtroVisibles(u) as never);
   if (conEstatus && f.estatus) q = q.where('t.estatus', '=', f.estatus);
   if (f.departamentoId) q = q.where('t.departamento_id', '=', f.departamentoId);
+  if (f.urgencia) q = q.where('t.urgencia', '=', f.urgencia);
   if (f.tipoId) q = q.where('t.tipo_id', '=', f.tipoId);
   if (f.empresaId) q = q.where('t.empresa_id', '=', f.empresaId);
   if (f.moduloId) q = q.where('t.modulo_id', '=', f.moduloId);
@@ -160,12 +161,15 @@ export async function listarTickets(
   const f = filtrosValidados(entrada);
   const busqueda = await prepararBusqueda(f.q, u);
   const dir = f.orden === 'antiguos' ? 'asc' : 'desc';
+  // "urgencia": crítica arriba (el ENUM está ordenado de baja a crítica), luego los más recientes.
+  const porUrgencia = f.orden === 'urgencia';
 
   // 1) Página de ids y contadores, solo sobre `tickets` (usa índices; sin uniones).
   // 2) Las uniones con catálogos y usuarios se hacen después, solo para los ids de la página.
   const [pagina, conteos] = await Promise.all([
-    aplicarFiltros(soloTickets(), u, f, true, busqueda)
-      .select('t.id')
+    (porUrgencia
+      ? aplicarFiltros(soloTickets(), u, f, true, busqueda).select('t.id').orderBy('t.urgencia', 'desc')
+      : aplicarFiltros(soloTickets(), u, f, true, busqueda).select('t.id'))
       .orderBy('t.creado_at', dir)
       .orderBy('t.id', dir)
       .limit(f.porPagina)
@@ -184,6 +188,7 @@ export async function listarTickets(
         't.id',
         't.folio',
         't.estatus',
+        't.urgencia',
         't.concepto',
         't.creado_at',
         'dp.id as dp_id',
@@ -215,6 +220,7 @@ export async function listarTickets(
       id: r.id,
       folio: r.folio,
       estatus: r.estatus as Estatus,
+      urgencia: r.urgencia,
       concepto: r.concepto,
       creadoAt: r.creado_at.toISOString(),
       departamento: { id: r.dp_id, nombre: r.dp_nombre },
@@ -290,6 +296,7 @@ export async function detalleTicket(u: UsuarioActual, id: number): Promise<Ticke
     id: r.id,
     folio: r.folio,
     estatus: r.estatus as Estatus,
+    urgencia: r.urgencia,
     departamento: { id: r.departamento_id, nombre: r.dp_nombre },
     tipo: { id: r.tipo_id, nombre: r.tipo_nombre },
     tituloDetalle: r.titulo_detalle,

@@ -46,3 +46,17 @@ function instanteLocal(fecha: string, hora: string): Date {
   const comoLocal = Date.UTC(v('year'), v('month') - 1, v('day'), v('hour'), v('minute'), v('second'));
   return new Date(utc.getTime() - (comoLocal - utc.getTime()));
 }
+
+/** Fecha de hoy (AAAA-MM-DD) en la zona horaria del sistema. */
+export function hoyLocal(ahora = new Date()): string {
+  return ahora.toLocaleDateString('en-CA', { timeZone: env.APP_TZ });
+}
+
+/** Fecha (AAAA-MM-DD) del lunes de la semana en curso, en la zona horaria del sistema. */
+export function lunesLocal(ahora = new Date()): string {
+  const hoy = hoyLocal(ahora);
+  const d = new Date(`${hoy}T12:00:00Z`);
+  const diasDesdeLunes = (d.getUTCDay() + 6) % 7;
+  d.setUTCDate(d.getUTCDate() - diasDesdeLunes);
+  return d.toISOString().slice(0, 10);
+}

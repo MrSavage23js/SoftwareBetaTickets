@@ -165,6 +165,11 @@ El usuario pidió continuar sin contestar las preguntas y **sin pruebas automati
   - Los tickets anteriores conservan su folio y quedaron en el departamento SIS.
   - Los códigos de empresa y tipo ya no forman el folio; quedan como códigos cortos para reportes. Por eso **P1 ya no bloquea** y los códigos provisionales de empresas dejan de importar para el folio.
 
+**Decisiones de la versión 0.4.0 (dashboard, notificaciones y urgencia, especificación del usuario del 30/09/2026):**
+- **D33.** Urgencia en `tickets.urgencia` (ENUM `BAJA`, `MEDIA`, `ALTA`, `CRITICA`, en ese orden para que `ORDER BY urgencia DESC` deje la crítica arriba), con los colores de la especificación. Como esos colores fallan la validación de daltonismo y de distinción normal, se acompañan siempre del nombre y de un indicador de nivel.
+- **D34.** El dashboard es la ruta `/panel` con el permiso nuevo `panel.ver`, que solo tiene el rol de administración (la migración 0004 se lo da al rol existente). Las gráficas son barras en HTML, sin librería: la especificación sugería Chart.js o Recharts, pero no hace falta para dos gráficas de barras. Tienen valor en la punta, detalle al pasar el cursor o con el teclado y clic para filtrar.
+- **D35.** Las notificaciones se insertan dentro de la transacción de la operación que las provoca. "Admins" son los usuarios con `tickets.atender`. "Contestado o actualizado" incluye respuestas y cambios de estatus de soporte. No se notifica a quien hizo el cambio. Se consulta cada 20 s: la especificación sugería de 15 a 30 s, y WebSockets quedan para después si hiciera falta inmediatez. Las leídas de más de 90 días se depuran solas.
+
 **Pendientes:**
 - **Confirmar la lista de departamentos y sus códigos** (hoy: SIS = Sistemas / TI, RH = Recursos Humanos) y asignar el departamento a cada usuario.
 - Fase opcional: pantalla para editar permisos por rol.

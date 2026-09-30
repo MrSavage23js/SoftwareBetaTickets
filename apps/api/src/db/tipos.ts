@@ -152,6 +152,7 @@ export interface TicketsTabla {
   descripcion_html: string;
   descripcion_texto: string;
   estatus: string;
+  urgencia: Generated<'BAJA' | 'MEDIA' | 'ALTA' | 'CRITICA'>;
   solicitante_id: number;
   creado_por_id: number;
   asignado_a_id: number | null;
@@ -255,6 +256,16 @@ export interface CorreosSalidaTabla {
   enviado_at: FechaNula;
 }
 
+export interface NotificacionesTabla {
+  id: Generated<number>;
+  usuario_id: number;
+  ticket_id: number;
+  tipo: 'nuevo_ticket' | 'ticket_contestado';
+  mensaje: string;
+  leida: Generated<number>;
+  creado_at: Generated<Date>;
+}
+
 export interface AjustesTabla {
   clave: string;
   valor: Json<unknown>;
@@ -296,6 +307,7 @@ export interface BD {
   plantillas_correo: PlantillasCorreoTabla;
   correos_salida: CorreosSalidaTabla;
   ajustes: AjustesTabla;
+  notificaciones: NotificacionesTabla;
   auditoria: AuditoriaTabla;
 }
 

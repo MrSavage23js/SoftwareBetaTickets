@@ -1,6 +1,7 @@
 // Formas de las respuestas de la API (contrato entre servidor y web). Las fechas viajan como ISO 8601 UTC.
 import type { Estatus } from './estatus';
 import type { Accion } from './maquina-estados';
+import type { Urgencia } from './urgencia';
 
 export interface ErrorApi {
   error: {
@@ -126,6 +127,7 @@ export interface TicketResumen {
   id: number;
   folio: string;
   estatus: Estatus;
+  urgencia: Urgencia;
   tipo: Ref;
   modulo: Ref | null;
   departamento: Ref;
@@ -223,4 +225,37 @@ export interface AjusteFila {
   clave: string;
   valor: unknown;
   descripcion: string;
+}
+
+export interface PanelResumen {
+  /** Pendientes + en proceso + pausados. */
+  abiertos: number;
+  pendientes: number;
+  enProceso: number;
+  pausados: number;
+  cerradosHoy: number;
+  /** Desde el lunes de esta semana (hora local del sistema). */
+  cerradosSemana: number;
+  /** Pendientes (nadie los ha tomado) por urgencia crítica o alta. */
+  criticosSinAtender: number;
+  altosSinAtender: number;
+  abiertosPorDepartamento: { id: number; nombre: string; codigo: string; total: number }[];
+  abiertosPorUrgencia: { urgencia: Urgencia; total: number }[];
+  generadoAt: string;
+}
+
+export type TipoNotificacion = 'nuevo_ticket' | 'ticket_contestado';
+
+export interface NotificacionInfo {
+  id: number;
+  tipo: TipoNotificacion;
+  mensaje: string;
+  leida: boolean;
+  ticket: { id: number; folio: string };
+  creadoAt: string;
+}
+
+export interface ListaNotificaciones {
+  noLeidas: number;
+  datos: NotificacionInfo[];
 }

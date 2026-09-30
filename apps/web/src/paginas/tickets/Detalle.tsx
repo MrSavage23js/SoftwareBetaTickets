@@ -5,6 +5,7 @@ import { ListaAdjuntos, SelectorArchivos } from '../../componentes/Archivos';
 import { Editor } from '../../componentes/Editor';
 import { Icono, type NombreIcono } from '../../componentes/Icono';
 import { Avatar, Cargando, EstadoError, Modal, PillEstatus, useAvisos } from '../../componentes/ui';
+import { BadgeUrgencia } from '../../componentes/Urgencia';
 import { fmtFechaHora } from '../../lib/formato';
 import { useSesion } from '../../sesion/Sesion';
 import { useDetalle, useHistorial, useRefrescarTickets, useTecnicos } from './datos';
@@ -59,6 +60,7 @@ function Contenido({ t }: { t: TicketDetalle }) {
           <span className="folio">{t.folio}</span>
           <PillEstatus estatus={t.estatus} />
           <span className="pill type">{t.tipo.nombre}</span>
+          <BadgeUrgencia urgencia={t.urgencia} />
         </div>
         <div className="r">
           {a.has('tomar') && botonAccion('check', 'Tomar ticket', () => void ejecutar('tomar', {}, `Tomaste el ticket ${t.folio}.`), true)}

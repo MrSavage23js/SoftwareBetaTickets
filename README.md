@@ -1,6 +1,6 @@
 # Mesa de Ayuda — Grupo Aramo
 
-Sistema de tickets de soporte. Tiene dos vistas: la del **solicitante** (Mis tickets, crear, comentar) y la del **Admin soporte** (bandeja, Kanban, tomar, pausar, reasignar, responder y cerrar; además usuarios, catálogos, correos y ajustes). Los avisos se envían por correo a Outlook.
+Sistema de tickets de soporte. Tiene dos vistas: la del **solicitante** (Mis tickets, crear, comentar) y la del **Admin soporte** (dashboard con indicadores, bandeja, Kanban, tomar, pausar, reasignar, responder y cerrar; además usuarios, catálogos, correos y ajustes). Cada ticket lleva una urgencia (baja, media, alta o crítica). Los avisos llegan por correo a Outlook y a la campana de notificaciones dentro del sistema.
 
 | Documento | Para qué |
 |---|---|

@@ -2,6 +2,7 @@
 // Los mensajes están en español porque se muestran tal cual al usuario.
 import { z } from 'zod';
 import { LISTA_ESTATUS } from './estatus';
+import { URGENCIA_POR_OMISION, URGENCIAS } from './urgencia';
 import { CODIGO_CATALOGO_REGEX, CODIGO_DEPARTAMENTO_REGEX } from './folio';
 
 const texto = (campo: string, max: number) =>
@@ -159,6 +160,8 @@ export const esquemaTicketCrear = z.object({
   tipoId: idEntero,
   /** Departamento que crea el ticket: forma el folio (SIS-2026-0001). */
   departamentoId: idEntero,
+  /** Quien reporta elige el nivel; si no, "media". */
+  urgencia: z.enum(URGENCIAS, { error: 'Selecciona una urgencia válida.' }).default(URGENCIA_POR_OMISION),
   empresaId: idEntero,
   moduloId: idEntero.optional().nullable(),
   concepto: textoOpcional('El concepto', 200),
@@ -172,13 +175,15 @@ export const esquemaTicketCrear = z.object({
 });
 export type TicketCrearEntrada = z.input<typeof esquemaTicketCrear>;
 
-export const ORDEN_TICKETS = ['recientes', 'antiguos'] as const;
+/** `urgencia`: crítica arriba; a igual urgencia, los más recientes primero. */
+export const ORDEN_TICKETS = ['recientes', 'antiguos', 'urgencia'] as const;
 
 export const esquemaListarTickets = z.object({
   estatus: z.enum(LISTA_ESTATUS as [string, ...string[]]).optional(),
   q: z.string().trim().max(100).optional(),
   tipoId: idEntero.optional(),
   departamentoId: idEntero.optional(),
+  urgencia: z.enum(URGENCIAS).optional(),
   empresaId: idEntero.optional(),
   moduloId: idEntero.optional(),
   asignadoAId: z.union([idEntero, z.literal('ninguno')]).optional(),

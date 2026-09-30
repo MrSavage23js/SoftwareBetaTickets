@@ -24,7 +24,7 @@ export function Inicio() {
   const [enviando, setEnviando] = useState(false);
 
   const volver = params.get('volver');
-  const destino = volver && esRutaInterna(volver) ? volver : '/tickets';
+  const destino = volver && esRutaInterna(volver) ? volver : '/';
 
   if (estado === 'cargando') return <Cargando />;
   if (estado === 'autenticado') return <Navigate to={destino} replace />;

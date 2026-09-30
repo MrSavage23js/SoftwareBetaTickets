@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { NavLink, Navigate, Outlet, useLocation } from 'react-router';
 import { PERMISOS } from '@mesa/shared';
+import { Campana } from '../componentes/Campana';
 import { Icono, type NombreIcono } from '../componentes/Icono';
 import { Cargando, EstadoVacio } from '../componentes/ui';
 import { iniciales } from '../lib/formato';
@@ -17,6 +18,7 @@ interface ItemMenu {
 
 // El menú se arma según los permisos; el servidor vuelve a validar cada petición.
 const MENU: ItemMenu[] = [
+  { a: '/panel', texto: 'Dashboard', icono: 'chart', permisos: [PERMISOS.PANEL_VER], etiqueta: 'Admin' },
   { a: '/tickets', texto: 'Tickets', icono: 'ticket', permisos: [PERMISOS.TICKETS_VER_PROPIOS, PERMISOS.TICKETS_VER_EMPRESA, PERMISOS.TICKETS_VER_TODOS] },
   { a: '/usuarios', texto: 'Usuarios', icono: 'users', permisos: [PERMISOS.USUARIOS_ADMINISTRAR], etiqueta: 'Admin' },
   { a: '/catalogos', texto: 'Catálogos', icono: 'catalog', permisos: [PERMISOS.CATALOGOS_ADMINISTRAR], etiqueta: 'Admin' },
@@ -41,6 +43,7 @@ export function Estructura() {
           <span>
             Mesa de Ayuda<small>Soporte técnico</small>
           </span>
+          <Campana />
         </div>
         <nav aria-label="Menú">
           <h3>Menú</h3>
@@ -74,6 +77,12 @@ export function Estructura() {
       {cambiarPassword && <VentanaCambiarPassword alCerrar={() => setCambiarPassword(false)} />}
     </div>
   );
+}
+
+/** Pantalla inicial según el rol: admins al dashboard, solicitantes a sus tickets. */
+export function RedireccionInicial() {
+  const { puede } = useSesion();
+  return <Navigate to={puede(PERMISOS.PANEL_VER) ? '/panel' : '/tickets'} replace />;
 }
 
 /** Protege una ruta: sin sesión → inicio de sesión; sin permiso → aviso (el servidor también lo impide). */

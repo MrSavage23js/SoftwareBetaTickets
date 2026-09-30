@@ -2,16 +2,20 @@ import { Fragment } from 'react';
 import type { UseQueryResult } from '@tanstack/react-query';
 import type { TicketResumen } from '@mesa/shared';
 import { Icono } from '../../componentes/Icono';
+import { BadgeUrgencia, franja } from '../../componentes/Urgencia';
 import { Avatar, EstadoError, EstadoVacio, Esqueletos, PillEstatus } from '../../componentes/ui';
 import { claveDia, etiquetaDia, fmtHora } from '../../lib/formato';
 import type { ListaTickets as Datos } from './datos';
 
 export function TarjetaTicket({ t, sel, mostrarTecnico, alAbrir }: { t: TicketResumen; sel: boolean; mostrarTecnico: boolean; alAbrir: () => void }) {
   return (
-    <button className={`tk ${sel ? 'sel' : ''}`} onClick={alAbrir} aria-current={sel || undefined}>
+    <button className={`tk ${sel ? 'sel' : ''}`} onClick={alAbrir} aria-current={sel || undefined} style={franja(t.urgencia)}>
       <span className="row">
         <span className="folio">{t.folio}</span>
-        <PillEstatus estatus={t.estatus} />
+        <span style={{ display: 'flex', gap: 6 }}>
+          <BadgeUrgencia urgencia={t.urgencia} compacto />
+          <PillEstatus estatus={t.estatus} />
+        </span>
       </span>
       <span className="t">
         {t.tipo.nombre} {t.modulo && <span>· {t.modulo.nombre}</span>}

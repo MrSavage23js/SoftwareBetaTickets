@@ -1,11 +1,12 @@
 // Ventana "Nuevo ticket" de la maqueta: primero el tipo de solicitud; al elegirlo aparece el formulario.
 // Al crear muestra la confirmación con el folio y el aviso de correo.
 import { useState } from 'react';
-import { PERMISOS, type TicketCreado } from '@mesa/shared';
+import { PERMISOS, URGENCIA_POR_OMISION, type TicketCreado, type Urgencia } from '@mesa/shared';
 import { api, camposDe, mensajeDe } from '../../api/cliente';
 import { SelectorArchivos } from '../../componentes/Archivos';
 import { SelectorContactos, type Contacto } from '../../componentes/Contactos';
 import { Editor } from '../../componentes/Editor';
+import { SelectorUrgencia } from '../../componentes/Urgencia';
 import { Icono } from '../../componentes/Icono';
 import { Cargando, EstadoError, Modal } from '../../componentes/ui';
 import { useSesion } from '../../sesion/Sesion';
@@ -19,6 +20,7 @@ export function NuevoTicket({ alCerrar, alCrear }: { alCerrar: () => void; alCre
   const [tipoId, setTipoId] = useState('');
   const [empresaId, setEmpresaId] = useState('');
   const [departamentoId, setDepartamentoId] = useState('');
+  const [urgencia, setUrgencia] = useState<Urgencia>(URGENCIA_POR_OMISION);
   const [moduloId, setModuloId] = useState('');
   const [concepto, setConcepto] = useState('');
   const [foliosRef, setFoliosRef] = useState('');
@@ -65,6 +67,7 @@ export function NuevoTicket({ alCerrar, alCrear }: { alCerrar: () => void; alCre
         {
           tipoId: Number(tipoId),
           departamentoId: Number(departamentoEfectivo),
+          urgencia,
           empresaId: Number(empresaEfectiva),
           moduloId: moduloId ? Number(moduloId) : null,
           concepto: concepto.trim(),
@@ -220,6 +223,11 @@ export function NuevoTicket({ alCerrar, alCrear }: { alCerrar: () => void; alCre
                 {errores.departamentoId
                   ? error('departamentoId')
                   : departamentoElegido && <div className="help">El folio será {departamentoElegido.codigo}-{new Date().getFullYear()}-####.</div>}
+              </div>
+              <div>
+                <span className="lbl" id="nt-urg">Urgencia</span>
+                <SelectorUrgencia valor={urgencia} alCambiar={setUrgencia} />
+                {errores.urgencia ? error('urgencia') : <div className="help">Si no estás seguro, déjala en Media.</div>}
               </div>
               <div className="g2">
                 <div>

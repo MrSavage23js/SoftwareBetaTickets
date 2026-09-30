@@ -3,6 +3,7 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { INFO_ESTATUS, LISTA_ESTATUS, type Estatus } from '@mesa/shared';
 import { api } from '../../api/cliente';
 import { Avatar, EstadoError } from '../../componentes/ui';
+import { BadgeUrgencia, franja } from '../../componentes/Urgencia';
 import { claves, type Filtros, type ListaTickets } from './datos';
 
 const COLOR: Record<Estatus, string> = { PENDIENTE: '#B36B00', EN_PROCESO: '#2563B0', PAUSADO: '#64748B', COMPLETADO: '#1F8A55' };
@@ -32,8 +33,11 @@ function Columna({ estatus, filtros, abrir }: { estatus: Estatus; filtros: Filtr
       {q.isPending && <div className="esqueleto" style={{ height: 120 }} />}
       {q.isError && <EstadoError error={q.error} reintentar={() => void q.refetch()} />}
       {tickets.map((t) => (
-        <button key={t.id} className="kc" onClick={() => abrir(t.id)}>
-          <span className="folio">{t.folio}</span>
+        <button key={t.id} className="kc" onClick={() => abrir(t.id)} style={franja(t.urgencia)}>
+          <span className="row" style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+            <span className="folio">{t.folio}</span>
+            <BadgeUrgencia urgencia={t.urgencia} compacto />
+          </span>
           <div className="t">{t.tipo.nombre}</div>
           <div className="s">
             {t.modulo ? `${t.modulo.nombre} · ` : ''}

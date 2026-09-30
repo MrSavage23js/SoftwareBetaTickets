@@ -36,6 +36,7 @@ const SOLO_ADMIN: [Metodo, string][] = [
   ['get', '/ajustes'],
   ['put', '/ajustes'],
   ['get', '/tickets/1/historial'],
+  ['get', '/panel/resumen'],
 ];
 
 const CON_SESION: [Metodo, string][] = [
@@ -49,6 +50,9 @@ const CON_SESION: [Metodo, string][] = [
   ['get', '/catalogos'],
   ['get', '/usuarios/contactos?q=ab'],
   ['get', '/usuarios/tecnicos'],
+  ['get', '/notificaciones'],
+  ['post', '/notificaciones/1/leida'],
+  ['post', '/notificaciones/leer-todas'],
   ['post', '/adjuntos/temporal'],
   ['get', '/adjuntos/0b1f5a2c-3d4e-4f60-8a9b-0c1d2e3f4a5b'],
 ];

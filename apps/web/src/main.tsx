@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
+import { BrowserRouter, Route, Routes } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import '@fontsource/figtree/400.css';
 import '@fontsource/figtree/500.css';
@@ -12,9 +12,10 @@ import './estilos/app.css';
 import { PERMISOS } from '@mesa/shared';
 import { ErrorCliente } from './api/cliente';
 import { ProveedorAvisos } from './componentes/ui';
-import { Estructura, NoEncontrado, Protegida } from './diseno/Estructura';
+import { Estructura, NoEncontrado, Protegida, RedireccionInicial } from './diseno/Estructura';
 import { ErrorDePagina } from './diseno/ErrorDePagina';
 import { Ajustes } from './paginas/Ajustes';
+import { Panel } from './paginas/Panel';
 import { Catalogos } from './paginas/Catalogos';
 import { Correos } from './paginas/Correos';
 import { Inicio } from './paginas/Inicio';
@@ -50,7 +51,8 @@ createRoot(document.getElementById('raiz')!).render(
                     </Protegida>
                   }
                 >
-                  <Route index element={<Navigate to="/tickets" replace />} />
+                  <Route index element={<RedireccionInicial />} />
+                  <Route path="panel" element={<Protegida permisos={[PERMISOS.PANEL_VER]}><Panel /></Protegida>} />
                   <Route path="tickets" element={<Tickets />} />
                   <Route path="tickets/:id" element={<Tickets />} />
                   <Route path="usuarios" element={<Protegida permisos={[PERMISOS.USUARIOS_ADMINISTRAR]}><Usuarios /></Protegida>} />

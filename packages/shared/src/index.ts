@@ -5,3 +5,4 @@ export * from './folio';
 export * from './esquemas';
 export * from './ajustes';
 export * from './tipos';
+export * from './urgencia';

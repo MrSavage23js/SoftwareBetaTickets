@@ -3,7 +3,7 @@
 // se puede recargar, compartir el enlace o usar "atrás" sin perder nada.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
-import { LISTA_ESTATUS, INFO_ESTATUS, PERMISOS, type Estatus } from '@mesa/shared';
+import { LISTA_ESTATUS, INFO_ESTATUS, INFO_URGENCIA, PERMISOS, URGENCIAS_DESC, type Estatus } from '@mesa/shared';
 import { Icono } from '../../componentes/Icono';
 import { EstadoVacio } from '../../componentes/ui';
 import { plural } from '../../lib/formato';
@@ -14,7 +14,7 @@ import { Kanban } from './Kanban';
 import { ListaTickets } from './Lista';
 import { NuevoTicket } from './NuevoTicket';
 
-const FILTROS_AVANZADOS = ['departamentoId', 'tipoId', 'empresaId', 'moduloId', 'asignadoAId', 'desde', 'hasta'] as const;
+const FILTROS_AVANZADOS = ['urgencia', 'departamentoId', 'tipoId', 'empresaId', 'moduloId', 'asignadoAId', 'desde', 'hasta'] as const;
 
 export function Tickets() {
   const { puede } = useSesion();
@@ -57,7 +57,7 @@ export function Tickets() {
 
   const filtros: Filtros = useMemo(() => {
     const f: Filtros = { porPagina: 25 };
-    for (const k of ['estatus', 'q', 'pagina', ...FILTROS_AVANZADOS]) {
+    for (const k of ['estatus', 'q', 'pagina', 'orden', ...FILTROS_AVANZADOS]) {
       const v = params.get(k);
       if (v) f[k] = v;
     }
@@ -114,6 +114,13 @@ export function Tickets() {
           ))}
         </div>
         {soporte && (
+          <div className="tools">
+            <label className="sr" htmlFor="orden-bandeja">Ordenar</label>
+            <select id="orden-bandeja" className="inp" style={{ width: 'auto', minHeight: 40 }} value={params.get('orden') ?? 'recientes'} onChange={(e) => cambiar({ orden: e.target.value === 'recientes' ? null : e.target.value })}>
+              <option value="recientes">Más recientes</option>
+              <option value="urgencia">Urgencia (crítica primero)</option>
+              <option value="antiguos">Más antiguos</option>
+            </select>
           <div className="seg" role="group" aria-label="Tipo de vista">
             <button aria-pressed={vista === 'lista'} onClick={() => cambiar({ vista: null }, false, true)}>
               <Icono n="list" t="s" />
@@ -123,6 +130,7 @@ export function Tickets() {
               <Icono n="kanban" t="s" />
               Kanban
             </button>
+          </div>
           </div>
         )}
       </div>
@@ -196,6 +204,7 @@ function PanelFiltros({ params, cambiar }: { params: URLSearchParams; cambiar: (
   );
   return (
     <div className="panel panel-filtros" role="region" aria-label="Filtros avanzados">
+      {sel('urgencia', 'Urgencia', URGENCIAS_DESC.map((u) => ({ id: u, nombre: INFO_URGENCIA[u].nombre })))}
       {sel('departamentoId', 'Departamento', cat.data?.departamentos ?? [])}
       {sel('tipoId', 'Tipo', cat.data?.tipos ?? [])}
       {sel('empresaId', 'Empresa', cat.data?.empresas ?? [])}

@@ -9,6 +9,7 @@ import { limpiarCarpetaTemporal } from './modulos/adjuntos/almacenamiento';
 import { limpiarTemporalesHuerfanos } from './modulos/adjuntos/servicio';
 import { limpiarSesionesVencidas } from './modulos/auth/sesiones';
 import { procesarCola } from './modulos/correos/trabajador';
+import { limpiarNotificaciones } from './modulos/notificaciones/servicio';
 
 interface Tarea {
   nombre: string;
@@ -35,6 +36,7 @@ const tareas: Tarea[] = [
     ejecutar: async () => {
       const sesiones = await limpiarSesionesVencidas();
       const temporales = (await limpiarTemporalesHuerfanos()) + (await limpiarCarpetaTemporal());
+      await limpiarNotificaciones();
       await db.deleteFrom('intentos_login').where('creado_at', '<', sql<Date>`NOW(3) - INTERVAL 90 DAY`).execute();
       if (sesiones || temporales) logger.info({ sesiones, temporales }, 'Limpieza periódica');
     },

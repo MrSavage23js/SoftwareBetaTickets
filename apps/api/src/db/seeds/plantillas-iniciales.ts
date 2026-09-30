@@ -4,6 +4,7 @@
 const VARIABLES_TICKET = [
   { nombre: 'folio', descripcion: 'Folio del ticket (SIS-2026-0001)' },
   { nombre: 'departamento', descripcion: 'Departamento que creó el ticket' },
+  { nombre: 'urgencia', descripcion: 'Urgencia (Baja, Media, Alta, Crítica)' },
   { nombre: 'tipo', descripcion: 'Tipo de solicitud' },
   { nombre: 'empresa', descripcion: 'Empresa' },
   { nombre: 'modulo', descripcion: 'Módulo (o "—")' },
@@ -39,7 +40,7 @@ const boton = `
         <p style="margin:24px 0 0"><a href="{{url_ticket}}" style="display:inline-block;background:#0E7C7B;color:#FFFFFF;text-decoration:none;font-weight:600;padding:12px 22px;border-radius:8px">Ver ticket en el sistema</a></p>`;
 
 const tablaDatos = `
-        <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%">${fila('Folio', 'folio')}${fila('Departamento', 'departamento')}${fila('Tipo', 'tipo')}${fila('Empresa', 'empresa')}${fila('Módulo', 'modulo')}${fila('Concepto', 'concepto')}${fila('Folio(s)', 'folios')}${fila('Estatus', 'estatus')}
+        <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%">${fila('Folio', 'folio')}${fila('Departamento', 'departamento')}${fila('Urgencia', 'urgencia')}${fila('Tipo', 'tipo')}${fila('Empresa', 'empresa')}${fila('Módulo', 'modulo')}${fila('Concepto', 'concepto')}${fila('Folio(s)', 'folios')}${fila('Estatus', 'estatus')}
         </table>`;
 
 export const PLANTILLAS = [
