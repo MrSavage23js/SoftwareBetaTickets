@@ -209,7 +209,7 @@ export async function listarTickets(
       .execute();
   filas.sort((x, y) => orden.get(x.id)! - orden.get(y.id)!);
 
-  const contadores: ContadoresEstatus = { total: 0, PENDIENTE: 0, EN_PROCESO: 0, PAUSADO: 0, COMPLETADO: 0 };
+  const contadores: ContadoresEstatus = { total: 0, PENDIENTE: 0, EN_PROCESO: 0, PAUSADO: 0, COMPLETADO: 0, NO_PROCEDE: 0 };
   for (const c of conteos) {
     if ((LISTA_ESTATUS as readonly string[]).includes(c.estatus)) contadores[c.estatus as Estatus] = Number(c.n);
     contadores.total += Number(c.n);

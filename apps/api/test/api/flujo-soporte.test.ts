@@ -24,7 +24,7 @@ describe('tomar', () => {
     const d = await detalle();
     expect(d).toMatchObject({ estatus: 'EN_PROCESO', asignado: { id: f.admin } });
     expect(d.tomadoAt).not.toBeNull();
-    expect(d.acciones).toEqual(['pausar', 'reasignar', 'responder', 'cerrar']);
+    expect(d.acciones).toEqual(['pausar', 'reasignar', 'responder', 'cerrar', 'noProcede']);
   });
 
   it('dos técnicos al mismo tiempo: uno lo toma y el otro recibe 409', async () => {
@@ -105,6 +105,30 @@ describe('flujo completo', () => {
     await admin.put('/ajustes', { 'correo.aviso_soporte_activo': true, 'correo.aviso_soporte_destino': 'soporte@prueba.local' }).expect(200);
     const r = await u1.form('/tickets', ticketValido(f));
     expect(r.body.correosEncolados).toBe(2);
+  });
+});
+
+describe('no procede', () => {
+  it('un admin lo marca desde pendiente con motivo: queda cerrado, el solicitante ve el motivo y recibe correo', async () => {
+    const v = (await detalle()).version;
+    expect((await u1.post(`/tickets/${id}/no-procede`, { motivo: 'x', version: v })).status).toBe(403);
+    expect((await admin.post(`/tickets/${id}/no-procede`, { version: v })).status).toBe(400); // sin motivo
+    await admin.post(`/tickets/${id}/no-procede`, { motivo: 'No es <de> sistemas', version: v }).expect(204);
+
+    const d = await detalle(u1);
+    expect(d).toMatchObject({ estatus: 'NO_PROCEDE', cerradoPor: { id: f.admin }, acciones: [] });
+    expect(d.mensajes).toHaveLength(1);
+    expect(d.mensajes[0]).toMatchObject({ tipo: 'RESOLUCION' });
+    expect(d.mensajes[0].html).toContain('No es &lt;de&gt; sistemas');
+
+    const h = (await admin.get(`/tickets/${id}/historial`)).body as { tipo: string; datos: Record<string, unknown> | null }[];
+    expect(h.at(-1)).toMatchObject({ tipo: 'NO_PROCEDE', datos: { motivo: 'No es <de> sistemas' } });
+    const correo = await db.selectFrom('correos_salida').selectAll().where('plantilla_codigo', '=', 'TICKET_CERRADO').executeTakeFirstOrThrow();
+    expect(correo.cuerpo_html).toContain('No procede');
+
+    // Es final: ni se vuelve a marcar ni admite comentarios.
+    expect((await admin.post(`/tickets/${id}/no-procede`, { motivo: 'otra', version: d.version })).status).toBe(409);
+    expect((await u1.form(`/tickets/${id}/comentarios`, { html: '<p>¿por qué?</p>' })).status).toBe(409);
   });
 });
 

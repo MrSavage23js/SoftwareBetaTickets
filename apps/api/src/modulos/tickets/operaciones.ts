@@ -9,6 +9,7 @@ import {
   PERMISOS,
   esquemaCerrar,
   esquemaMensaje,
+  esquemaNoProcede,
   esquemaPausar,
   esquemaReasignar,
   esquemaTicketCrear,
@@ -30,7 +31,7 @@ import { insertarAdjuntos, vincularEnLinea } from '../adjuntos/servicio';
 import { obtenerAjustes } from '../ajustes/servicio';
 import { nombreVisible, type UsuarioActual } from '../auth/contexto';
 import { CODIGOS_PLANTILLA, encolarCorreo } from '../correos/cola';
-import type { Variables } from '../correos/plantillas';
+import { escaparHtml, type Variables } from '../correos/plantillas';
 import { registrarEvento, TIPOS_EVENTO, type TipoEvento } from '../eventos/servicio';
 import { empresasDe, puedeVerTicket } from './acceso';
 import { anioActual, siguienteFolio } from './folio';
@@ -321,6 +322,8 @@ function mensajeParaSolicitante(tipo: TipoEvento, folio: string, u: UsuarioActua
       return `Tu ticket ${folio} se reasignó a otro técnico`;
     case TIPOS_EVENTO.CERRADO:
       return `Tu ticket ${folio} fue cerrado`;
+    case TIPOS_EVENTO.NO_PROCEDE:
+      return `Tu ticket ${folio} no procede${datos?.motivo ? `: ${String(datos.motivo)}` : ''}`;
     case TIPOS_EVENTO.REABIERTO:
       return `Tu ticket ${folio} se reabrió`;
     default:
@@ -472,6 +475,24 @@ export async function cerrar(u: UsuarioActual, id: number, entrada: unknown, arc
       await evento(c, u, TIPOS_EVENTO.CERRADO, { mensajeId, adjuntos: guardados.length, correoEncolado: encolado });
     }),
   );
+}
+
+/** Cierra un ticket abierto como "No procede". El motivo queda como resolución visible para el solicitante. */
+export async function noProcede(u: UsuarioActual, id: number, entrada: unknown) {
+  const d = validar(esquemaNoProcede, entrada);
+  const html = `<p><strong>No procede:</strong> ${escaparHtml(d.motivo)}</p>`;
+  await conTicket(u, id, 'noProcede', d.version, async (c) => {
+    const mensajeId = await guardarMensaje(c, u, 'RESOLUCION', html, []);
+    await actualizar(c, { estatus: c.estatusNuevo, cerrado_at: c.ahora, cerrado_por_id: u.id, pausado_at: null });
+    const { vars, solicitante } = await variablesTicket(c.tx, id);
+    const encolado = await encolarCorreo(c.tx, {
+      plantilla: CODIGOS_PLANTILLA.TICKET_CERRADO,
+      para: [solicitante],
+      variables: { ...vars, tecnico: nombreVisible(u), fecha_cierre: fechaLarga(c.ahora), resolucion_html: html },
+      ticketId: id,
+    });
+    await evento(c, u, TIPOS_EVENTO.NO_PROCEDE, { motivo: d.motivo, mensajeId, correoEncolado: encolado });
+  });
 }
 
 export async function reabrir(u: UsuarioActual, id: number, entrada: unknown) {

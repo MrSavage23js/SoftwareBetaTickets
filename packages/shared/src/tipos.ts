@@ -187,6 +187,7 @@ export interface ContadoresEstatus {
   EN_PROCESO: number;
   PAUSADO: number;
   COMPLETADO: number;
+  NO_PROCEDE: number;
 }
 
 export interface TicketCreado {

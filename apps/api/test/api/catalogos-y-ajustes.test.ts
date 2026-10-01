@@ -13,7 +13,7 @@ afterAll(async () => {
 });
 
 describe('catálogos', () => {
-  it('datos iniciales: 17 empresas, 6 tipos, 7 módulos y 4 estatus', async () => {
+  it('datos iniciales: 17 empresas, 6 tipos, 7 módulos y 5 estatus', async () => {
     const r = await admin.get('/catalogos');
     expect(r.body.empresas).toHaveLength(17);
     expect(r.body.tipos.map((t: { nombre: string }) => t.nombre)).toEqual([
@@ -25,7 +25,7 @@ describe('catálogos', () => {
       'Mantenimiento a equipo o instalación',
     ]);
     expect(r.body.modulos).toHaveLength(7);
-    expect(r.body.estatus.map((e: { codigo: string }) => e.codigo)).toEqual(['PENDIENTE', 'EN_PROCESO', 'PAUSADO', 'COMPLETADO']);
+    expect(r.body.estatus.map((e: { codigo: string }) => e.codigo)).toEqual(['PENDIENTE', 'EN_PROCESO', 'PAUSADO', 'COMPLETADO', 'NO_PROCEDE']);
   });
 
   it('el solicitante solo ve sus empresas asignadas', async () => {

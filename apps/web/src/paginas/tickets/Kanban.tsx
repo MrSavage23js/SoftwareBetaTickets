@@ -6,7 +6,7 @@ import { Avatar, EstadoError } from '../../componentes/ui';
 import { BadgeUrgencia, franja } from '../../componentes/Urgencia';
 import { claves, type Filtros, type ListaTickets } from './datos';
 
-const COLOR: Record<Estatus, string> = { PENDIENTE: '#B36B00', EN_PROCESO: '#2563B0', PAUSADO: '#64748B', COMPLETADO: '#1F8A55' };
+const COLOR: Record<Estatus, string> = { PENDIENTE: '#B36B00', EN_PROCESO: '#2563B0', PAUSADO: '#64748B', COMPLETADO: '#1F8A55', NO_PROCEDE: '#B42318' };
 const POR_COLUMNA = 50;
 
 function Columna({ estatus, filtros, abrir }: { estatus: Estatus; filtros: Filtros; abrir: (id: number) => void }) {

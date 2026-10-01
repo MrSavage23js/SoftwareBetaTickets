@@ -223,7 +223,7 @@ describe('lista, búsqueda y filtros', () => {
 
     const r = await admin.get('/tickets?estatus=PENDIENTE');
     expect(r.body.total).toBe(2);
-    expect(r.body.contadores).toEqual({ total: 3, PENDIENTE: 2, EN_PROCESO: 1, PAUSADO: 0, COMPLETADO: 0 });
+    expect(r.body.contadores).toEqual({ total: 3, PENDIENTE: 2, EN_PROCESO: 1, PAUSADO: 0, COMPLETADO: 0, NO_PROCEDE: 0 });
     expect((await admin.get(`/tickets?tipoId=${f.tipoCG}`)).body.total).toBe(1);
     expect((await admin.get(`/tickets?departamentoId=${f.deptoSIS}`)).body.total).toBe(2);
     expect((await admin.get(`/tickets?departamentoId=${f.deptoRH}`)).body.datos[0].departamento.nombre).toBe('Recursos Humanos');

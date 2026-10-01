@@ -6,7 +6,7 @@ import { env } from '../../config/env';
 
 export type Variables = Record<string, string | number | null | undefined>;
 
-const escaparHtml = (s: string) =>
+export const escaparHtml = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
 function valor(vars: Variables, nombre: string): string {

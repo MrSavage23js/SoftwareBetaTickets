@@ -90,10 +90,20 @@ describe('máquina de estados', () => {
   });
 
   it('acciones del técnico asignado en cada estatus', () => {
-    expect(accionesDisponibles(ticket('PENDIENTE'), admin)).toEqual(['tomar']);
-    expect(accionesDisponibles(ticket('EN_PROCESO', admin.id), admin)).toEqual(['pausar', 'reasignar', 'responder', 'cerrar']);
-    expect(accionesDisponibles(ticket('PAUSADO', admin.id), admin)).toEqual(['reanudar', 'reasignar', 'responder', 'cerrar']);
+    expect(accionesDisponibles(ticket('PENDIENTE'), admin)).toEqual(['tomar', 'noProcede']);
+    expect(accionesDisponibles(ticket('EN_PROCESO', admin.id), admin)).toEqual(['pausar', 'reasignar', 'responder', 'cerrar', 'noProcede']);
+    expect(accionesDisponibles(ticket('PAUSADO', admin.id), admin)).toEqual(['reanudar', 'reasignar', 'responder', 'cerrar', 'noProcede']);
     expect(accionesDisponibles(ticket('COMPLETADO', admin.id), admin)).toEqual([]);
+    expect(accionesDisponibles(ticket('NO_PROCEDE', admin.id), conReabrir)).toEqual([]);
+  });
+
+  it('no procede: desde cualquier estatus abierto, cualquier administrador, sin vuelta atrás', () => {
+    for (const e of ['PENDIENTE', 'EN_PROCESO', 'PAUSADO'] as const) {
+      expect(validarAccion('noProcede', ticket(e, e === 'PENDIENTE' ? null : admin.id), otroAdmin)).toEqual({ ok: true, estatusNuevo: 'NO_PROCEDE' });
+    }
+    expect(validarAccion('noProcede', ticket('PENDIENTE'), usuario)).toMatchObject({ codigo: 'SIN_PERMISO' });
+    expect(validarAccion('noProcede', ticket('COMPLETADO', admin.id), admin)).toMatchObject({ codigo: 'ESTATUS_INVALIDO' });
+    expect(validarAccion('comentar', ticket('NO_PROCEDE'), usuario)).toMatchObject({ codigo: 'ESTATUS_INVALIDO' });
   });
 
   it('acepta permisos como arreglo además de Set', () => {
@@ -108,5 +118,6 @@ describe('barra de avance', () => {
     expect(pasosCompletados({ ...base, tomadoAt: '2026-01-02', estatus: 'EN_PROCESO' })).toBe(2);
     expect(pasosCompletados({ ...base, tomadoAt: '2026-01-02', primeraRespuestaAt: '2026-01-03', estatus: 'PAUSADO' })).toBe(3);
     expect(pasosCompletados({ ...base, cerradoAt: '2026-01-04', estatus: 'COMPLETADO' })).toBe(4);
+    expect(pasosCompletados({ ...base, cerradoAt: '2026-01-04', estatus: 'NO_PROCEDE' })).toBe(4);
   });
 });

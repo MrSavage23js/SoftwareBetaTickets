@@ -202,6 +202,7 @@ export const esquemaMensaje = z.object({
 });
 
 export const esquemaPausar = z.object({ motivo: texto('El motivo', 500), version: z.coerce.number().int().min(0) });
+export const esquemaNoProcede = z.object({ motivo: texto('El motivo', 1000), version: z.coerce.number().int().min(0) });
 export const esquemaVersion = z.object({ version: z.coerce.number().int().min(0) });
 export const esquemaReasignar = z.object({ asignadoAId: idEntero, version: z.coerce.number().int().min(0) });
 export const esquemaCerrar = z.object({

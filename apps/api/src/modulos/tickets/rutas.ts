@@ -66,6 +66,10 @@ rutasTickets.post('/:id/reasignar', async (req, res) => {
   await op.reasignar(actor(req), idDeRuta(req.params.id), req.body);
   res.status(204).end();
 });
+rutasTickets.post('/:id/no-procede', async (req, res) => {
+  await op.noProcede(actor(req), idDeRuta(req.params.id), req.body);
+  res.status(204).end();
+});
 rutasTickets.post('/:id/reabrir', async (req, res) => {
   await op.reabrir(actor(req), idDeRuta(req.params.id), req.body);
   res.status(204).end();

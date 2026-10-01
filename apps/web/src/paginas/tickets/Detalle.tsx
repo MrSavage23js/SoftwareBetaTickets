@@ -10,7 +10,7 @@ import { fmtFechaHora } from '../../lib/formato';
 import { useSesion } from '../../sesion/Sesion';
 import { useDetalle, useHistorial, useRefrescarTickets, useTecnicos } from './datos';
 
-type Ventana = 'pausar' | 'reasignar' | 'cerrar' | null;
+type Ventana = 'pausar' | 'reasignar' | 'cerrar' | 'noProcede' | null;
 
 export function Detalle({ id }: { id: number }) {
   const q = useDetalle(id);
@@ -28,6 +28,7 @@ function Contenido({ t }: { t: TicketDetalle }) {
   const soporte = puede(PERMISOS.TICKETS_VER_TODOS);
   const a = new Set(t.acciones);
   const pasos = pasosCompletados(t);
+  const cerrado = INFO_ESTATUS[t.estatus].esFinal;
 
   async function ejecutar(accion: string, cuerpo: unknown, exito: string) {
     setOcupado(true);
@@ -68,6 +69,7 @@ function Contenido({ t }: { t: TicketDetalle }) {
           {a.has('reanudar') && botonAccion('play', 'Reanudar', () => void ejecutar('reanudar', { version: t.version }, 'Ticket reanudado.'))}
           {a.has('reasignar') && botonAccion('swap', 'Reasignar', () => setVentana('reasignar'))}
           {a.has('cerrar') && botonAccion('check', 'Cerrar ticket', () => setVentana('cerrar'), true)}
+          {a.has('noProcede') && botonAccion('x', 'No procede', () => setVentana('noProcede'))}
           {a.has('reabrir') && botonAccion('reopen', 'Reabrir', () => void ejecutar('reabrir', { version: t.version }, 'Ticket reabierto.'))}
           {!soporte && <EsperaSolicitante t={t} />}
         </div>
@@ -142,7 +144,7 @@ function Contenido({ t }: { t: TicketDetalle }) {
       ) : (
         <div className="box">
           <h3>Conversación</h3>
-          {!soporte && t.estatus !== 'COMPLETADO' && (
+          {!soporte && !cerrado && (
             <div className="notice gray">
               <Icono n="mail" t="l" />
               <span>Cuando soporte cierre tu ticket recibirás el aviso en tu correo Outlook. Las respuestas las verás aquí.</span>
@@ -161,7 +163,7 @@ function Contenido({ t }: { t: TicketDetalle }) {
         </div>
       )}
 
-      {soporte && t.asignado && t.asignado.id !== usuario?.id && t.estatus !== 'COMPLETADO' && (
+      {soporte && t.asignado && t.asignado.id !== usuario?.id && !cerrado && (
         <div className="notice gray">
           <Icono n="user" t="l" />
           <span>Este ticket lo atiende {t.asignado.nombre}. Solo el técnico asignado puede responder, pausar o cerrarlo.</span>
@@ -173,6 +175,7 @@ function Contenido({ t }: { t: TicketDetalle }) {
       {ventana === 'pausar' && <VentanaPausar t={t} alCerrar={() => setVentana(null)} ejecutar={ejecutar} />}
       {ventana === 'reasignar' && <VentanaReasignar t={t} alCerrar={() => setVentana(null)} ejecutar={ejecutar} />}
       {ventana === 'cerrar' && <VentanaCerrar t={t} alCerrar={() => setVentana(null)} />}
+      {ventana === 'noProcede' && <VentanaNoProcede t={t} alCerrar={() => setVentana(null)} ejecutar={ejecutar} />}
     </div>
   );
 }
@@ -192,6 +195,7 @@ function EsperaSolicitante({ t }: { t: TicketDetalle }) {
     EN_PROCESO: ['monitor', `${t.asignado?.nombre ?? 'Soporte'} está atendiendo tu ticket`],
     PAUSADO: ['pause', 'Soporte pausó tu ticket; puede necesitar más información'],
     COMPLETADO: ['check', `Cerrado ${t.cerradoAt ? fmtFechaHora(t.cerradoAt) : ''}`],
+    NO_PROCEDE: ['x', `No procede · ${t.cerradoAt ? fmtFechaHora(t.cerradoAt) : ''}`],
   };
   const [icono, texto] = textos[t.estatus] ?? ['clock', ''];
   return (
@@ -326,6 +330,48 @@ function VentanaPausar({ t, alCerrar, ejecutar }: { t: TicketDetalle; alCerrar: 
   );
 }
 
+function VentanaNoProcede({ t, alCerrar, ejecutar }: { t: TicketDetalle; alCerrar: () => void; ejecutar: Ejecutar }) {
+  const [motivo, setMotivo] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [ocupado, setOcupado] = useState(false);
+  return (
+    <Modal
+      titulo={`No procede ${t.folio}`}
+      icono="x"
+      tamano="chica"
+      alCerrar={alCerrar}
+      bloqueado={ocupado}
+      pie={
+        <div className="b">
+          <button className="btn" onClick={alCerrar} disabled={ocupado}>
+            Cancelar
+          </button>
+          <button
+            className="btn p"
+            disabled={ocupado}
+            onClick={async () => {
+              if (!motivo.trim()) return setError('Escribe por qué no procede.');
+              setOcupado(true);
+              if (await ejecutar('no-procede', { motivo: motivo.trim(), version: t.version }, 'Ticket marcado como no procede.')) alCerrar();
+              setOcupado(false);
+            }}
+          >
+            Marcar como no procede
+          </button>
+        </div>
+      }
+    >
+      <div>
+        <label className="lbl" htmlFor="motivo-no-procede">
+          Motivo
+        </label>
+        <textarea id="motivo-no-procede" className="inp" rows={3} maxLength={1000} value={motivo} onChange={(e) => setMotivo(e.target.value)} placeholder="Ej. La solicitud no corresponde a soporte de sistemas" aria-invalid={!!error} />
+        {error ? <div className="err">{error}</div> : <div className="help">El ticket se cierra y el solicitante recibe el motivo por correo.</div>}
+      </div>
+    </Modal>
+  );
+}
+
 function VentanaReasignar({ t, alCerrar, ejecutar }: { t: TicketDetalle; alCerrar: () => void; ejecutar: Ejecutar }) {
   const tecnicos = useTecnicos();
   const [destino, setDestino] = useState('');
@@ -455,6 +501,7 @@ const TEXTO_EVENTO: Record<string, [NombreIcono, (e: EventoInfo) => string]> = {
   COMENTADO: ['send', () => 'comentó'],
   ADJUNTO_AGREGADO: ['clip', () => 'adjuntó archivos'],
   CERRADO: ['check', () => 'cerró el ticket'],
+  NO_PROCEDE: ['x', (e) => `marcó el ticket como no procede${e.datos?.motivo ? `: “${String(e.datos.motivo)}”` : ''}`],
   REABIERTO: ['reopen', () => 'reabrió el ticket'],
   CORREO_FALLIDO: ['alert', (e) => `no se pudo enviar el correo "${String(e.datos?.asunto ?? '')}"`],
 };

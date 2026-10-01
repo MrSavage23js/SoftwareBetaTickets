@@ -4,6 +4,8 @@ import { ESTATUS, URGENCIAS_DESC, type PanelResumen, type Urgencia } from '@mesa
 import { db } from '../../db/conexion';
 import { inicioDiaLocal, hoyLocal, lunesLocal } from '../../lib/fechas';
 
+const FINALES = [ESTATUS.COMPLETADO, ESTATUS.NO_PROCEDE];
+
 export async function resumenPanel(ahora = new Date()): Promise<PanelResumen> {
   const inicioHoy = inicioDiaLocal(hoyLocal(ahora));
   const inicioSemana = inicioDiaLocal(lunesLocal(ahora));
@@ -28,7 +30,7 @@ export async function resumenPanel(ahora = new Date()): Promise<PanelResumen> {
       .execute(),
     db
       .selectFrom('departamentos as d')
-      .leftJoin('tickets as t', (j) => j.onRef('t.departamento_id', '=', 'd.id').on('t.estatus', '!=', ESTATUS.COMPLETADO))
+      .leftJoin('tickets as t', (j) => j.onRef('t.departamento_id', '=', 'd.id').on('t.estatus', 'not in', FINALES))
       .select(['d.id', 'd.nombre', 'd.codigo', sql<number>`COUNT(t.id)`.as('n')])
       .where((eb) => eb.or([eb('d.activo', '=', 1), eb('t.id', 'is not', null)]))
       .groupBy(['d.id', 'd.nombre', 'd.codigo'])
@@ -38,7 +40,7 @@ export async function resumenPanel(ahora = new Date()): Promise<PanelResumen> {
     db
       .selectFrom('tickets')
       .select(['urgencia', sql<number>`COUNT(*)`.as('n')])
-      .where('estatus', '!=', ESTATUS.COMPLETADO)
+      .where('estatus', 'not in', FINALES)
       .groupBy('urgencia')
       .execute(),
   ]);

@@ -10,6 +10,7 @@ export const ACCIONES = [
   'reasignar',
   'responder',
   'cerrar',
+  'noProcede',
   'reabrir',
   'comentar',
 ] as const;
@@ -63,6 +64,8 @@ export const REGLAS: Record<Accion, Regla> = {
   reasignar: { desde: ATENDIENDO, hacia: null, permiso: PERMISOS.TICKETS_REASIGNAR, quien: 'cualquiera' },
   responder: { desde: ATENDIENDO, hacia: null, permiso: PERMISOS.TICKETS_RESPONDER, quien: 'asignado' },
   cerrar: { desde: ATENDIENDO, hacia: ESTATUS.COMPLETADO, permiso: PERMISOS.TICKETS_CERRAR, quien: 'asignado' },
+  // Rechazo administrativo: cualquier ticket abierto, aunque nadie lo haya tomado. Es final (no se reabre).
+  noProcede: { desde: ABIERTOS, hacia: ESTATUS.NO_PROCEDE, permiso: PERMISOS.TICKETS_CERRAR, quien: 'cualquiera' },
   reabrir: {
     desde: [ESTATUS.COMPLETADO],
     hacia: ESTATUS.EN_PROCESO,
@@ -89,10 +92,11 @@ const MENSAJE_ESTATUS: Record<Accion, string> = {
   pausar: 'Solo se pueden pausar tickets en proceso.',
   reanudar: 'Solo se pueden reanudar tickets pausados.',
   reasignar: 'Solo se pueden reasignar tickets en proceso o pausados.',
-  responder: 'Toma el ticket para poder responder. Los tickets completados no admiten respuestas.',
+  responder: 'Toma el ticket para poder responder. Los tickets cerrados no admiten respuestas.',
   cerrar: 'Solo se pueden cerrar tickets en proceso o pausados.',
+  noProcede: 'El ticket ya está cerrado.',
   reabrir: 'Solo se pueden reabrir tickets completados.',
-  comentar: 'El ticket ya está completado y no admite más comentarios.',
+  comentar: 'El ticket ya está cerrado y no admite más comentarios.',
 };
 
 export function validarAccion(accion: Accion, t: TicketParaReglas, actor: ActorParaReglas): ResultadoAccion {
