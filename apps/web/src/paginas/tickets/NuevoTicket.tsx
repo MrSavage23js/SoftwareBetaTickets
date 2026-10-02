@@ -27,6 +27,7 @@ export function NuevoTicket({ alCerrar, alCrear }: { alCerrar: () => void; alCre
   const [html, setHtml] = useState('');
   const [archivos, setArchivos] = useState<File[]>([]);
   const [copias, setCopias] = useState<Contacto[]>([]);
+  const [copiaPendiente, setCopiaPendiente] = useState('');
   const [aNombreDe, setANombreDe] = useState<Contacto[]>([]);
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
@@ -52,6 +53,7 @@ export function NuevoTicket({ alCerrar, alCrear }: { alCerrar: () => void; alCre
     if (tipo?.requiereConcepto && !concepto.trim()) e.concepto = 'Escribe el concepto.';
     if (tipo?.requiereFolios && !foliosRef.trim()) e.foliosRef = 'Escribe el folio o folios relacionados.';
     if (!html) e.descripcionHtml = 'Escribe la descripción detallada.';
+    if (copiaPendiente) e.copias = `"${copiaPendiente}" no es un correo válido. Corrígelo o bórralo.`;
     return e;
   }
 
@@ -291,10 +293,16 @@ export function NuevoTicket({ alCerrar, alCrear }: { alCerrar: () => void; alCre
 
               <div>
                 <label className="lbl" htmlFor="nt-cc">
-                  Enviar copia a
+                  Enviar copia a (opcional)
                 </label>
-                <SelectorContactos id="nt-cc" valor={copias} alCambiar={setCopias} />
-                {errores.copias ? error('copias') : <div className="help">Puedes seleccionar uno o varios contactos, o escribir un correo.</div>}
+                <SelectorContactos id="nt-cc" valor={copias} alCambiar={setCopias} alPendiente={setCopiaPendiente} />
+                {errores.copias ? (
+                  error('copias')
+                ) : (
+                  <div className="help">
+                    El equipo de sistemas siempre recibe el ticket automáticamente. Puedes elegir contactos o escribir uno o varios correos separados por coma.
+                  </div>
+                )}
               </div>
             </>
           )}

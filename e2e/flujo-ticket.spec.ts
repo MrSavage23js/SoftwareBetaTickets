@@ -93,3 +93,36 @@ test('ciclo de vida completo de un ticket', async ({ page }) => {
   // Completado: ya no hay caja para comentar.
   await expect(detalle.getByLabel('Agregar un comentario')).toHaveCount(0);
 });
+
+test('"Enviar copia a" acepta varios correos separados por coma y no deja pasar uno mal escrito', async ({
+  page,
+}) => {
+  await iniciarSesion(page, 'usuario_uno');
+  await page.getByRole('button', { name: 'Nuevo ticket' }).first().click();
+  const ventana = page.getByRole('dialog', { name: 'Nuevo ticket de soporte' });
+  await ventana.getByLabel('Tipo de solicitud').selectOption({ label: 'Cancelación' });
+  await ventana.getByLabel(/^Módulo/).selectOption({ label: 'Compras' });
+  await ventana.getByLabel(/^Concepto/).fill('CARTA PORTE');
+  await ventana.getByLabel(/^Folio\(s\)/).fill('B999');
+  await escribirEnEditor(page, 'nt-desc', 'Prueba de copias.');
+  await expect(
+    ventana.getByText('El equipo de sistemas siempre recibe el ticket automáticamente.', { exact: false }),
+  ).toBeVisible();
+
+  // Un correo mal escrito se queda en el cuadro y bloquea el envío.
+  const copia = ventana.getByLabel('Enviar copia a (opcional)');
+  await copia.fill('uno@prueba.local, dos-sin-arroba');
+  await ventana.getByRole('button', { name: 'Crear ticket' }).click();
+  await expect(
+    ventana.getByText('"dos-sin-arroba" no es un correo válido. Corrígelo o bórralo.'),
+  ).toBeVisible();
+  await expect(page.getByRole('dialog', { name: 'Ticket creado' })).toBeHidden();
+
+  // Corregido (y sin pulsar Enter): se agrega al salir del cuadro y el ticket se crea con ambas copias.
+  await copia.fill('dos@prueba.local');
+  await ventana.getByRole('button', { name: 'Crear ticket' }).click();
+  const confirmacion = page.getByRole('dialog', { name: 'Ticket creado' });
+  await expect(confirmacion.getByText(/y a los contactos en copia/)).toBeVisible();
+  await confirmacion.getByRole('button', { name: 'Ver ticket' }).click();
+  await expect(page.getByText('En copia: uno@prueba.local, dos@prueba.local')).toBeVisible();
+});

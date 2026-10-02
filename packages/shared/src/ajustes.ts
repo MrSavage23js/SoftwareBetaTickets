@@ -2,6 +2,13 @@
 // el tipo, los límites y la descripción, para validar igual en servidor y en formulario.
 import { z } from 'zod';
 
+/** Separa una lista de correos escrita con comas o punto y coma (como en Outlook). */
+export const listaCorreos = (s: string) =>
+  s
+    .split(/[,;]/)
+    .map((c) => c.trim())
+    .filter(Boolean);
+
 export const DEFINICION_AJUSTES = {
   'sesion.inactividad_min': {
     descripcion: 'Minutos sin actividad antes de cerrar la sesión',
@@ -53,8 +60,11 @@ export const DEFINICION_AJUSTES = {
     esquema: z.boolean(),
   },
   'correo.aviso_soporte_destino': {
-    descripcion: 'Correo del buzón de soporte que recibe el aviso de ticket nuevo',
-    esquema: z.union([z.literal(''), z.email('Correo inválido')]),
+    descripcion: 'Correos que reciben el aviso de ticket nuevo (varios separados por coma)',
+    esquema: z
+      .string()
+      .transform((s) => listaCorreos(s).join(', '))
+      .refine((s) => listaCorreos(s).every((c) => z.email().safeParse(c).success), 'Correo inválido'),
   },
   'kanban.tarjetas_por_columna': {
     descripcion: 'Tarjetas visibles por columna en el Kanban antes de "Ver más"',

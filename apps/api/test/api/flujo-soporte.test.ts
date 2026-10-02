@@ -106,6 +106,24 @@ describe('flujo completo', () => {
     const r = await u1.form('/tickets', ticketValido(f));
     expect(r.body.correosEncolados).toBe(2);
   });
+
+  it('el aviso a soporte admite varios correos separados por coma', async () => {
+    const r = await admin.put('/ajustes', { 'correo.aviso_soporte_activo': true, 'correo.aviso_soporte_destino': ' Uno@prueba.local ; dos@prueba.local,' });
+    expect(r.status).toBe(200);
+    const { id: nuevo, folio } = (await u1.form('/tickets', { ...ticketValido(f), copias: [{ email: 'externo@prueba.local' }] })).body;
+    const aviso = await db
+      .selectFrom('correos_salida')
+      .select(['para', 'asunto', 'cuerpo_html'])
+      .where('plantilla_codigo', '=', 'TICKET_NUEVO_SOPORTE')
+      .where('ticket_id', '=', nuevo)
+      .executeTakeFirstOrThrow();
+    const para = (typeof aviso.para === 'string' ? JSON.parse(aviso.para) : aviso.para) as { email: string }[];
+    expect(para.map((d) => d.email)).toEqual(['uno@prueba.local', 'dos@prueba.local']);
+    // Asunto con folio y urgencia; el cuerpo dice quién lo reportó (con su correo) y a quién se envió copia.
+    expect(aviso.asunto).toMatch(new RegExp(`^Nuevo ticket: ${folio} — Urgencia \\S+`));
+    expect(aviso.cuerpo_html).toContain('usuario_uno@prueba.local');
+    expect(aviso.cuerpo_html).toContain('En copia: externo@prueba.local');
+  });
 });
 
 describe('no procede', () => {

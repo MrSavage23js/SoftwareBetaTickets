@@ -12,8 +12,27 @@ export interface Contacto {
 
 const CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export function SelectorContactos({ id, valor, alCambiar }: { id: string; valor: Contacto[]; alCambiar: (c: Contacto[]) => void }) {
-  const [texto, setTexto] = useState('');
+/**
+ * Con `alPendiente` el campo acepta varios correos separados por coma o punto y coma (pegados o escritos)
+ * y convierte en contacto el correo que quede escrito al salir del campo. Lo que no sea un correo válido
+ * se queda en el cuadro y se informa con `alPendiente`, para que el formulario no lo pierda en silencio.
+ */
+export function SelectorContactos({
+  id,
+  valor,
+  alCambiar,
+  alPendiente,
+}: {
+  id: string;
+  valor: Contacto[];
+  alCambiar: (c: Contacto[]) => void;
+  alPendiente?: (texto: string) => void;
+}) {
+  const [texto, setTextoInterno] = useState('');
+  const setTexto = (t: string) => {
+    setTextoInterno(t);
+    alPendiente?.(t.trim());
+  };
   const [busqueda, setBusqueda] = useState('');
   const [abierto, setAbierto] = useState(false);
   const [indice, setIndice] = useState(0);
@@ -46,6 +65,19 @@ export function SelectorContactos({ id, valor, alCambiar }: { id: string; valor:
     setIndice(0);
   };
 
+  /** Pasa a contactos los correos válidos del texto; deja en el cuadro lo que no lo sea. */
+  const separarCorreos = (t: string) => {
+    const nuevos: Contacto[] = [];
+    const resto: string[] = [];
+    for (const parte of t.split(/[,;]/).map((x) => x.trim()).filter(Boolean)) {
+      const email = parte.toLowerCase();
+      if (!CORREO.test(parte)) resto.push(parte);
+      else if (!elegidos.has(email) && !nuevos.some((n) => n.email === email)) nuevos.push({ email });
+    }
+    if (nuevos.length) alCambiar([...valor, ...nuevos]);
+    setTexto(resto.join(', '));
+  };
+
   return (
     <div className="combo">
       {valor.length > 0 && (
@@ -71,12 +103,16 @@ export function SelectorContactos({ id, valor, alCambiar }: { id: string; valor:
         placeholder="Escribe un nombre o un correo…"
         value={texto}
         onChange={(e) => {
-          setTexto(e.target.value);
+          if (alPendiente && /[,;]/.test(e.target.value)) separarCorreos(e.target.value);
+          else setTexto(e.target.value);
           setAbierto(true);
           setIndice(0);
         }}
         onFocus={() => setAbierto(true)}
-        onBlur={() => window.setTimeout(() => setAbierto(false), 150)}
+        onBlur={() => {
+          if (alPendiente && texto.trim()) separarCorreos(texto);
+          window.setTimeout(() => setAbierto(false), 150);
+        }}
         onKeyDown={(e) => {
           if (e.key === 'ArrowDown') {
             e.preventDefault();

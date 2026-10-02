@@ -7,6 +7,7 @@ import * as m0003 from './migraciones/0003_folio_departamento';
 import * as m0004 from './migraciones/0004_urgencia_panel_notificaciones';
 import * as m0005 from './migraciones/0005_estatus_no_procede';
 import * as m0006 from './migraciones/0006_nombre_sistema_de_tickets';
+import * as m0007 from './migraciones/0007_aviso_soporte_datos';
 
 // Lista explícita (no se lee la carpeta) para que funcione igual empaquetado en dist/.
 // Para agregar una migración: crea 0002_algo.ts e impórtala aquí.
@@ -17,6 +18,7 @@ const MIGRACIONES: Record<string, Migration> = {
   '0004_urgencia_panel_notificaciones': m0004,
   '0005_estatus_no_procede': m0005,
   '0006_nombre_sistema_de_tickets': m0006,
+  '0007_aviso_soporte_datos': m0007,
 };
 
 const proveedor: MigrationProvider = { getMigrations: async () => MIGRACIONES };

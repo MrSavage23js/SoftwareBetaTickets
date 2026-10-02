@@ -14,6 +14,7 @@ import {
   esquemaReasignar,
   esquemaTicketCrear,
   esquemaVersion,
+  listaCorreos,
   validarAccion,
   type Accion,
   type Estatus,
@@ -82,6 +83,7 @@ async function variablesTicket(tx: Tx, ticketId: number): Promise<{ vars: Variab
       folios: t.folios_ref,
       estatus: INFO_ESTATUS[t.estatus as Estatus]?.nombre ?? t.estatus,
       solicitante: nombre,
+      solicitante_email: t.email,
       fecha: fechaLarga(t.creado_at),
       url_ticket: urlTicket(t.id),
       descripcion_html: t.descripcion_html,
@@ -211,8 +213,8 @@ export async function crearTicket(u: UsuarioActual, entrada: unknown, archivos: 
         if (
           await encolarCorreo(tx, {
             plantilla: CODIGOS_PLANTILLA.TICKET_NUEVO_SOPORTE,
-            para: [{ email: ajustes['correo.aviso_soporte_destino'] }],
-            variables: vars,
+            para: listaCorreos(ajustes['correo.aviso_soporte_destino']).map((email) => ({ email })),
+            variables: { ...vars, copias: unicas.map((c) => c.email).join(', ') },
             ticketId,
           })
         )

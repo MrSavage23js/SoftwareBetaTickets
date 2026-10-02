@@ -12,6 +12,7 @@ const VARIABLES_TICKET = [
   { nombre: 'folios', descripcion: 'Folio(s) de referencia (o "—")' },
   { nombre: 'estatus', descripcion: 'Estatus actual' },
   { nombre: 'solicitante', descripcion: 'Nombre del solicitante' },
+  { nombre: 'solicitante_email', descripcion: 'Correo del solicitante' },
   { nombre: 'fecha', descripcion: 'Fecha y hora de creación' },
   { nombre: 'url_ticket', descripcion: 'Enlace directo al ticket' },
   { nombre: 'empresa_sistema', descripcion: 'Nombre de la organización (APP_NOMBRE_EMPRESA)' },
@@ -92,11 +93,16 @@ export const PLANTILLAS = [
     codigo: 'TICKET_NUEVO_SOPORTE',
     nombre: 'Aviso de ticket nuevo a soporte',
     descripcion: 'Se envía al buzón de soporte cuando se crea un ticket (solo si el ajuste "correo.aviso_soporte_activo" está encendido).',
-    asunto: '[{{folio}}] Nuevo ticket · {{empresa}} · {{tipo}}',
-    variables: [...VARIABLES_TICKET, { nombre: 'descripcion_html', descripcion: 'Descripción (HTML; usar con triple llave)' }],
+    asunto: 'Nuevo ticket: {{folio}} — Urgencia {{urgencia}}',
+    variables: [
+      ...VARIABLES_TICKET,
+      { nombre: 'copias', descripcion: 'Correos que recibieron copia (o "—")' },
+      { nombre: 'descripcion_html', descripcion: 'Descripción (HTML; usar con triple llave)' },
+    ],
     cuerpoHtml: envoltura(
       'Nuevo ticket pendiente',
-      `        <p style="margin:0 0 16px;color:#17222D;font-size:15px">{{solicitante}} creó un ticket nuevo.</p>${tablaDatos}
+      `        <p style="margin:0 0 16px;color:#17222D;font-size:15px">{{solicitante}} ({{solicitante_email}}) creó un ticket nuevo.</p>
+        <p style="margin:0 0 16px;color:#4A5966;font-size:14px">En copia: {{copias}}</p>${tablaDatos}
         <div style="margin:16px 0 0;padding:14px 16px;background:#FAFBFC;border:1px solid #DDE3E9;border-radius:8px;color:#17222D;font-size:14px">{{{descripcion_html}}}</div>${boton}`,
     ),
   },
