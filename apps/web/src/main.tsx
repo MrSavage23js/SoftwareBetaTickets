@@ -19,6 +19,13 @@ import { Tickets } from './paginas/tickets/Tickets';
 import { Usuarios } from './paginas/Usuarios';
 import { ProveedorSesion } from './sesion/Sesion';
 
+// Instalable como aplicación (PWA). Solo en la compilación: en desarrollo Vite recarga los módulos por su cuenta.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+  });
+}
+
 const clienteConsultas = new QueryClient({
   defaultOptions: {
     queries: {

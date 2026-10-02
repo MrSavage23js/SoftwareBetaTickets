@@ -1,0 +1,17 @@
+{
+  "name": "Sistema de Tickets - Grupo Aramo",
+  "short_name": "Tickets Aramo",
+  "description": "Sistema interno de mesa de ayuda de Grupo Aramo",
+  "lang": "es-MX",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#028183",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

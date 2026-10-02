@@ -8,7 +8,7 @@ Sistema de tickets de soporte. Tiene dos vistas: la del **solicitante** (Mis tic
 | `DECISIONES.md` | Supuestos, decisiones técnicas y preguntas abiertas (`CONFIRMAR`) |
 | `docs/MODELO_DATOS.md` | Tablas, relaciones e índices |
 | `docs/EXTENDER.md` | Cómo agregar tipos, módulos, empresas, campos, estatus, roles y plantillas |
-| `docs/DESPLIEGUE.md` | Instalación en el servidor (Windows o Linux) |
+| `docs/DESPLIEGUE.md` | Instalación en el servidor (Windows, Linux o Render) |
 | `docs/CORREO_M365.md` | Qué pedirle al administrador de Microsoft 365 |
 | `docs/SEGURIDAD.md` | Controles de seguridad y **lista obligatoria antes de publicar** |
 | `CHECKLIST_QA.md` | Pruebas manuales antes de presentar |
