@@ -2,6 +2,7 @@
 import { createContext, useCallback, useContext, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { INFO_ESTATUS, type Estatus } from '@mesa/shared';
 import { mensajeDe } from '../api/cliente';
+import { menosMovimiento } from '../lib/movimiento';
 import { Icono, type NombreIcono } from './Icono';
 
 // ---------------------------------------------------------------- Estados
@@ -123,13 +124,24 @@ export function Modal({
   const id = useId();
   const caja = useRef<HTMLDivElement>(null);
   const anterior = useRef<Element | null>(null);
+  const [saliendo, setSaliendo] = useState(false);
+  const cerrando = useRef(false);
+  // Cerrar desde la propia ventana: primero se anima la salida y luego se desmonta.
+  // (Ref y no estado: el manejador de Esc se registra una sola vez y vería un valor viejo.)
+  const cerrar = () => {
+    if (cerrando.current) return;
+    cerrando.current = true;
+    if (menosMovimiento()) return alCerrar();
+    setSaliendo(true);
+    window.setTimeout(alCerrar, 150);
+  };
 
   useEffect(() => {
     anterior.current = document.activeElement;
     const primero = caja.current?.querySelector<HTMLElement>('input, select, textarea, [contenteditable], button:not([data-cerrar])');
     primero?.focus();
     const tecla = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !bloqueado) alCerrar();
+      if (e.key === 'Escape' && !bloqueado) cerrar();
     };
     document.addEventListener('keydown', tecla);
     const desbordamiento = document.body.style.overflow;
@@ -144,9 +156,9 @@ export function Modal({
 
   return (
     <div
-      className="overlay"
+      className={`overlay${saliendo ? ' saliendo' : ''}`}
       onMouseDown={(e) => {
-        if (e.target === e.currentTarget && !bloqueado) alCerrar();
+        if (e.target === e.currentTarget && !bloqueado) cerrar();
       }}
     >
       <div className={['modal', tamano].filter(Boolean).join(' ')} role="dialog" aria-modal="true" aria-labelledby={id} ref={caja}>
@@ -160,7 +172,7 @@ export function Modal({
             <h2 id={id}>{titulo}</h2>
             {insignia && <span className="badge">{insignia}</span>}
           </div>
-          <button className="icon-btn" style={{ border: 0, background: 'transparent' }} aria-label="Cerrar" onClick={alCerrar} disabled={bloqueado} data-cerrar>
+          <button className="icon-btn" style={{ border: 0, background: 'transparent' }} aria-label="Cerrar" onClick={cerrar} disabled={bloqueado} data-cerrar>
             <Icono n="x" t="l" />
           </button>
         </div>
@@ -232,13 +244,19 @@ interface Aviso {
   id: number;
   texto: string;
   tipo: 'ok' | 'mal';
+  saliendo?: boolean;
 }
 const ContextoAvisos = createContext<(texto: string, tipo?: 'ok' | 'mal') => void>(() => undefined);
 
 export function ProveedorAvisos({ children }: { children: ReactNode }) {
   const [avisos, setAvisos] = useState<Aviso[]>([]);
   const siguiente = useRef(1);
-  const quitar = useCallback((id: number) => setAvisos((a) => a.filter((x) => x.id !== id)), []);
+  const quitar = useCallback((id: number) => {
+    const fuera = () => setAvisos((a) => a.filter((x) => x.id !== id));
+    if (menosMovimiento()) return fuera();
+    setAvisos((a) => a.map((x) => (x.id === id ? { ...x, saliendo: true } : x)));
+    window.setTimeout(fuera, 180);
+  }, []);
   const avisar = useCallback(
     (texto: string, tipo: 'ok' | 'mal' = 'ok') => {
       const id = siguiente.current++;
@@ -252,7 +270,7 @@ export function ProveedorAvisos({ children }: { children: ReactNode }) {
       {children}
       <div className="avisos" aria-live="polite">
         {avisos.map((a) => (
-          <div key={a.id} className={`aviso ${a.tipo === 'mal' ? 'mal' : ''}`} role={a.tipo === 'mal' ? 'alert' : 'status'}>
+          <div key={a.id} className={['aviso', a.tipo === 'mal' && 'mal', a.saliendo && 'saliendo'].filter(Boolean).join(' ')} role={a.tipo === 'mal' ? 'alert' : 'status'}>
             <Icono n={a.tipo === 'mal' ? 'alert' : 'check'} />
             <span>{a.texto}</span>
             <button aria-label="Cerrar aviso" onClick={() => quitar(a.id)}>

@@ -86,10 +86,10 @@ export function Estructura() {
         </button>
         <div className="logo">
           <span className="mark">
-            <Icono n="ticket" t="l" />
+            <Icono n="vela" t="l" />
           </span>
           <span className="marca-txt">
-            Mesa de Ayuda<small>Soporte técnico</small>
+            Sistema de Tickets<small>Soporte técnico</small>
           </span>
           <Campana />
           <button
@@ -110,7 +110,7 @@ export function Estructura() {
               {MENU.filter((m) => m.permisos.some(puede)).map((m) => {
                 const texto = m.a === '/tickets' && !esSoporte ? 'Mis tickets' : m.texto;
                 return (
-                  <NavLink key={m.a} to={m.a} className="navbtn" title={iconos ? texto : undefined} onClick={() => setAbierto(false)}>
+                  <NavLink key={m.a} to={m.a} viewTransition className="navbtn" title={iconos ? texto : undefined} onClick={() => setAbierto(false)}>
                     <Icono n={m.icono} t="l" />
                     <span className="txt">{texto}</span>
                     {m.etiqueta && <span className="tag">{m.etiqueta}</span>}
@@ -154,7 +154,7 @@ export function RedireccionInicial() {
 export function Protegida({ permisos, children }: { permisos?: string[]; children: ReactNode }) {
   const { estado, puede, reintentar } = useSesion();
   const ubicacion = useLocation();
-  if (estado === 'cargando') return <Cargando texto="Cargando la Mesa de Ayuda…" />;
+  if (estado === 'cargando') return <Cargando texto="Cargando el sistema de tickets…" />;
   if (estado === 'sin-servidor') {
     return (
       <EstadoVacio icono="alert" titulo="No se pudo conectar con el servidor" texto="Revisa tu conexión o inténtalo en unos momentos.">

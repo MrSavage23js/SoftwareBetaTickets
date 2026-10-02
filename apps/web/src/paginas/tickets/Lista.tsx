@@ -1,15 +1,16 @@
-import { Fragment } from 'react';
+import { Fragment, useRef } from 'react';
 import type { UseQueryResult } from '@tanstack/react-query';
 import type { TicketResumen } from '@mesa/shared';
 import { Icono } from '../../componentes/Icono';
 import { BadgeUrgencia, franja } from '../../componentes/Urgencia';
 import { Avatar, EstadoError, EstadoVacio, Esqueletos, PillEstatus } from '../../componentes/ui';
 import { claveDia, etiquetaDia, fmtHora } from '../../lib/formato';
+import { useReacomodo } from '../../lib/movimiento';
 import type { ListaTickets as Datos } from './datos';
 
 export function TarjetaTicket({ t, sel, mostrarTecnico, alAbrir }: { t: TicketResumen; sel: boolean; mostrarTecnico: boolean; alAbrir: () => void }) {
   return (
-    <button className={`tk ${sel ? 'sel' : ''}`} onClick={alAbrir} aria-current={sel || undefined} style={franja(t.urgencia)}>
+    <button className={`tk ${sel ? 'sel' : ''}`} data-flip={t.id} onClick={alAbrir} aria-current={sel || undefined} style={franja(t.urgencia)}>
       <span className="row">
         <span className="folio">{t.folio}</span>
         <span style={{ display: 'flex', gap: 6 }}>
@@ -55,6 +56,8 @@ export function ListaTickets({
   alCrear?: () => void;
 }) {
   const { data, isPending, isError, error, refetch, isFetching } = consulta;
+  const lista = useRef<HTMLDivElement>(null);
+  useReacomodo(lista, data?.datos.map((t) => `${t.id}:${t.estatus}`).join() ?? '');
   if (isPending) return <Esqueletos n={4} />;
   if (isError && !data) return <EstadoError error={error} reintentar={() => void refetch()} />;
   if (!data.datos.length) {
@@ -76,7 +79,7 @@ export function ListaTickets({
   let diaAnterior = '';
   return (
     <>
-      <div className="list" aria-busy={isFetching}>
+      <div className="list" aria-busy={isFetching} ref={lista}>
         {isError && <div className="notice mal">No se pudo actualizar la lista; se muestran los últimos datos.</div>}
         {data.datos.map((t) => {
           const dia = claveDia(t.creadoAt);

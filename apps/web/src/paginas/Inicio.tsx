@@ -54,15 +54,23 @@ export function Inicio() {
       <div className="brandside">
         <div className="logo">
           <span className="mark">
-            <Icono n="ticket" t="l" />
+            <Icono n="vela" t="l" />
           </span>
-          Mesa de Ayuda
+          Sistema de Tickets
         </div>
         <div>
           <h2>Sistema de soporte técnico</h2>
           <p className="lede">Crea solicitudes, da seguimiento a tus tickets y recibe los avisos en tu correo Outlook.</p>
+          {/* La ruta que recorre cada ticket; se traza una vez al cargar la página. */}
+          <ol className="ruta-marca" aria-label="Así avanza un ticket">
+            {['Creado', 'Tomado', 'En proceso', 'Cerrado'].map((paso, i) => (
+              <li key={paso} style={{ ['--i' as string]: i }}>
+                {paso}
+              </li>
+            ))}
+          </ol>
         </div>
-        <div style={{ color: '#8FA1AF', fontSize: 13 }}>Grupo Aramo</div>
+        <div className="pie-marca">Grupo Aramo</div>
       </div>
       <div className="formside">
         <form onSubmit={enviar} noValidate>

@@ -10,8 +10,7 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@fontsource/bricolage-grotesque": "^5.3.0",
-    "@fontsource/figtree": "^5.3.0",
+    "@fontsource-variable/archivo": "^5.3.0",
     "@mesa/shared": "*",
     "@tanstack/react-query": "^5.90.0",
     "@tiptap/extension-image": "^3.6.0",

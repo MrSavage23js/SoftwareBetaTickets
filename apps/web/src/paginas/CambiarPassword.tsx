@@ -75,15 +75,15 @@ export function CambioObligatorio() {
       <div className="brandside">
         <div className="logo">
           <span className="mark">
-            <Icono n="ticket" t="l" />
+            <Icono n="vela" t="l" />
           </span>
-          Mesa de Ayuda
+          Sistema de Tickets
         </div>
         <div>
           <h2>Protege tu cuenta</h2>
           <p className="lede">Tu contraseña la asignó el administrador. Elige una nueva que solo tú conozcas para continuar.</p>
         </div>
-        <div style={{ color: '#8FA1AF', fontSize: 13 }}>Grupo Aramo</div>
+        <div className="pie-marca">Grupo Aramo</div>
       </div>
       <div className="formside">
         <form onSubmit={(e) => void f.enviar(e)} noValidate>

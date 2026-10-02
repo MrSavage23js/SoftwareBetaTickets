@@ -136,7 +136,7 @@ export function NuevoTicket({ alCerrar, alCrear }: { alCerrar: () => void; alCre
     <Modal
       titulo="Nuevo ticket de soporte"
       icono="docplus"
-      insignia="Mesa de ayuda"
+      insignia="Sistema de tickets"
       alCerrar={alCerrar}
       bloqueado={enviando}
       pie={

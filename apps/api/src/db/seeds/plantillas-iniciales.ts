@@ -26,12 +26,12 @@ const fila = (etiqueta: string, variable: string) => `
 const envoltura = (titulo: string, contenido: string) => `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F4F6F8;padding:24px 0;font-family:Segoe UI,Arial,sans-serif">
   <tr><td align="center">
     <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#FFFFFF;border:1px solid #DDE3E9;border-radius:12px">
-      <tr><td style="background:#12202B;color:#FFFFFF;padding:18px 28px;font-size:18px;font-weight:700;border-radius:12px 12px 0 0">Mesa de Ayuda · {{empresa_sistema}}</td></tr>
+      <tr><td style="background:#028183;color:#FFFFFF;padding:18px 28px;font-size:18px;font-weight:700;border-radius:12px 12px 0 0">Sistema de Tickets · {{empresa_sistema}}</td></tr>
       <tr><td style="padding:24px 28px">
         <h1 style="margin:0 0 16px;font-size:20px;color:#12202B">${titulo}</h1>
 ${contenido}
       </td></tr>
-      <tr><td style="padding:16px 28px;border-top:1px solid #E6EBEF;color:#4A5966;font-size:12px">Este correo se envió automáticamente desde la Mesa de Ayuda. No respondas a este mensaje; usa el sistema para dar seguimiento.</td></tr>
+      <tr><td style="padding:16px 28px;border-top:1px solid #E6EBEF;color:#4A5966;font-size:12px">Este correo se envió automáticamente desde el Sistema de Tickets. No respondas a este mensaje; usa el sistema para dar seguimiento.</td></tr>
     </table>
   </td></tr>
 </table>`;

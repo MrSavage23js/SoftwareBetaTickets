@@ -68,7 +68,7 @@ const esquema = z
 
     MAIL_TRANSPORT: z.enum(['consola', 'smtp', 'graph']).default('consola'),
     MAIL_FROM: z.email('MAIL_FROM debe ser un correo válido'),
-    MAIL_FROM_NAME: z.string().default('Mesa de Ayuda'),
+    MAIL_FROM_NAME: z.string().default('Sistema de Tickets'),
     MAIL_COLA_INTERVALO_SEG: z.coerce.number().int().min(2).max(3600).default(15),
     SMTP_HOST: z.string().default(''),
     SMTP_PORT: z.coerce.number().int().default(587),

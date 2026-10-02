@@ -2,12 +2,8 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Route, Routes } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import '@fontsource/figtree/400.css';
-import '@fontsource/figtree/500.css';
-import '@fontsource/figtree/600.css';
-import '@fontsource/figtree/700.css';
-import '@fontsource/bricolage-grotesque/600.css';
-import '@fontsource/bricolage-grotesque/700.css';
+// Archivo variable con eje de ancho: expandida en títulos y folios, normal en el texto.
+import '@fontsource-variable/archivo/wdth.css';
 import './estilos/app.css';
 import { PERMISOS } from '@mesa/shared';
 import { ErrorCliente } from './api/cliente';

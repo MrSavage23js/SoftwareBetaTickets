@@ -1,9 +1,11 @@
 // Kanban: una columna por estatus, máximo 50 tarjetas visibles por columna y "Ver más" para cargar el resto.
+import { useRef } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { INFO_ESTATUS, LISTA_ESTATUS, type Estatus } from '@mesa/shared';
 import { api } from '../../api/cliente';
 import { Avatar, EstadoError } from '../../componentes/ui';
 import { BadgeUrgencia, franja } from '../../componentes/Urgencia';
+import { useReacomodo } from '../../lib/movimiento';
 import { claves, type Filtros, type ListaTickets } from './datos';
 
 const COLOR: Record<Estatus, string> = { PENDIENTE: '#B36B00', EN_PROCESO: '#2563B0', PAUSADO: '#64748B', COMPLETADO: '#1F8A55', NO_PROCEDE: '#B42318' };
@@ -20,9 +22,11 @@ function Columna({ estatus, filtros, abrir }: { estatus: Estatus; filtros: Filtr
   });
   const tickets = q.data?.pages.flatMap((p) => p.datos) ?? [];
   const total = q.data?.pages[0]?.total;
+  const columna = useRef<HTMLElement>(null);
+  useReacomodo(columna, tickets.map((t) => t.id).join());
 
   return (
-    <section className="col" aria-label={INFO_ESTATUS[estatus].nombre}>
+    <section className="col" aria-label={INFO_ESTATUS[estatus].nombre} ref={columna}>
       <div className="h">
         <h2>
           <i style={{ background: COLOR[estatus] }} />
@@ -33,7 +37,7 @@ function Columna({ estatus, filtros, abrir }: { estatus: Estatus; filtros: Filtr
       {q.isPending && <div className="esqueleto" style={{ height: 120 }} />}
       {q.isError && <EstadoError error={q.error} reintentar={() => void q.refetch()} />}
       {tickets.map((t) => (
-        <button key={t.id} className="kc" onClick={() => abrir(t.id)} style={franja(t.urgencia)}>
+        <button key={t.id} className="kc" data-flip={t.id} onClick={() => abrir(t.id)} style={franja(t.urgencia)}>
           <span className="row" style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
             <span className="folio">{t.folio}</span>
             <BadgeUrgencia urgencia={t.urgencia} compacto />
@@ -75,7 +79,7 @@ export function Kanban({ filtros, estatus, abrir }: { filtros: Filtros; estatus:
   const columnas = estatus ? [estatus] : LISTA_ESTATUS;
   const { estatus: _e, ...resto } = filtros;
   return (
-    <div className="kanban" style={estatus ? { gridTemplateColumns: 'minmax(0, 420px)' } : undefined}>
+    <div className="kanban" data-flip-raiz style={estatus ? { gridAutoColumns: 'minmax(0, 420px)' } : undefined}>
       {columnas.map((e) => (
         <Columna key={e} estatus={e} filtros={resto} abrir={abrir} />
       ))}

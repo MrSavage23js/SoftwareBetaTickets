@@ -16,7 +16,8 @@ export function Detalle({ id }: { id: number }) {
   const q = useDetalle(id);
   if (q.isPending) return <Cargando texto="Cargando ticket…" />;
   if (q.isError) return <EstadoError error={q.error} reintentar={() => void q.refetch()} />;
-  return <Contenido t={q.data} />;
+  // La llave reinicia el contenido (y su entrada animada) al cambiar de ticket.
+  return <Contenido key={q.data.id} t={q.data} />;
 }
 
 function Contenido({ t }: { t: TicketDetalle }) {
@@ -59,7 +60,8 @@ function Contenido({ t }: { t: TicketDetalle }) {
       <div className="top">
         <div className="l">
           <span className="folio">{t.folio}</span>
-          <PillEstatus estatus={t.estatus} />
+          {/* Se vuelve a montar al cambiar de estatus: la etiqueta "sella" el nuevo valor. */}
+          <PillEstatus key={t.estatus} estatus={t.estatus} />
           <span className="pill type">{t.tipo.nombre}</span>
           <BadgeUrgencia urgencia={t.urgencia} />
         </div>
@@ -76,7 +78,7 @@ function Contenido({ t }: { t: TicketDetalle }) {
       </div>
 
       <div className="steps" aria-label="Avance del ticket">
-        {['Creado', 'Tomado', 'En proceso', 'Cerrado'].map((nombre, i) => (
+        {['Creado', 'Tomado', 'En proceso', t.estatus === 'NO_PROCEDE' ? 'No procede' : 'Cerrado'].map((nombre, i) => (
           <span key={nombre} style={{ display: 'contents' }}>
             {i > 0 && <span className={`ln ${pasos > i ? 'done' : ''}`} />}
             <span className={`st ${pasos > i ? 'done' : ''}`} aria-current={pasos === i + 1 ? 'step' : undefined}>

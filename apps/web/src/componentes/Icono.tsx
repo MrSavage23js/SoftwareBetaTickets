@@ -43,6 +43,9 @@ const TRAZOS = {
   chevron: <path d="M15 6l-6 6 6 6" />,
   menu: <path d="M4 7h16M4 12h16M4 17h16" />,
   chart: <><path d="M4 20V4M4 20h16" /><path d="M8 16v-4M12 16V8M16 16v-7" /></>,
+  // Marca del sistema: una vela sencilla (llama, mecha, cuerpo y base).
+  vela: <><path d="M12 2.8c1.5 1.7 2.3 2.9 2.3 4a2.3 2.3 0 01-4.6 0c0-1.1.8-2.3 2.3-4z" /><path d="M12 9.1v1.4" /><rect x="8.5" y="10.5" width="7" height="9.5" rx="1.5" /><path d="M6 20h12" /></>,
+  descargar: <path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 20h14" />,
 } as const;
 
 export type NombreIcono = keyof typeof TRAZOS;
