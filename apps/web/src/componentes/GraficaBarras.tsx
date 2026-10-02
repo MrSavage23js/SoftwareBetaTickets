@@ -17,18 +17,21 @@ export function GraficaBarras({
   unidad,
   alElegir,
   descripcion,
+  porcentaje = true,
 }: {
   datos: DatoBarra[];
   unidad: [singular: string, plural: string];
   alElegir?: (clave: string) => void;
   descripcion: string;
+  /** Muestra la parte del total en el detalle; no aplica a promedios. */
+  porcentaje?: boolean;
 }) {
   const [info, setInfo] = useState<{ texto: string; x: number; y: number } | null>(null);
   const caja = useRef<HTMLDivElement>(null);
   const max = Math.max(1, ...datos.map((d) => d.valor));
   const total = datos.reduce((s, d) => s + d.valor, 0);
   const texto = (d: DatoBarra) =>
-    `${d.etiqueta}: ${d.valor.toLocaleString('es-MX')} ${d.valor === 1 ? unidad[0] : unidad[1]}${total ? ` (${Math.round((d.valor / total) * 100)} %)` : ''}`;
+    `${d.etiqueta}: ${d.valor.toLocaleString('es-MX')} ${d.valor === 1 ? unidad[0] : unidad[1]}${porcentaje && total ? ` (${Math.round((d.valor / total) * 100)} %)` : ''}`;
 
   const mostrar = (d: DatoBarra, el: HTMLElement) => {
     const r = el.getBoundingClientRect();

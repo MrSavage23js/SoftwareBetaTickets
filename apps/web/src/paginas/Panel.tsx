@@ -3,9 +3,20 @@
 import { useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { INFO_ESTATUS, INFO_URGENCIA, LISTA_ESTATUS, URGENCIAS_DESC, type PanelResumen, type Urgencia } from '@mesa/shared';
+import {
+  INFO_ESTATUS,
+  INFO_URGENCIA,
+  LISTA_ESTATUS,
+  PERIODOS_PANEL,
+  URGENCIAS_DESC,
+  type PanelAnalitica,
+  type PanelResumen,
+  type PeriodoPanel,
+  type Urgencia,
+} from '@mesa/shared';
 import { api } from '../api/cliente';
 import { GraficaBarras } from '../componentes/GraficaBarras';
+import { GraficaTendencia, TarjetaGrafica } from '../componentes/Graficas';
 import { Icono } from '../componentes/Icono';
 import { BadgeUrgencia, franja, Nivel } from '../componentes/Urgencia';
 import { Cargando, EstadoError, EstadoVacio, PillEstatus } from '../componentes/ui';
@@ -13,8 +24,11 @@ import { fmtFechaCorta, fmtFechaHora, plural } from '../lib/formato';
 import { useCatalogos, type ListaTickets } from './tickets/datos';
 
 const FILTROS = ['estatus', 'urgencia', 'departamentoId', 'desde', 'hasta', 'orden', 'pagina'] as const;
-/** Color único para magnitud (tickets por departamento): el acento del sistema. */
-const COLOR_DEPTO = '#0E7C7B';
+/** Color único para magnitud (una sola serie): la serie 1 de la paleta de gráficas. */
+const COLOR_DEPTO = 'var(--serie-1)';
+/** AAAA-MM-DD (ya en la zona del sistema) → "2 de septiembre de 2026". */
+const fechaPeriodo = (f: string) => new Intl.DateTimeFormat('es-MX', { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(`${f}T00:00:00Z`));
+const NOMBRE_PERIODO: Record<PeriodoPanel, string> = { 7: '7 días', 30: '30 días', 90: '90 días', 365: '12 meses' };
 
 export function Panel() {
   const navegar = useNavigate();
@@ -35,6 +49,14 @@ export function Panel() {
     }
     return f;
   }, [params]);
+
+  const periodo = (PERIODOS_PANEL as readonly number[]).includes(Number(params.get('periodo'))) ? (Number(params.get('periodo')) as PeriodoPanel) : 30;
+  const analitica = useQuery({
+    queryKey: ['panel', 'analitica', periodo],
+    queryFn: ({ signal }) => api.get<PanelAnalitica>('/panel/analitica', { dias: periodo }, signal),
+    placeholderData: keepPreviousData,
+    refetchInterval: 5 * 60_000,
+  });
 
   const tabla = useQuery({
     queryKey: ['tickets', 'lista', 'panel', filtros],
@@ -74,7 +96,7 @@ export function Panel() {
       <header className="head">
         <div>
           <h1>Dashboard</h1>
-          <p>{r ? `Actualizado ${fmtFechaHora(r.generadoAt)} · se refresca cada 30 s` : 'Resumen de la mesa de ayuda'}</p>
+          <p>{r ? `Actualizado ${fmtFechaHora(r.generadoAt)} · se refresca cada 30 s` : 'Resumen del sistema de tickets'}</p>
         </div>
       </header>
 
@@ -157,6 +179,43 @@ export function Panel() {
             </div>
           </>
         )}
+
+        <section className="analitica" aria-labelledby="t-analitica">
+          <div className="analitica-barra">
+            <div>
+              <h2 id="t-analitica">Análisis del periodo</h2>
+              {analitica.data && (
+                <p>
+                  Del {fechaPeriodo(analitica.data.desde)} al {fechaPeriodo(analitica.data.hasta)}
+                </p>
+              )}
+            </div>
+            <div className="seg" role="group" aria-label="Periodo">
+              {PERIODOS_PANEL.map((d) => (
+                <button key={d} type="button" aria-pressed={periodo === d} onClick={() => cambiar({ periodo: d === 30 ? null : String(d), pagina: null })}>
+                  {NOMBRE_PERIODO[d]}
+                </button>
+              ))}
+            </div>
+            <div className="analitica-exportar">
+              <a className="btn p" href={`/api/panel/exportar.csv?dias=${periodo}`} download title="Una fila por ticket creado en el periodo. En Power BI: Obtener datos → Texto/CSV.">
+                <Icono n="descargar" t="s" />
+                Exportar para Power BI
+              </a>
+              <a className="btn" href="/api/panel/exportar.csv?dias=todo" download title="Todos los tickets del sistema en un CSV.">
+                Todos los tickets
+              </a>
+            </div>
+          </div>
+
+          {analitica.isPending ? (
+            <Cargando />
+          ) : analitica.isError && !analitica.data ? (
+            <EstadoError error={analitica.error} reintentar={() => void analitica.refetch()} />
+          ) : (
+            <Analitica a={analitica.data} />
+          )}
+        </section>
 
         <section className="panel">
           <div className="panel-h" style={{ flexWrap: 'wrap' }}>
@@ -278,5 +337,84 @@ export function Panel() {
         </p>
       </div>
     </>
+  );
+}
+
+/** Gráficas del periodo. Cada una descarga sus propios datos en CSV y tiene vista de tabla. */
+function Analitica({ a }: { a: PanelAnalitica }) {
+  const sufijo = `${a.desde}_a_${a.hasta}`;
+  const creados = a.tendencia.reduce((s, d) => s + d.creados, 0);
+  const resueltos = a.tendencia.reduce((s, d) => s + d.resueltos, 0);
+  const barras = (xs: { id: number | null; nombre: string; total: number }[]) =>
+    xs.map((x) => ({ clave: String(x.id ?? 'otras'), etiqueta: x.nombre, valor: x.total, color: COLOR_DEPTO }));
+  const vacio = <EstadoVacio icono="chart" titulo="Sin datos en este periodo" />;
+  const porCada = { dia: 'día', semana: 'semana', mes: 'mes' }[a.agrupacion];
+
+  return (
+    <div className="graficas">
+      <TarjetaGrafica
+        ancho
+        titulo={`Creados y resueltos por ${porCada}`}
+        resumen={`${plural(creados, 'ticket creado', 'tickets creados')} y ${plural(resueltos, 'resuelto', 'resueltos')}`}
+        archivo={`tendencia_${sufijo}`}
+        tabla={{ columnas: [a.agrupacion === 'dia' ? 'Fecha' : a.agrupacion === 'semana' ? 'Semana (lunes)' : 'Mes', 'Creados', 'Resueltos'], filas: a.tendencia.map((d) => [d.fecha, d.creados, d.resueltos]) }}
+      >
+        <GraficaTendencia
+          descripcion={`Tickets creados y resueltos por ${porCada}`}
+          agrupacion={a.agrupacion}
+          fechas={a.tendencia.map((d) => d.fecha)}
+          series={[
+            { clave: 'creados', nombre: 'Creados', color: 'var(--serie-1)', valores: a.tendencia.map((d) => d.creados) },
+            { clave: 'resueltos', nombre: 'Resueltos', color: 'var(--serie-2)', valores: a.tendencia.map((d) => d.resueltos) },
+          ]}
+        />
+      </TarjetaGrafica>
+
+      <TarjetaGrafica
+        titulo="Creados por tipo de solicitud"
+        archivo={`por_tipo_${sufijo}`}
+        tabla={{ columnas: ['Tipo', 'Tickets'], filas: a.porTipo.map((x) => [x.nombre, x.total]) }}
+      >
+        {a.porTipo.length ? <GraficaBarras descripcion="Tickets creados por tipo de solicitud" unidad={['ticket', 'tickets']} datos={barras(a.porTipo)} /> : vacio}
+      </TarjetaGrafica>
+
+      <TarjetaGrafica
+        titulo="Creados por empresa"
+        archivo={`por_empresa_${sufijo}`}
+        tabla={{ columnas: ['Empresa', 'Tickets'], filas: a.porEmpresa.map((x) => [x.nombre, x.total]) }}
+      >
+        {a.porEmpresa.length ? <GraficaBarras descripcion="Tickets creados por empresa" unidad={['ticket', 'tickets']} datos={barras(a.porEmpresa)} /> : vacio}
+      </TarjetaGrafica>
+
+      <TarjetaGrafica
+        titulo="Resueltos por técnico"
+        archivo={`resueltos_por_tecnico_${sufijo}`}
+        tabla={{ columnas: ['Técnico', 'Resueltos'], filas: a.resueltosPorTecnico.map((x) => [x.nombre, x.total]) }}
+      >
+        {a.resueltosPorTecnico.length ? (
+          <GraficaBarras descripcion="Tickets resueltos por técnico" unidad={['ticket resuelto', 'tickets resueltos']} datos={barras(a.resueltosPorTecnico)} />
+        ) : (
+          vacio
+        )}
+      </TarjetaGrafica>
+
+      <TarjetaGrafica
+        titulo="Tiempo promedio de resolución"
+        resumen="Horas desde que se crea hasta que se completa, por tipo"
+        archivo={`horas_resolucion_${sufijo}`}
+        tabla={{ columnas: ['Tipo', 'Horas promedio', 'Tickets resueltos'], filas: a.horasResolucionPorTipo.map((x) => [x.nombre, x.horas, x.resueltos]) }}
+      >
+        {a.horasResolucionPorTipo.length ? (
+          <GraficaBarras
+            descripcion="Horas promedio de resolución por tipo de solicitud"
+            unidad={['hora en promedio', 'horas en promedio']}
+            porcentaje={false}
+            datos={a.horasResolucionPorTipo.map((x) => ({ clave: String(x.id), etiqueta: x.nombre, valor: x.horas, color: COLOR_DEPTO }))}
+          />
+        ) : (
+          vacio
+        )}
+      </TarjetaGrafica>
+    </div>
   );
 }

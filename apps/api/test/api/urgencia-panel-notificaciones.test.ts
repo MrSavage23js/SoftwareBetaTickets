@@ -98,6 +98,84 @@ describe('dashboard de administración', () => {
   });
 });
 
+describe('gráficas del dashboard y exportación', () => {
+  const cerrarTicket = async (id: number) => {
+    await admin.post(`/tickets/${id}/tomar`).expect(204);
+    const v = (await admin.get(`/tickets/${id}`)).body.version;
+    await admin.form(`/tickets/${id}/cerrar`, { resolucionHtml: '<p>ok</p>', version: v }).expect(204);
+  };
+
+  it('solo admins; el periodo se valida', async () => {
+    expect((await u1.get('/panel/analitica')).status).toBe(403);
+    expect((await u1.get('/panel/exportar.csv')).status).toBe(403);
+    expect((await admin.get('/panel/analitica?dias=12')).status).toBe(400);
+  });
+
+  it('tendencia por día, por tipo, por empresa, resueltos por técnico y horas de resolución', async () => {
+    await crear();
+    const viejo = await crear();
+    const resuelto = await crear();
+    await cerrarTicket(resuelto.id);
+    // Creado hace 3 horas para que el promedio de resolución no sea cero.
+    await db.updateTable('tickets').set({ creado_at: new Date(Date.now() - 3 * 3_600_000) }).where('id', '=', resuelto.id).execute();
+    // Fuera de un periodo de 7 días.
+    await db.updateTable('tickets').set({ creado_at: new Date(Date.now() - 20 * 86_400_000) }).where('id', '=', viejo.id).execute();
+
+    const r = await admin.get('/panel/analitica?dias=7');
+    expect(r.status).toBe(200);
+    expect(r.body.tendencia).toHaveLength(7);
+    const total = (k: 'creados' | 'resueltos') => r.body.tendencia.reduce((s: number, d: { creados: number; resueltos: number }) => s + d[k], 0);
+    expect(total('creados')).toBe(2);
+    expect(total('resueltos')).toBe(1);
+    expect(r.body.tendencia.at(-1).fecha).toBe(r.body.hasta);
+    expect(r.body.porTipo).toEqual([expect.objectContaining({ total: 2 })]);
+    expect(r.body.porEmpresa).toEqual([expect.objectContaining({ total: 2 })]);
+    expect(r.body.resueltosPorTecnico).toEqual([expect.objectContaining({ nombre: 'admin_prueba', total: 1 })]);
+    expect(r.body.horasResolucionPorTipo[0].horas).toBeGreaterThan(2.9);
+
+    // 30 días (por omisión) incluye el ticket viejo.
+    const r30 = await admin.get('/panel/analitica');
+    expect(r30.body.dias).toBe(30);
+    expect(r30.body.agrupacion).toBe('dia');
+    expect(r30.body.porTipo[0].total).toBe(3);
+  });
+
+  it('periodos largos agrupan la tendencia: semana (lunes) a 90 días y mes a 12 meses, sin perder tickets', async () => {
+    await crear();
+    const semana = await admin.get('/panel/analitica?dias=90');
+    expect(semana.body.agrupacion).toBe('semana');
+    for (const p of semana.body.tendencia) expect(new Date(`${p.fecha}T12:00:00Z`).getUTCDay()).toBe(1);
+    const mes = await admin.get('/panel/analitica?dias=365');
+    expect(mes.body.agrupacion).toBe('mes');
+    expect(mes.body.tendencia.length).toBeGreaterThanOrEqual(12);
+    for (const p of mes.body.tendencia) expect(p.fecha).toMatch(/-01$/);
+    const suma = (r: typeof mes) => r.body.tendencia.reduce((s: number, d: { creados: number }) => s + d.creados, 0);
+    expect(suma(semana)).toBe(1);
+    expect(suma(mes)).toBe(1);
+  });
+
+  it('CSV para Power BI: una fila por ticket, BOM, encabezados y filtro por periodo', async () => {
+    const a = await crear({ concepto: '=HIPERVINCULO("x")' });
+    const b = await crear();
+    await db.updateTable('tickets').set({ creado_at: new Date(Date.now() - 20 * 86_400_000) }).where('id', '=', b.id).execute();
+
+    const r = await admin.get('/panel/exportar.csv?dias=7');
+    expect(r.status).toBe(200);
+    expect(r.headers['content-type']).toContain('text/csv');
+    expect(r.headers['content-disposition']).toMatch(/attachment; filename="tickets_7dias_\d{4}-\d{2}-\d{2}\.csv"/);
+    expect(r.text.charCodeAt(0)).toBe(0xfeff);
+    const lineas = r.text.slice(1).trim().split('\r\n');
+    expect(lineas[0]).toMatch(/^Folio,Estatus,Urgencia,/);
+    expect(lineas).toHaveLength(2);
+    expect(lineas[1]).toContain(a.folio);
+    // Un concepto que empieza con "=" no se ejecuta como fórmula en Excel.
+    expect(lineas[1]).toContain(`"'=HIPERVINCULO(""x"")"`);
+
+    const todo = await admin.get('/panel/exportar.csv?dias=todo');
+    expect(todo.text.slice(1).trim().split('\r\n')).toHaveLength(3);
+  });
+});
+
 describe('notificaciones', () => {
   const lista = async (c: Cliente, q = '') => (await c.get(`/notificaciones${q}`)).body as { noLeidas: number; datos: { id: number; tipo: string; mensaje: string; leida: boolean; ticket: { id: number; folio: string } }[] };
 

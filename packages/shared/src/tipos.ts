@@ -245,6 +245,31 @@ export interface PanelResumen {
   generadoAt: string;
 }
 
+/** Periodos que ofrece el dashboard para las gráficas y la exportación (días hacia atrás desde hoy). */
+export const PERIODOS_PANEL = [7, 30, 90, 365] as const;
+export type PeriodoPanel = (typeof PERIODOS_PANEL)[number];
+
+/** Gráficas del dashboard para un periodo. Fechas AAAA-MM-DD en la zona horaria del sistema. */
+export interface PanelAnalitica {
+  dias: PeriodoPanel;
+  desde: string;
+  hasta: string;
+  /** Tamaño de cada punto de la tendencia: día (7 y 30 días), semana (90) o mes (12 meses). */
+  agrupacion: 'dia' | 'semana' | 'mes';
+  /** Un punto por día/semana/mes (también los que están en cero); `fecha` es el inicio del intervalo.
+   *  Resueltos = completados en ese intervalo. */
+  tendencia: { fecha: string; creados: number; resueltos: number }[];
+  /** Tickets creados en el periodo. */
+  porTipo: { id: number; nombre: string; total: number }[];
+  /** Tickets creados en el periodo; las empresas fuera de las 7 primeras se agrupan en "Otras" (id null). */
+  porEmpresa: { id: number | null; nombre: string; total: number }[];
+  /** Tickets completados en el periodo por quien los cerró. */
+  resueltosPorTecnico: { id: number; nombre: string; total: number }[];
+  /** Horas promedio de creación a cierre de los completados en el periodo. */
+  horasResolucionPorTipo: { id: number; nombre: string; horas: number; resueltos: number }[];
+  generadoAt: string;
+}
+
 export type TipoNotificacion = 'nuevo_ticket' | 'ticket_contestado';
 
 export interface NotificacionInfo {
