@@ -1,32 +1,27 @@
 # Servicios de apoyo para DESARROLLO en equipos con Docker (Linux/macOS o Windows con Docker Desktop).
-# En Windows sin Docker usa: npm run db:local -- instalar
+# Sin Docker usa: npm run db:local -- instalar
 #
 #   docker compose -f docker/docker-compose.yml up -d
 #
-# MySQL queda en 127.0.0.1:3307 (mismos datos de conexión que .env.example).
+# PostgreSQL queda en 127.0.0.1:5433 (mismos datos de conexión que DATABASE_URL en .env.example).
 # Mailpit (opcional, para probar MAIL_TRANSPORT=smtp): SMTP en :1025, bandeja web en http://localhost:8025
 #   SMTP_HOST=127.0.0.1  SMTP_PORT=1025  SMTP_SECURE=false  (sin usuario)
 services:
-  mysql:
-    image: mysql:8.4
+  postgres:
+    image: postgres:17
     restart: unless-stopped
     ports:
-      - '127.0.0.1:3307:3306'
+      - '127.0.0.1:5433:5432'
     environment:
-      MYSQL_ROOT_PASSWORD: root_dev_123
-      MYSQL_DATABASE: mesa_ayuda
-      MYSQL_USER: mesa_app
-      MYSQL_PASSWORD: mesa_dev_123
+      POSTGRES_DB: mesa_ayuda
+      POSTGRES_USER: mesa_app
+      POSTGRES_PASSWORD: mesa_dev_123
       TZ: UTC
-    command:
-      - --character-set-server=utf8mb4
-      - --collation-server=utf8mb4_0900_ai_ci
-      - --default-time-zone=+00:00
     volumes:
-      - mysql-datos:/var/lib/mysql
-      - ./mysql-init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - pg-datos:/var/lib/postgresql/data
+      - ./pg-init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     healthcheck:
-      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-uroot', '-proot_dev_123']
+      test: ['CMD', 'pg_isready', '-U', 'mesa_app', '-d', 'mesa_ayuda']
       interval: 5s
       retries: 20
 
@@ -38,4 +33,4 @@ services:
       - '127.0.0.1:8025:8025'
 
 volumes:
-  mysql-datos:
+  pg-datos:

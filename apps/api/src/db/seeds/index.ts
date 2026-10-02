@@ -26,7 +26,7 @@ async function roles() {
 
   await db
     .insertInto('permisos')
-    .ignore()
+    .onConflict((oc) => oc.doNothing())
     .values(
       Object.entries(DESCRIPCION_PERMISOS).map(([codigo, d]) => ({ codigo, grupo: d.grupo, descripcion: d.descripcion })),
     )
@@ -40,8 +40,8 @@ async function roles() {
     const r = await db
       .insertInto('roles')
       .values({ codigo, ...nombres[codigo], es_sistema: 1 })
-      .executeTakeFirstOrThrow();
-    const rolId = Number(r.insertId);
+      .returning('id').executeTakeFirstOrThrow();
+    const rolId = r.id;
     // Los permisos iniciales solo se asignan al crear el rol; después se administran en BD.
     await db
       .insertInto('rol_permisos')
@@ -54,7 +54,7 @@ async function roles() {
 async function catalogos() {
   await db
     .insertInto('estatus_ticket')
-    .ignore()
+    .onConflict((oc) => oc.doNothing())
     .values(
       LISTA_ESTATUS.map((codigo, i) => ({
         codigo,
@@ -68,19 +68,19 @@ async function catalogos() {
 
   await db
     .insertInto('departamentos')
-    .ignore()
+    .onConflict((oc) => oc.doNothing())
     .values(DEPARTAMENTOS.map((d, i) => ({ nombre: d.nombre, codigo: d.codigo, activo: 1, orden: i + 1 })))
     .execute();
 
   await db
     .insertInto('empresas')
-    .ignore()
+    .onConflict((oc) => oc.doNothing())
     .values(EMPRESAS.map((e, i) => ({ nombre: e.nombre, codigo: e.codigo, activa: 1, orden: i + 1 })))
     .execute();
 
   await db
     .insertInto('tipos_solicitud')
-    .ignore()
+    .onConflict((oc) => oc.doNothing())
     .values(
       TIPOS.map((t, i) => ({
         nombre: t.nombre,
@@ -97,7 +97,7 @@ async function catalogos() {
 
   await db
     .insertInto('modulos')
-    .ignore()
+    .onConflict((oc) => oc.doNothing())
     .values(MODULOS.map((m, i) => ({ nombre: m.nombre, codigo: m.codigo, activo: 1, orden: i + 1 })))
     .execute();
 }
@@ -105,7 +105,7 @@ async function catalogos() {
 async function plantillas() {
   await db
     .insertInto('plantillas_correo')
-    .ignore()
+    .onConflict((oc) => oc.doNothing())
     .values(
       PLANTILLAS.map((p) => ({
         codigo: p.codigo,
@@ -143,7 +143,7 @@ async function ajustes() {
   const valores = valoresInicialesAjustes();
   await db
     .insertInto('ajustes')
-    .ignore()
+    .onConflict((oc) => oc.doNothing())
     .values(
       (Object.keys(DEFINICION_AJUSTES) as ClaveAjuste[]).map((clave) => ({
         clave,

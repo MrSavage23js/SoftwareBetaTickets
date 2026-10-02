@@ -15,6 +15,7 @@ import {
 } from '@mesa/shared';
 import { db } from '../../db/conexion';
 import type { BD } from '../../db/tipos';
+import { coincide, escaparLike } from '../../lib/buscar';
 import { errores } from '../../lib/errores';
 import { finDiaLocal, inicioDiaLocal } from '../../lib/fechas';
 import { validar } from '../../lib/validar';
@@ -42,17 +43,22 @@ function base(): Base {
     .leftJoin('usuarios as a', 'a.id', 't.asignado_a_id') as unknown as Base;
 }
 
-/** Convierte la búsqueda libre en una expresión FULLTEXT en modo booleano (cada palabra es obligatoria, con prefijo). */
+/**
+ * Convierte la búsqueda libre en una consulta de texto completo de PostgreSQL: cada palabra es obligatoria
+ * y se busca como prefijo ("invent" encuentra "inventario"). Solo letras y números, así que no hay
+ * caracteres especiales de tsquery que escapar.
+ */
 function consultaFulltext(q: string): string | null {
   const palabras = q
     .normalize('NFC')
     .split(/[^\p{L}\p{N}]+/u)
     .filter((p) => p.length >= 3)
     .slice(0, 8);
-  return palabras.length ? palabras.map((p) => `+${p}*`).join(' ') : null;
+  return palabras.length ? palabras.map((p) => `${p}:*`).join(' & ') : null;
 }
 
-const escaparLike = (s: string) => s.replace(/[\\%_]/g, (c) => '\\' + c);
+/** Tickets cuyo texto (concepto, folio(s), descripción) contiene todas las palabras. Usa el índice GIN. */
+const textoCompleto = (consulta: string) => sql<SqlBool>`t.busqueda @@ to_tsquery('simple', f_unaccent(${consulta}))`;
 
 /** Consultas solo sobre `tickets` (sin uniones): para contar y paginar. Los filtros solo usan columnas de t. */
 type SoloTickets = SelectQueryBuilder<BD & { t: BD['tickets'] }, 't', object>;
@@ -63,11 +69,11 @@ interface Busqueda {
   like: string;
   usuarios: number[];
   empresas: number[];
-  /** El texto tiene palabras que busca el índice FULLTEXT. */
+  /** El texto tiene palabras que busca el índice de texto completo. */
   hayPalabras: boolean;
-  /** Coincidencias FULLTEXT resueltas aparte (dentro de un OR, MySQL no usaría el índice FULLTEXT). */
+  /** Coincidencias de texto completo resueltas aparte (dentro de un OR grande el índice rinde menos). */
   fulltext: number[];
-  /** Expresión FULLTEXT; se usa directo en la consulta si hubo demasiadas coincidencias para la lista de ids. */
+  /** Consulta de texto completo; se usa directo si hubo demasiadas coincidencias para la lista de ids. */
   expresionFulltext: string | null;
   fulltextTruncado: boolean;
 }
@@ -84,16 +90,16 @@ async function prepararBusqueda(q: string | undefined, u: UsuarioActual): Promis
     db
       .selectFrom('usuarios')
       .select('id')
-      .where((eb) => eb.or([eb('username', 'like', like), eb('nombre', 'like', like)]))
+      .where((eb) => eb.or([coincide('username', like), coincide('nombre', like)]))
       .limit(200)
       .execute(),
-    db.selectFrom('empresas').select('id').where('nombre', 'like', like).execute(),
+    db.selectFrom('empresas').select('id').where(coincide('nombre', like)).execute(),
     ft
       ? soloTickets()
           .select('t.id')
           // Solo entre los tickets que el usuario puede ver: el tope nunca deja fuera los suyos.
           .where(filtroVisibles(u) as never)
-          .where(sql<SqlBool>`MATCH(t.concepto, t.folios_ref, t.descripcion_texto) AGAINST (${ft} IN BOOLEAN MODE)`)
+          .where(textoCompleto(ft))
           .limit(MAX_FULLTEXT)
           .execute()
       : Promise.resolve([]),
@@ -133,14 +139,14 @@ function aplicarFiltros(
   if (b) {
     q = q.where((eb) => {
       const o: Expression<SqlBool>[] = [eb('t.folio', 'like', `${escaparLike(b.texto.toUpperCase())}%`)];
-      // Concepto y folio(s) están en el índice FULLTEXT. El LIKE (que recorre toda la tabla) solo se usa
+      // Concepto y folio(s) están en el índice de texto completo. El LIKE (que recorre toda la tabla) solo se usa
       // cuando el texto no tiene palabras indexables (menos de 3 caracteres, p. ej. "B1").
-      if (!b.hayPalabras) o.push(eb('t.folios_ref', 'like', b.like), eb('t.concepto', 'like', b.like));
+      if (!b.hayPalabras) o.push(coincide('t.folios_ref', b.like), coincide('t.concepto', b.like));
       if (b.usuarios.length) o.push(eb('t.solicitante_id', 'in', b.usuarios));
       if (b.empresas.length) o.push(eb('t.empresa_id', 'in', b.empresas));
       if (b.fulltextTruncado && b.expresionFulltext) {
         // Palabra muy común (más coincidencias que el tope): consulta completa, más lenta pero sin perder resultados.
-        o.push(sql<SqlBool>`MATCH(t.concepto, t.folios_ref, t.descripcion_texto) AGAINST (${b.expresionFulltext} IN BOOLEAN MODE)`);
+        o.push(textoCompleto(b.expresionFulltext));
       } else if (b.fulltext.length) {
         o.push(eb('t.id', 'in', b.fulltext));
       }
@@ -161,7 +167,7 @@ export async function listarTickets(
   const f = filtrosValidados(entrada);
   const busqueda = await prepararBusqueda(f.q, u);
   const dir = f.orden === 'antiguos' ? 'asc' : 'desc';
-  // "urgencia": crítica arriba (el ENUM está ordenado de baja a crítica), luego los más recientes.
+  // "urgencia": crítica arriba (el tipo urgencia_ticket está ordenado de baja a crítica), luego los más recientes.
   const porUrgencia = f.orden === 'urgencia';
 
   // 1) Página de ids y contadores, solo sobre `tickets` (usa índices; sin uniones).

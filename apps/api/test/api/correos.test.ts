@@ -85,7 +85,7 @@ describe('cola de salida', () => {
 
   it('un correo "atorado" en ENVIANDO (el proceso se cayó) se recupera al vencer su bloqueo', async () => {
     await u1.form('/tickets', ticketValido(f));
-    await db.updateTable('correos_salida').set({ estado: 'ENVIANDO', bloqueado_hasta: sql<Date>`NOW(3) - INTERVAL 1 MINUTE` }).execute();
+    await db.updateTable('correos_salida').set({ estado: 'ENVIANDO', bloqueado_hasta: sql<Date>`now() - interval '1 minute'` }).execute();
     await procesarCola();
     expect((await correo()).estado).toBe('ENVIADO');
   });

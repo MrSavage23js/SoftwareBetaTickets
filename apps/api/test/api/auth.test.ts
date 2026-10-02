@@ -100,7 +100,7 @@ describe('sesión', () => {
 
   it('se cierra por inactividad y avisa el motivo', async () => {
     const c = await entrar('usuario_uno');
-    await db.updateTable('sesiones').set({ ultima_actividad_at: sql<Date>`NOW(3) - INTERVAL 31 MINUTE` }).execute();
+    await db.updateTable('sesiones').set({ ultima_actividad_at: sql<Date>`now() - interval '31 minutes'` }).execute();
     const r = await c.get('/auth/yo');
     expect(r.status).toBe(401);
     expect(r.body.error.mensaje).toContain('inactividad');
@@ -110,7 +110,7 @@ describe('sesión', () => {
 
   it('respeta la duración máxima aunque haya actividad', async () => {
     const c = await entrar('usuario_uno');
-    await db.updateTable('sesiones').set({ expira_absoluta_at: sql<Date>`NOW(3) - INTERVAL 1 SECOND` }).execute();
+    await db.updateTable('sesiones').set({ expira_absoluta_at: sql<Date>`now() - interval '1 second'` }).execute();
     expect((await c.get('/auth/yo')).status).toBe(401);
   });
 

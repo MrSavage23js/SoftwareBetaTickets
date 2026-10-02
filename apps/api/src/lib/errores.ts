@@ -24,7 +24,7 @@ export const errores = {
   archivo: (mensaje: string) => new ErrorApp(400, 'ARCHIVO_INVALIDO', mensaje),
 };
 
-/** Error de MySQL por llave única duplicada. */
+/** Error de PostgreSQL por llave única duplicada (unique_violation). */
 export function esDuplicado(e: unknown): boolean {
-  return typeof e === 'object' && e !== null && (e as { code?: string }).code === 'ER_DUP_ENTRY';
+  return typeof e === 'object' && e !== null && (e as { code?: string }).code === '23505';
 }

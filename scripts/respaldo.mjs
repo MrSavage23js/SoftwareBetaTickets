@@ -1,16 +1,15 @@
 #!/usr/bin/env node
-// Respaldo completo: base de datos (mysqldump comprimido) + carpeta de adjuntos + manifiesto.
+// Respaldo completo: datos de la base (volcado propio, ver bd-volcado.mjs) + carpeta de adjuntos + manifiesto.
+// Funciona contra la base local o una remota (Render): toma DATABASE_URL de .env o del entorno.
 // Borra respaldos más viejos que RESPALDOS_RETENCION_DIAS.
 // Uso: npm run respaldo
 // Programarlo: Programador de tareas de Windows o cron (ver README → Respaldos).
-import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { createReadStream, createWriteStream, existsSync } from 'node:fs';
+import { createReadStream, existsSync } from 'node:fs';
 import { cp, mkdir, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import { isAbsolute, join, resolve } from 'node:path';
-import { pipeline } from 'node:stream/promises';
-import { createGzip } from 'node:zlib';
-import { binarioMysql, cargarEnv, RAIZ } from './env.mjs';
+import { volcar } from './bd-volcado.mjs';
+import { cargarEnv, RAIZ } from './env.mjs';
 
 const env = cargarEnv();
 const abs = (p) => (isAbsolute(p) ? p : resolve(RAIZ, p));
@@ -24,32 +23,6 @@ function sha256(ruta) {
     const h = createHash('sha256');
     createReadStream(ruta).on('data', (d) => h.update(d)).on('end', () => ok(h.digest('hex'))).on('error', mal);
   });
-}
-
-async function volcarBD(archivo) {
-  const args = [
-    `--host=${env.DB_HOST}`,
-    `--port=${env.DB_PORT}`,
-    `--user=${env.DB_USER}`,
-    '--single-transaction', // copia consistente sin bloquear el sistema
-    '--quick',
-    '--routines',
-    '--triggers',
-    '--no-tablespaces',
-    '--set-gtid-purged=OFF',
-    '--default-character-set=utf8mb4',
-    '--hex-blob',
-    env.DB_NAME,
-  ];
-  // La contraseña va por variable de entorno, no en la línea de comandos (no queda visible en procesos).
-  const hijo = spawn(binarioMysql('mysqldump'), args, { env: { ...process.env, MYSQL_PWD: env.DB_PASSWORD ?? '' } });
-  let error = '';
-  hijo.stderr.on('data', (d) => (error += d));
-  const terminado = new Promise((ok, mal) => {
-    hijo.on('error', mal);
-    hijo.on('close', (c) => (c === 0 ? ok() : mal(new Error(`mysqldump terminó con código ${c}: ${error.trim()}`))));
-  });
-  await Promise.all([pipeline(hijo.stdout, createGzip({ level: 6 }), createWriteStream(archivo)), terminado]);
 }
 
 async function contarArchivos(dir) {
@@ -89,9 +62,10 @@ async function main() {
   console.log(`Respaldo en ${carpeta}`);
 
   try {
-    const sql = join(carpeta, 'bd.sql.gz');
-    await volcarBD(sql);
-    console.log('✔ Base de datos');
+    if (!env.DATABASE_URL) throw new Error('Falta DATABASE_URL');
+    const sql = join(carpeta, 'bd.jsonl.gz');
+    const { conteo } = await volcar(env.DATABASE_URL, sql);
+    console.log(`✔ Base de datos (${conteo.tickets ?? 0} tickets, ${conteo.usuarios ?? 0} usuarios)`);
 
     const origenAdj = join(STORAGE, 'adjuntos');
     if (existsSync(origenAdj)) await cp(origenAdj, join(carpeta, 'adjuntos'), { recursive: true });
@@ -104,8 +78,9 @@ async function main() {
         {
           sistema: 'mesa-de-ayuda',
           fecha: ahora.toISOString(),
-          baseDatos: env.DB_NAME,
-          bd: { archivo: 'bd.sql.gz', bytes: (await stat(sql)).size, sha256: await sha256(sql) },
+          baseDatos: new URL(env.DATABASE_URL).pathname.slice(1),
+          motor: 'postgresql',
+          bd: { archivo: 'bd.jsonl.gz', bytes: (await stat(sql)).size, sha256: await sha256(sql), filas: conteo },
           adjuntos: adj,
         },
         null,

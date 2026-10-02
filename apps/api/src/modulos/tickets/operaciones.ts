@@ -20,6 +20,7 @@ import {
   type Estatus,
   type TicketCreado,
 } from '@mesa/shared';
+import { sql } from 'kysely';
 import { env } from '../../config/env';
 import { db, type Tx } from '../../db/conexion';
 import type { CambioTicket, Destinatario, Ticket, TipoMensaje } from '../../db/tipos';
@@ -172,6 +173,9 @@ export async function crearTicket(u: UsuarioActual, entrada: unknown, archivos: 
       // Si un folio ya existe (p. ej. importado del sistema anterior) se toma el siguiente.
       for (let intento = 0; intento < 20 && !ticketId; intento++) {
         folio = await siguienteFolio(tx, departamento!.codigo, anio);
+        // En PostgreSQL un error invalida toda la transacción: el punto de guardado permite descartar
+        // solo el INSERT fallido y seguir con el siguiente folio.
+        await sql`SAVEPOINT folio_libre`.execute(tx);
         try {
           const r = await tx
             .insertInto('tickets')
@@ -193,10 +197,13 @@ export async function crearTicket(u: UsuarioActual, entrada: unknown, archivos: 
               cerrado_por_id: null,
               id_anterior: null,
             })
+            .returning('id')
             .executeTakeFirstOrThrow();
-          ticketId = Number(r.insertId);
+          ticketId = r.id;
+          await sql`RELEASE SAVEPOINT folio_libre`.execute(tx);
         } catch (e) {
           if (!esDuplicado(e)) throw e;
+          await sql`ROLLBACK TO SAVEPOINT folio_libre`.execute(tx);
         }
       }
       if (!ticketId) throw new Error(`No se pudo asignar un folio libre para ${departamento!.codigo}-${anio}`);
@@ -292,8 +299,8 @@ async function guardarMensaje(
   const r = await c.tx
     .insertInto('ticket_mensajes')
     .values({ ticket_id: c.t.id, autor_id: u.id, tipo, cuerpo_html: html, cuerpo_texto: htmlATexto(html).slice(0, 60_000) })
-    .executeTakeFirstOrThrow();
-  const mensajeId = Number(r.insertId);
+    .returning('id').executeTakeFirstOrThrow();
+  const mensajeId = r.id;
   await insertarAdjuntos(c.tx, guardados, { ticketId: c.t.id, mensajeId, subidoPorId: u.id, enLinea: false });
   await vincularEnLinea(c.tx, uuidsEnLinea(html), { ticketId: c.t.id, mensajeId, usuarioId: u.id });
   return mensajeId;

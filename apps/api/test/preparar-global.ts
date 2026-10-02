@@ -11,7 +11,7 @@ export default async function prepararGlobal() {
     const mensaje = e instanceof Error ? e.message : String(e);
     throw new Error(
       `No se pudo preparar la BD de pruebas (${process.env.DB_NAME_TEST ?? 'mesa_ayuda_test'}): ${mensaje}\n` +
-        '¿Está MySQL encendido? (npm run db:local -- iniciar)',
+        '¿Está PostgreSQL encendido? (npm run db:local -- iniciar)',
     );
   } finally {
     await cerrarBD();

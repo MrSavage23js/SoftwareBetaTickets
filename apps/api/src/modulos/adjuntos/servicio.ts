@@ -70,7 +70,7 @@ export async function limpiarTemporalesHuerfanos(): Promise<number> {
     .selectFrom('adjuntos')
     .select(['id', 'uuid', 'ruta_relativa'])
     .where('ticket_id', 'is', null)
-    .where('creado_at', '<', sql<Date>`NOW(3) - INTERVAL 1 DAY`)
+    .where('creado_at', '<', sql<Date>`now() - make_interval(days => 1)`)
     .limit(500)
     .execute();
   for (const a of viejos) {

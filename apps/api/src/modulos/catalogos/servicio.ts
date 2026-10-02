@@ -138,8 +138,8 @@ export async function guardarDepartamento(id: number | null, entrada: unknown, a
   const valores = { nombre: d.nombre, codigo: d.codigo, activo: d.activo ? 1 : 0, orden: d.orden };
   try {
     if (id === null) {
-      const r = await db.insertInto('departamentos').values(valores).executeTakeFirstOrThrow();
-      const nuevo = Number(r.insertId);
+      const r = await db.insertInto('departamentos').values(valores).returning('id').executeTakeFirstOrThrow();
+      const nuevo = r.id;
       await auditar(db, { actorId, entidad: 'departamento', entidadId: nuevo, accion: 'CREADO', ip, datos: valores });
       return { id: nuevo, advertencia: null };
     }
@@ -167,8 +167,8 @@ export async function guardarEmpresa(id: number | null, entrada: unknown, actorI
   const valores = { nombre: d.nombre, codigo: d.codigo, activa: d.activa ? 1 : 0, orden: d.orden };
   try {
     if (id === null) {
-      const r = await db.insertInto('empresas').values(valores).executeTakeFirstOrThrow();
-      const nuevo = Number(r.insertId);
+      const r = await db.insertInto('empresas').values(valores).returning('id').executeTakeFirstOrThrow();
+      const nuevo = r.id;
       await auditar(db, { actorId, entidad: 'empresa', entidadId: nuevo, accion: 'CREADA', ip, datos: valores });
       return { id: nuevo, advertencia: null };
     }
@@ -198,8 +198,8 @@ export async function guardarTipo(id: number | null, entrada: unknown, actorId: 
   };
   try {
     if (id === null) {
-      const r = await db.insertInto('tipos_solicitud').values(valores).executeTakeFirstOrThrow();
-      const nuevo = Number(r.insertId);
+      const r = await db.insertInto('tipos_solicitud').values(valores).returning('id').executeTakeFirstOrThrow();
+      const nuevo = r.id;
       await auditar(db, { actorId, entidad: 'tipo_solicitud', entidadId: nuevo, accion: 'CREADO', ip, datos: valores });
       return { id: nuevo, advertencia: null };
     }
@@ -220,8 +220,8 @@ export async function guardarModulo(id: number | null, entrada: unknown, actorId
   const valores = { nombre: d.nombre, codigo: d.codigo, activo: d.activo ? 1 : 0, orden: d.orden };
   try {
     if (id === null) {
-      const r = await db.insertInto('modulos').values(valores).executeTakeFirstOrThrow();
-      const nuevo = Number(r.insertId);
+      const r = await db.insertInto('modulos').values(valores).returning('id').executeTakeFirstOrThrow();
+      const nuevo = r.id;
       await auditar(db, { actorId, entidad: 'modulo', entidadId: nuevo, accion: 'CREADO', ip, datos: valores });
       return { id: nuevo, advertencia: null };
     }

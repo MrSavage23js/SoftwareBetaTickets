@@ -2,6 +2,20 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado semántico.
 
+## [Sin publicar]
+
+### Cambiado
+- **Base de datos: de MySQL 8.4 a PostgreSQL 17**, para desplegar en Render.
+  - Una sola variable de conexión, `DATABASE_URL` (reemplaza `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD` y `DB_NAME`).
+  - Las migraciones de MySQL quedaron reunidas en una sola migración base. Se mantiene que usuario, correo y búsquedas no distingan mayúsculas ni acentos.
+  - La búsqueda libre usa el texto completo de PostgreSQL. Ahora pasan las 3 pruebas de búsqueda que fallaban con el FULLTEXT de MySQL.
+  - `npm run db:local` levanta un PostgreSQL portátil que viene con `npm install`; ya no se descarga MySQL.
+  - Respaldo y restauración sin programas externos: funcionan igual contra la base local que contra una remota (`--url`). Los respaldos anteriores de MySQL no se pueden cargar.
+
+### Agregado
+- Aplicación instalable (PWA) y guía de despliegue en Render y en PC de oficina.
+- Aviso de ticket nuevo a varios correos, con la urgencia en el asunto; "Enviar copia a" acepta varios correos y no deja pasar uno mal escrito.
+
 ## [0.4.1] — 2026-09-30
 
 ### Agregado

@@ -37,7 +37,7 @@ const tareas: Tarea[] = [
       const sesiones = await limpiarSesionesVencidas();
       const temporales = (await limpiarTemporalesHuerfanos()) + (await limpiarCarpetaTemporal());
       await limpiarNotificaciones();
-      await db.deleteFrom('intentos_login').where('creado_at', '<', sql<Date>`NOW(3) - INTERVAL 90 DAY`).execute();
+      await db.deleteFrom('intentos_login').where('creado_at', '<', sql<Date>`now() - make_interval(days => 90)`).execute();
       if (sesiones || temporales) logger.info({ sesiones, temporales }, 'Limpieza periódica');
     },
   },

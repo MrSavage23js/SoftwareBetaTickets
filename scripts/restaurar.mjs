@@ -2,23 +2,24 @@
 // Restaura un respaldo creado con scripts/respaldo.mjs.
 // Uso:
 //   npm run restaurar -- <carpeta-del-respaldo> --confirmar
-//   npm run restaurar -- <carpeta> --bd otra_base --confirmar   (restaurar en otra base para verificar)
+//   npm run restaurar -- <carpeta> --bd otra_base --confirmar     (otra base del mismo servidor, p. ej. para verificar)
+//   npm run restaurar -- <carpeta> --url postgresql://… --confirmar  (otro servidor, p. ej. una base nueva en Render)
 //   npm run restaurar -- <carpeta> --sin-adjuntos --confirmar
 // ¡Reemplaza el contenido de la base de datos destino! Detén el servicio antes de restaurar la base principal.
-import { spawn } from 'node:child_process';
+// La base destino debe existir (en Render se crea desde su panel); el esquema lo crean las migraciones.
+import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { createReadStream, existsSync, readFileSync } from 'node:fs';
 import { cp } from 'node:fs/promises';
 import { isAbsolute, join, resolve } from 'node:path';
-import { pipeline } from 'node:stream/promises';
 import { parseArgs } from 'node:util';
-import { createGunzip } from 'node:zlib';
-import { binarioMysql, cargarEnv, RAIZ } from './env.mjs';
+import { cargar } from './bd-volcado.mjs';
+import { cargarEnv, RAIZ } from './env.mjs';
 
 const env = cargarEnv();
 const { values, positionals } = parseArgs({
   allowPositionals: true,
-  options: { bd: { type: 'string' }, confirmar: { type: 'boolean' }, 'sin-adjuntos': { type: 'boolean' } },
+  options: { bd: { type: 'string' }, url: { type: 'string' }, confirmar: { type: 'boolean' }, 'sin-adjuntos': { type: 'boolean' } },
 });
 
 const carpeta = positionals[0] && (isAbsolute(positionals[0]) ? positionals[0] : resolve(process.cwd(), positionals[0]));
@@ -27,10 +28,17 @@ if (!carpeta || !existsSync(join(carpeta, 'manifiesto.json'))) {
   process.exit(1);
 }
 const manifiesto = JSON.parse(readFileSync(join(carpeta, 'manifiesto.json'), 'utf8'));
-const destino = values.bd ?? env.DB_NAME;
+if (manifiesto.motor !== 'postgresql') {
+  console.error('Este respaldo es del sistema anterior con MySQL (bd.sql.gz) y no se puede cargar en PostgreSQL.');
+  process.exit(1);
+}
+
+const destino = new URL(values.url ?? env.DATABASE_URL ?? '');
+if (values.bd) destino.pathname = `/${values.bd}`;
+const nombreDestino = `${destino.hostname}/${destino.pathname.slice(1)}`;
 
 if (!values.confirmar) {
-  console.log(`Se restaurará el respaldo del ${manifiesto.fecha} en la base "${destino}" (su contenido actual se REEMPLAZA).`);
+  console.log(`Se restaurará el respaldo del ${manifiesto.fecha} en "${nombreDestino}" (su contenido actual se REEMPLAZA).`);
   console.log('Vuelve a ejecutar agregando --confirmar para continuar.');
   process.exit(1);
 }
@@ -42,37 +50,44 @@ function sha256(ruta) {
   });
 }
 
-function mysql(args, entrada) {
-  const hijo = spawn(binarioMysql('mysql'), [`--host=${env.DB_HOST}`, `--port=${env.DB_PORT}`, `--user=${env.DB_USER}`, '--default-character-set=utf8mb4', ...args], {
-    env: { ...process.env, MYSQL_PWD: env.DB_PASSWORD ?? '' },
-    stdio: [entrada ? 'pipe' : 'ignore', 'pipe', 'pipe'],
-  });
-  let salida = '';
-  let error = '';
-  hijo.stdout.on('data', (d) => (salida += d));
-  hijo.stderr.on('data', (d) => (error += d));
-  const fin = new Promise((ok, mal) => {
-    hijo.on('error', mal);
-    hijo.on('close', (c) => (c === 0 ? ok(salida) : mal(new Error(error.trim() || `mysql terminó con código ${c}`))));
-  });
-  return { hijo, fin };
-}
-
-const sql = join(carpeta, manifiesto.bd.archivo);
-if ((await sha256(sql)) !== manifiesto.bd.sha256) {
+const archivo = join(carpeta, manifiesto.bd.archivo);
+if ((await sha256(archivo)) !== manifiesto.bd.sha256) {
   console.error('✖ El archivo de la base de datos no coincide con el manifiesto (está dañado o fue modificado).');
   process.exit(1);
 }
 console.log('✔ Integridad verificada');
 
-await mysql(['-e', `CREATE DATABASE IF NOT EXISTS \`${destino.replaceAll('`', '')}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci`]).fin;
-const carga = mysql([destino], true);
-await Promise.all([pipeline(createReadStream(sql), createGunzip(), carga.hijo.stdin), carga.fin]);
-console.log(`✔ Base de datos restaurada en "${destino}"`);
+// Esquema al día en la base destino, con las migraciones del propio sistema (compiladas o desde el código).
+const API = join(RAIZ, 'apps', 'api');
+const cli = existsSync(join(API, 'dist', 'cli.js')) ? ['dist/cli.js'] : ['--import', 'tsx', 'src/db/cli.ts'];
+const mig = spawnSync(process.execPath, [...cli, 'migrar'], {
+  cwd: API,
+  // Solo migra: lo demás de la configuración no importa, pero debe ser válido aunque no haya .env.
+  env: {
+    ...process.env,
+    DATABASE_URL: destino.toString(),
+    NODE_ENV: 'development',
+    LOG_LEVEL: 'warn',
+    APP_URL: 'http://localhost',
+    MAIL_TRANSPORT: 'consola',
+    MAIL_FROM: env.MAIL_FROM || 'respaldo@localhost',
+  },
+  stdio: 'inherit',
+});
+if (mig.status !== 0) {
+  console.error('✖ No se pudieron aplicar las migraciones en la base destino.');
+  process.exit(1);
+}
+console.log('✔ Esquema al día');
 
-const conteo = await mysql(['-N', '-e', 'SELECT (SELECT COUNT(*) FROM tickets), (SELECT COUNT(*) FROM usuarios), (SELECT COUNT(*) FROM adjuntos)', destino]).fin;
-const [tickets, usuarios, adjuntos] = conteo.trim().split(/\s+/);
-console.log(`  tickets: ${tickets} · usuarios: ${usuarios} · adjuntos registrados: ${adjuntos}`);
+try {
+  const conteo = await cargar(destino.toString(), archivo);
+  console.log(`✔ Base de datos restaurada en "${nombreDestino}"`);
+  console.log(`  tickets: ${conteo.tickets ?? 0} · usuarios: ${conteo.usuarios ?? 0} · adjuntos registrados: ${conteo.adjuntos ?? 0}`);
+} catch (e) {
+  console.error(`✖ Falló la carga (la base destino quedó como estaba): ${e.message}`);
+  process.exit(1);
+}
 
 if (!values['sin-adjuntos'] && existsSync(join(carpeta, 'adjuntos'))) {
   const storage = isAbsolute(env.STORAGE_DIR ?? '') ? env.STORAGE_DIR : resolve(RAIZ, env.STORAGE_DIR ?? './storage');

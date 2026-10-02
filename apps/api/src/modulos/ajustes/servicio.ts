@@ -76,7 +76,7 @@ export async function actualizarAjustes(cambios: Record<string, unknown>, actorI
           descripcion: DEFINICION_AJUSTES[v.clave].descripcion,
           actualizado_por_id: actorId,
         })
-        .onDuplicateKeyUpdate({ valor: JSON.stringify(v.valor), actualizado_por_id: actorId })
+        .onConflict((oc) => oc.column('clave').doUpdateSet({ valor: JSON.stringify(v.valor), actualizado_por_id: actorId }))
         .execute();
     }
   });

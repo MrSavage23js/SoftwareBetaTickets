@@ -64,12 +64,8 @@ export interface Fixtures {
 
 /** Deja la BD de pruebas como recién instalada + 4 usuarios de prueba. */
 export async function reiniciarBD(): Promise<Fixtures> {
-  // DELETE (mucho más rápido que TRUNCATE en tablas chicas) con llaves foráneas desactivadas, en la misma conexión.
-  await db.connection().execute(async (c) => {
-    await sql`SET FOREIGN_KEY_CHECKS = 0`.execute(c);
-    for (const t of TABLAS) await sql.raw(`DELETE FROM ${t}`).execute(c);
-    await sql`SET FOREIGN_KEY_CHECKS = 1`.execute(c);
-  });
+  // Un solo TRUNCATE de todas las tablas: PostgreSQL resuelve las llaves foráneas entre ellas y reinicia los ids.
+  await sql.raw(`TRUNCATE ${TABLAS.join(', ')} RESTART IDENTITY`).execute(db);
   invalidarAjustes();
   invalidarPermisos();
   usarTransporte(undefined);
@@ -100,8 +96,8 @@ export async function reiniciarBD(): Promise<Fixtures> {
         password_cambiado_at: new Date(),
         id_anterior: null,
       })
-      .executeTakeFirstOrThrow();
-    const id = Number(r.insertId);
+      .returning('id').executeTakeFirstOrThrow();
+    const id = r.id;
     if (empresas.length) await db.insertInto('usuario_empresas').values(empresas.map((e) => ({ usuario_id: id, empresa_id: e }))).execute();
     return id;
   };

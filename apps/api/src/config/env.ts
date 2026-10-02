@@ -44,12 +44,12 @@ const esquema = z
     LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
     TRUST_PROXY: z.coerce.number().int().min(0).max(10).default(0),
 
-    DB_HOST: z.string().min(1),
-    DB_PORT: z.coerce.number().int().default(3306),
-    DB_USER: z.string().min(1),
-    DB_PASSWORD: z.string().default(''),
-    DB_NAME: z.string().min(1),
-    DB_NAME_TEST: z.string().default('mesa_ayuda_test'),
+    // postgresql://usuario:contraseña@host:puerto/base (Render la entrega lista; agregar ?sslmode=require si es externa).
+    DATABASE_URL: z
+      .string()
+      .regex(/^postgres(ql)?:\/\/.+\/[^/?]+/, 'DATABASE_URL debe ser postgresql://usuario:contraseña@host:puerto/base'),
+    // Base para las pruebas automatizadas. Si no se define, se usa la de DATABASE_URL con el sufijo _test.
+    DATABASE_URL_TEST: z.string().default(''),
     DB_POOL_MAX: z.coerce.number().int().min(2).max(100).default(10),
 
     SESSION_COOKIE_NAME: z.string().regex(/^[a-zA-Z0-9_-]+$/).default('mesa_sid'),
@@ -107,6 +107,13 @@ const esquema = z
 
 export type Env = z.infer<typeof esquema>;
 
+/** La misma conexión con la base `<nombre>_test`: las pruebas nunca tocan la base de desarrollo. */
+export function urlDePruebas(url: string): string {
+  const u = new URL(url);
+  u.pathname = `${u.pathname.replace(/\/$/, '')}_test`;
+  return u.toString();
+}
+
 function cargar(): Env {
   const r = esquema.safeParse(process.env);
   if (!r.success) {
@@ -116,7 +123,7 @@ function cargar(): Env {
     process.exit(1);
   }
   const env = r.data;
-  if (env.NODE_ENV === 'test') env.DB_NAME = env.DB_NAME_TEST;
+  if (env.NODE_ENV === 'test') env.DATABASE_URL = env.DATABASE_URL_TEST || urlDePruebas(env.DATABASE_URL);
   return env;
 }
 

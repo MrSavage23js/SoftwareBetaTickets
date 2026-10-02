@@ -20,9 +20,9 @@ async function tomarLote(): Promise<number[]> {
       .select('id')
       .where((eb) =>
         eb.or([
-          eb.and([eb('estado', '=', 'PENDIENTE'), eb('proximo_intento_at', '<=', sql<Date>`NOW(3)`)]),
+          eb.and([eb('estado', '=', 'PENDIENTE'), eb('proximo_intento_at', '<=', sql<Date>`now()`)]),
           // Un correo "ENVIANDO" con el bloqueo vencido quedó atorado (el proceso se cayó a medio envío).
-          eb.and([eb('estado', '=', 'ENVIANDO'), eb('bloqueado_hasta', '<', sql<Date>`NOW(3)`)]),
+          eb.and([eb('estado', '=', 'ENVIANDO'), eb('bloqueado_hasta', '<', sql<Date>`now()`)]),
         ]),
       )
       .orderBy('id')
@@ -34,7 +34,7 @@ async function tomarLote(): Promise<number[]> {
     if (ids.length) {
       await tx
         .updateTable('correos_salida')
-        .set({ estado: 'ENVIANDO', bloqueado_hasta: sql<Date>`NOW(3) + INTERVAL ${BLOQUEO_MIN} MINUTE` })
+        .set({ estado: 'ENVIANDO', bloqueado_hasta: sql<Date>`now() + make_interval(mins => ${BLOQUEO_MIN})` })
         .where('id', 'in', ids)
         .execute();
     }
@@ -75,7 +75,7 @@ async function enviarUno(id: number): Promise<void> {
         bloqueado_hasta: null,
         ultimo_error: mensaje,
         transporte: t.nombre,
-        proximo_intento_at: sql<Date>`NOW(3) + INTERVAL ${esperaTrasIntento(intentos)} MINUTE`,
+        proximo_intento_at: sql<Date>`now() + make_interval(mins => ${esperaTrasIntento(intentos)})`,
       })
       .where('id', '=', id)
       .execute();

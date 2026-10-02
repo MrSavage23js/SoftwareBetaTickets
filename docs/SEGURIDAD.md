@@ -33,7 +33,7 @@ La Mesa de Ayuda la usará toda la empresa y puede quedar accesible desde intern
 - [ ] **HTTPS** con un certificado válido. En `.env`: `NODE_ENV=production`, `APP_URL=https://…` y `COOKIE_SECURE=true`. El sistema **no arranca** en producción sin esto.
 - [ ] `TRUST_PROXY=1` si hay IIS o nginx delante. Sin esto, todas las peticiones parecen venir de la misma IP y el límite por IP bloquea a todos.
 - [ ] Cambiar la contraseña del administrador inicial al primer ingreso (el sistema lo exige) y **borrar `ADMIN_INICIAL_PASSWORD` del `.env`** después.
-- [ ] Usuario de MySQL exclusivo para el sistema, con permisos solo sobre su base (`docs/DESPLIEGUE.md`). MySQL escuchando solo en `127.0.0.1` o en la red interna, **nunca expuesto a internet**.
+- [ ] Usuario de PostgreSQL exclusivo para el sistema, dueño solo de su base (`docs/DESPLIEGUE.md`). PostgreSQL escuchando solo en `127.0.0.1` o en la red interna, **nunca expuesto a internet** (en Render, la URL externa solo para respaldos y con `sslmode=require`).
 - [ ] El proceso corre con una cuenta de servicio **sin privilegios de administrador**.
 - [ ] `.env` legible solo por esa cuenta y por los administradores (contiene secretos del correo y de la BD).
 - [ ] `STORAGE_DIR` fuera de la carpeta del código y de cualquier carpeta que sirva IIS o nginx.

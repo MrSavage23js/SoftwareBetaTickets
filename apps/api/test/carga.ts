@@ -63,7 +63,7 @@ await db
   .insertInto('folio_contadores')
   .values([...consecutivo].map(([clave, ultimo]) => ({ departamento: clave.split('|')[0]!, anio: Number(clave.split('|')[1]), ultimo_consecutivo: ultimo })))
   .execute();
-await sql`ANALYZE TABLE tickets`.execute(db);
+await sql`ANALYZE tickets`.execute(db);
 console.log(`Listo en ${((Date.now() - t0) / 1000).toFixed(1)} s\n`);
 
 const primerId = (await db.selectFrom('tickets').select('id').orderBy('id').limit(1).executeTakeFirstOrThrow()).id;

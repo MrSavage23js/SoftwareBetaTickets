@@ -174,8 +174,8 @@ export async function usuariosEnLinea(ids?: number[]): Promise<Set<number>> {
     .select('usuario_id')
     .distinct()
     .where('cerrada_at', 'is', null)
-    .where('expira_absoluta_at', '>', sql<Date>`NOW(3)`)
-    .where('ultima_actividad_at', '>', sql<Date>`NOW(3) - INTERVAL ${inactividad} MINUTE`);
+    .where('expira_absoluta_at', '>', sql<Date>`now()`)
+    .where('ultima_actividad_at', '>', sql<Date>`now() - make_interval(mins => ${inactividad})`);
   if (ids) q = q.where('usuario_id', 'in', ids);
   const filas = await q.execute();
   return new Set(filas.map((f) => f.usuario_id));
@@ -186,17 +186,17 @@ export async function limpiarSesionesVencidas(): Promise<number> {
   const { 'sesion.inactividad_min': inactividad } = await obtenerAjustes();
   const r1 = await db
     .updateTable('sesiones')
-    .set({ cerrada_at: sql<Date>`NOW(3)`, motivo_cierre: 'INACTIVIDAD' })
+    .set({ cerrada_at: sql<Date>`now()`, motivo_cierre: 'INACTIVIDAD' })
     .where('cerrada_at', 'is', null)
-    .where('ultima_actividad_at', '<=', sql<Date>`NOW(3) - INTERVAL ${inactividad} MINUTE`)
+    .where('ultima_actividad_at', '<=', sql<Date>`now() - make_interval(mins => ${inactividad})`)
     .executeTakeFirst();
   const r2 = await db
     .updateTable('sesiones')
-    .set({ cerrada_at: sql<Date>`NOW(3)`, motivo_cierre: 'EXPIRADA' })
+    .set({ cerrada_at: sql<Date>`now()`, motivo_cierre: 'EXPIRADA' })
     .where('cerrada_at', 'is', null)
-    .where('expira_absoluta_at', '<=', sql<Date>`NOW(3)`)
+    .where('expira_absoluta_at', '<=', sql<Date>`now()`)
     .executeTakeFirst();
   // Las sesiones cerradas hace más de 90 días ya no aportan nada.
-  await db.deleteFrom('sesiones').where('cerrada_at', '<', sql<Date>`NOW(3) - INTERVAL 90 DAY`).execute();
+  await db.deleteFrom('sesiones').where('cerrada_at', '<', sql<Date>`now() - make_interval(days => 90)`).execute();
   return Number(r1.numUpdatedRows) + Number(r2.numUpdatedRows);
 }

@@ -12,6 +12,7 @@ import {
 } from '@mesa/shared';
 import { db, type Ejecutor } from '../../db/conexion';
 import { OPCIONES_ARGON2 } from '../../db/seeds';
+import { coincide, escaparLike } from '../../lib/buscar';
 import { errores, esDuplicado } from '../../lib/errores';
 import { validar } from '../../lib/validar';
 import { obtenerAjustes } from '../ajustes/servicio';
@@ -86,9 +87,9 @@ export async function listarUsuarios(q?: string): Promise<UsuarioFila[]> {
     .where('u.eliminado_at', 'is', null)
     .orderBy('u.username');
   if (q) {
-    const patron = `%${q.replace(/[\\%_]/g, (c) => '\\' + c)}%`;
+    const patron = `%${escaparLike(q)}%`;
     consulta = consulta.where((eb) =>
-      eb.or([eb('u.username', 'like', patron), eb('u.nombre', 'like', patron), eb('u.email', 'like', patron)]),
+      eb.or([coincide('u.username', patron), coincide('u.nombre', patron), coincide('u.email', patron)]),
     );
   }
   const filas = await consulta.execute();
@@ -148,8 +149,8 @@ export async function crearUsuario(entrada: UsuarioCrearEntrada, actorId: number
           debe_cambiar_password: 1,
           id_anterior: null,
         })
-        .executeTakeFirstOrThrow();
-      const id = Number(r.insertId);
+        .returning('id').executeTakeFirstOrThrow();
+      const id = r.id;
       if (empresas.length) {
         await tx.insertInto('usuario_empresas').values(empresas.map((e) => ({ usuario_id: id, empresa_id: e }))).execute();
       }
@@ -292,14 +293,14 @@ export async function listarTecnicos() {
 
 /** Contactos para "Enviar copia a": usuarios activos, búsqueda por nombre, usuario o correo. */
 export async function buscarContactos(q: string, excluirId: number) {
-  const patron = `%${q.replace(/[\\%_]/g, (c) => '\\' + c)}%`;
+  const patron = `%${escaparLike(q)}%`;
   return db
     .selectFrom('usuarios')
     .select(['id', 'username', 'nombre', 'email'])
     .where('activo', '=', 1)
     .where('eliminado_at', 'is', null)
     .where('id', '!=', excluirId)
-    .where((eb) => eb.or([eb('username', 'like', patron), eb('nombre', 'like', patron), eb('email', 'like', patron)]))
+    .where((eb) => eb.or([coincide('username', patron), coincide('nombre', patron), coincide('email', patron)]))
     .orderBy('username')
     .limit(20)
     .execute();

@@ -3,7 +3,7 @@
 // Uso:
 //   npm run ci              lint, tipos, pruebas unitarias y de API, auditoría de dependencias, build
 //   npm run ci -- --e2e     además los recorridos completos en navegador (Playwright)
-// Requiere MySQL encendido (npm run db:local -- iniciar): las pruebas usan la BD de pruebas.
+// Requiere PostgreSQL encendido (npm run db:local -- iniciar): las pruebas usan la BD de pruebas.
 import { spawnSync } from 'node:child_process';
 import { RAIZ } from './env.mjs';
 

@@ -1,5 +1,5 @@
 // Tipos de las tablas para Kysely. Deben coincidir con las migraciones (docs/MODELO_DATOS.md).
-// Booleanos: MySQL los guarda como TINYINT(1) y llegan como 0/1.
+// Booleanos: columnas BOOLEAN que llegan como 0/1 (conversión en db/conexion.ts, como el TINYINT(1) de MySQL).
 import type { ColumnType, Generated, Insertable, Selectable, Updateable } from 'kysely';
 
 type Fecha = ColumnType<Date, Date | string | undefined, Date | string>;

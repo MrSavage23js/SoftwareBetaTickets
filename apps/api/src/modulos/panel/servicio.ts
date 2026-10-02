@@ -15,8 +15,8 @@ export async function resumenPanel(ahora = new Date()): Promise<PanelResumen> {
     db
       .selectFrom('tickets')
       .select([
-        sql<number>`SUM(cerrado_at >= ${inicioHoy})`.as('hoy'),
-        sql<number>`SUM(cerrado_at >= ${inicioSemana})`.as('semana'),
+        sql<number>`COUNT(*) FILTER (WHERE cerrado_at >= ${inicioHoy})`.as('hoy'),
+        sql<number>`COUNT(*) FILTER (WHERE cerrado_at >= ${inicioSemana})`.as('semana'),
       ])
       .where('estatus', '=', ESTATUS.COMPLETADO)
       .where('cerrado_at', '>=', inicioSemana < inicioHoy ? inicioSemana : inicioHoy)

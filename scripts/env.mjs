@@ -18,16 +18,3 @@ export function cargarEnv(archivo = join(RAIZ, '.env')) {
   }
   return { ...valores, ...process.env };
 }
-
-/** Ruta de mysql/mysqldump: variable de .env, MySQL portátil de desarrollo o el PATH. */
-export function binarioMysql(nombre) {
-  const env = cargarEnv();
-  const explicito = nombre === 'mysqldump' ? env.MYSQLDUMP_BIN : env.MYSQL_BIN;
-  if (explicito) return explicito;
-  // MySQL portátil de desarrollo (scripts/mysql-local.mjs).
-  if (process.env.LOCALAPPDATA) {
-    const portatil = join(process.env.LOCALAPPDATA, 'mesa-ayuda', 'mysql-8.4.11-winx64', 'bin', `${nombre}.exe`);
-    if (existsSync(portatil)) return portatil;
-  }
-  return nombre; // se busca en el PATH
-}

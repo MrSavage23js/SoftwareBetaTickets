@@ -4,18 +4,18 @@
 
 ## Requisitos
 - Node.js 24 LTS.
-- MySQL 8.4 (o MariaDB 11.4+ con ajustes de collation; se recomienda MySQL).
+- PostgreSQL 16 o superior (se prueba con 17), con las extensiones `unaccent` e ICU (vienen en las distribuciones normales y en Render).
 - Un certificado HTTPS de la empresa, o un proxy inverso (IIS o nginx) que lo maneje.
 - Unos 2 GB de RAM libres y espacio en disco para adjuntos y respaldos.
 
 ## 1. Base de datos
 ```sql
-CREATE DATABASE mesa_ayuda CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
-CREATE USER 'mesa_app'@'localhost' IDENTIFIED BY '<contraseña larga>';
-GRANT ALL PRIVILEGES ON mesa_ayuda.* TO 'mesa_app'@'localhost';
-GRANT PROCESS, RELOAD ON *.* TO 'mesa_app'@'localhost';   -- para mysqldump
+CREATE ROLE mesa_app LOGIN PASSWORD '<contraseña larga>';
+CREATE DATABASE mesa_ayuda OWNER mesa_app ENCODING 'UTF8';
 ```
-En `my.ini` / `my.cnf`: `default-time-zone='+00:00'`, `character-set-server=utf8mb4` y `collation-server=utf8mb4_0900_ai_ci`.
+El usuario debe ser **dueño** de la base: la primera migración crea la extensión `unaccent` y la intercalación
+`sin_acentos`. Las fechas se guardan como `TIMESTAMPTZ` y el sistema abre cada conexión en UTC; no hay que
+configurar la zona horaria del servidor.
 
 ## 2. Aplicación
 ```bash
@@ -31,7 +31,7 @@ NODE_ENV=production
 APP_URL=https://mesa.grupoaramo.com
 COOKIE_SECURE=true
 TRUST_PROXY=1            # si hay IIS/nginx delante
-DB_HOST=127.0.0.1  DB_PORT=3306  DB_USER=mesa_app  DB_PASSWORD=…
+DATABASE_URL=postgresql://mesa_app:<contraseña>@127.0.0.1:5432/mesa_ayuda
 MAIL_TRANSPORT=graph     # ver docs/CORREO_M365.md
 ADMIN_INICIAL_PASSWORD=<temporal; cambiarla al entrar>
 STORAGE_DIR=D:\MesaAyuda\storage      # fuera de la carpeta del código y de carpetas públicas
@@ -70,7 +70,7 @@ hacia Cloudflare; nadie entra directo a ella y Cloudflare pone el HTTPS. A difer
 
 Requisitos: una cuenta gratuita de Cloudflare y un dominio cuyo DNS esté en Cloudflare (p. ej. uno comprado ahí).
 
-1. **MySQL 8.4** con el instalador oficial (queda como servicio de Windows) y la base de datos del paso 1.
+1. **PostgreSQL 17** con el instalador oficial (queda como servicio de Windows) y la base de datos del paso 1.
 2. **Sistema** como en el paso 2, con estos valores en `.env`:
    ```
    NODE_ENV=production
@@ -102,7 +102,7 @@ Prueba: abrir `https://<tu-dominio>/health` desde un celular con datos (fuera de
 ```ini
 [Unit]
 Description=Mesa de Ayuda
-After=network.target mysql.service
+After=network.target postgresql.service
 
 [Service]
 WorkingDirectory=/opt/mesa-de-ayuda
@@ -134,7 +134,8 @@ server {
 
 ## 3c. Render (nube)
 
-Comandos del *Web Service* (Node 24, se toma de `engines` en `package.json`):
+1. **Base de datos**: en Render → *New* → *Postgres* (versión 17). Al crearla, copiar la **Internal Database URL**.
+2. **Web Service** conectado al repositorio de GitHub (Node 24, se toma de `engines` en `package.json`):
 
 | Campo | Valor |
 |---|---|
@@ -147,26 +148,32 @@ Al arrancar aplica las migraciones y crea los datos iniciales (admin incluido); 
 Variables de entorno (en el panel de Render, no en un archivo; el sistema no necesita `.env` si están ahí):
 ```
 NODE_ENV=production
-APP_URL=https://<servicio>.onrender.com     # o el dominio propio
+APP_URL=https://<servicio>.onrender.com     # se conoce después del primer despliegue; o el dominio propio
 COOKIE_SECURE=true
 TRUST_PROXY=1                               # Render pone un proxy delante
-DB_HOST=…  DB_PORT=3306  DB_USER=…  DB_PASSWORD=…  DB_NAME=mesa_ayuda
+DATABASE_URL=<Internal Database URL>        # postgresql://usuario:contraseña@host/base
 MAIL_TRANSPORT=smtp  MAIL_FROM=…  MAIL_FROM_NAME=…
 SMTP_HOST=…  SMTP_PORT=465  SMTP_SECURE=true  SMTP_USER=…  SMTP_PASS=…
-STORAGE_DIR=/var/data/storage               # ruta del disco persistente
-ADMIN_INICIAL_PASSWORD=<temporal; cambiarla al entrar>
+ADMIN_INICIAL_USUARIO=admin  ADMIN_INICIAL_EMAIL=…  ADMIN_INICIAL_PASSWORD=<temporal; cambiarla al entrar>
 ```
 Los destinatarios del aviso de ticket nuevo no van aquí: se configuran en **Ajustes → Correos**.
 
-Limitaciones de Render que afectan a este sistema:
-- **MySQL**: Render solo ofrece PostgreSQL administrado. MySQL se monta como *Private Service* con Docker
-  y un disco en `/var/lib/mysql` ([guía de Render](https://render.com/docs/deploy-mysql)), o se usa un MySQL externo.
-- **Adjuntos**: el disco del servicio se borra en cada despliegue. Hace falta un *Persistent Disk*
-  (planes de pago) montado en la ruta de `STORAGE_DIR`.
+Limitaciones del **plan gratuito** de Render que afectan a este sistema:
+- **La base gratuita caduca a los 30 días** de creada y, 14 días después, Render la borra con todos los datos
+  ([límites del plan gratuito](https://render.com/docs/free)). Solo puede haber una base gratuita por cuenta.
+  Para no perder nada, **antes del día 30**:
+  1. Respaldo desde cualquier PC con el proyecto, usando la *External Database URL*:
+     `DATABASE_URL="<External URL>?sslmode=require" npm run respaldo`
+  2. En Render, borrar la base vieja y crear una nueva (otra vez gratuita).
+  3. Restaurar en la nueva: `npm run restaurar -- storage/respaldos/<carpeta> --url "<External URL nueva>?sslmode=require" --confirmar`
+  4. Cambiar `DATABASE_URL` del Web Service por la *Internal URL* nueva.
+  Con un plan de pago de la base esto no hace falta.
 - **Correo**: el plan gratuito bloquea la salida a los puertos SMTP 25, 465 y 587
-  ([aviso de Render](https://render.com/changelog/free-web-services-will-no-longer-allow-outbound-traffic-to-smtp-ports)).
-  Con SMTP se necesita un plan de pago, o usar `MAIL_TRANSPORT=graph` (va por HTTPS).
-- **Plan gratuito**: el servicio se duerme sin visitas; mientras duerme no envía la cola de correos ni corre las tareas periódicas.
+  ([aviso de Render](https://render.com/changelog/free-web-services-will-no-longer-allow-outbound-traffic-to-smtp-ports)):
+  **con SMTP no sale ningún correo**. Se necesita un plan de pago del Web Service, o `MAIL_TRANSPORT=graph` (va por HTTPS).
+- **Adjuntos**: el disco del servicio se borra en cada despliegue y reinicio. Para conservarlos hace falta un
+  *Persistent Disk* (planes de pago) montado en la ruta de `STORAGE_DIR`.
+- **El servicio se duerme** sin visitas; mientras duerme no envía la cola de correos ni corre las tareas periódicas.
 
 ## 4. Actualizaciones
 ```bash

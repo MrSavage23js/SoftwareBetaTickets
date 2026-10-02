@@ -16,14 +16,14 @@ Sistema de tickets de soporte. Tiene dos vistas: la del **solicitante** (Mis tic
 
 ## Tecnología
 
-Node.js 24 · TypeScript · Express 5 · MySQL 8.4 · Kysely · React 19 + Vite · TipTap · zod · argon2 · pino.
+Node.js 24 · TypeScript · Express 5 · PostgreSQL 17 · Kysely · React 19 + Vite · TipTap · zod · argon2 · pino.
 En producción es **un solo proceso**: la API sirve también la aplicación web ya compilada.
 
 ```
 apps/api         API, migraciones, seeds, cola de correo
 apps/web         Aplicación web (React)
 packages/shared  Reglas compartidas: estatus, máquina de estados, permisos, validaciones
-scripts/         MySQL portátil, desarrollo, CI local, respaldo y restauración
+scripts/         PostgreSQL portátil, desarrollo, CI local, respaldo y restauración
 docs/            Documentación técnica
 referencia/      Maqueta de diseño (las capturas del sistema anterior no se publican: tienen datos reales)
 storage/         (no va en git) adjuntos, correos de consola, respaldos
@@ -31,14 +31,14 @@ storage/         (no va en git) adjuntos, correos de consola, respaldos
 
 ## Instalación para desarrollo
 
-Requisitos: **Node.js 24+** y **git**. MySQL puede ser el portátil incluido (Windows) o Docker.
+Requisitos: **Node.js 24+** y **git**. PostgreSQL puede ser el portátil incluido o Docker.
 
 ```bash
 npm install
 cp .env.example .env              # en Windows: copy .env.example .env
 
 # Base de datos: elige UNA opción
-npm run db:local -- instalar      # Windows sin Docker: descarga MySQL 8.4 portátil (~260 MB) y lo arranca en :3307
+npm run db:local -- instalar      # sin Docker: PostgreSQL 17 portátil (viene con npm install) en :5433
 docker compose -f docker/docker-compose.yml up -d   # con Docker
 
 npm run dev                       # API en :3100 y web en http://localhost:5180
@@ -46,9 +46,9 @@ npm run dev                       # API en :3100 y web en http://localhost:5180
 
 Al arrancar, la API aplica las migraciones y siembra los catálogos, las plantillas y los ajustes. También crea el administrador inicial que definen `ADMIN_INICIAL_*` en `.env`. **Cambia esa contraseña después del primer inicio de sesión.**
 
-> ⚠ Si el proyecto está dentro de OneDrive, no guardes los datos de MySQL ahí: la sincronización los corrompe. El MySQL portátil ya los guarda en `%LOCALAPPDATA%\mesa-ayuda`.
+> ⚠ Si el proyecto está dentro de OneDrive, no guardes los datos de la base ahí: la sincronización los corrompe. El PostgreSQL portátil ya los guarda en `%LOCALAPPDATA%\mesa-ayuda\pg-datos`.
 
-MySQL portátil: `npm run db:local -- iniciar | detener | estado`. Hay que iniciarlo después de reiniciar el equipo.
+PostgreSQL portátil: `npm run db:local -- iniciar | detener | estado`. Hay que iniciarlo después de reiniciar el equipo.
 
 ## Variables de entorno (`.env`)
 
@@ -58,7 +58,7 @@ Todas están documentadas en `.env.example`. Las principales:
 |---|---|
 | `APP_URL` | URL pública del sistema. La usa el botón "Ver ticket en el sistema" de los correos. |
 | `PORT` | Puerto de la API y la web (3100 por omisión). |
-| `DB_*` | Conexión a MySQL. |
+| `DATABASE_URL` | Conexión a PostgreSQL: `postgresql://usuario:contraseña@host:puerto/base`. |
 | `COOKIE_SECURE` | `true` en producción (requiere HTTPS). Si es `false` en producción, el sistema no arranca. |
 | `TRUST_PROXY` | `1` si el sistema corre detrás de IIS o nginx. |
 | `STORAGE_DIR` | Carpeta de adjuntos y respaldos (fuera de cualquier carpeta pública). |
@@ -88,7 +88,7 @@ Lo que se configura **desde la pantalla** (menú Ajustes, Catálogos y Correos �
 
 ## Pruebas automatizadas
 
-Necesitan MySQL encendido. Usan **otra base de datos** (`DB_NAME_TEST`, por omisión `mesa_ayuda_test`) y otra carpeta de archivos (`storage/pruebas`, `storage/e2e`). **Nunca tocan los datos reales.**
+Necesitan PostgreSQL encendido. Usan **otra base de datos** (`DATABASE_URL_TEST`, por omisión la de `DATABASE_URL` con el sufijo `_test`) y otra carpeta de archivos (`storage/pruebas`, `storage/e2e`). **Nunca tocan los datos reales.**
 
 | Tipo | Dónde | Qué cubre |
 |---|---|---|
@@ -102,7 +102,7 @@ La primera vez: `npx playwright install chromium`.
 ## Respaldos
 
 `npm run respaldo` crea `storage/respaldos/AAAA-MM-DD_HHMMSS/` con:
-- `bd.sql.gz`: `mysqldump --single-transaction`, una copia consistente que no detiene el sistema;
+- `bd.jsonl.gz`: todas las filas, leídas en una sola transacción de solo lectura (copia consistente que no detiene el sistema). No necesita `pg_dump`: funciona igual contra la base local que contra una remota como Render (`DATABASE_URL=… npm run respaldo`);
 - `adjuntos/`: copia de todos los archivos;
 - `manifiesto.json`: fecha, tamaños y SHA-256 para verificar la integridad.
 
@@ -123,7 +123,9 @@ schtasks /Create /SC DAILY /ST 23:00 /TN "MesaAyuda-Respaldo" /TR "cmd /c cd /d 
 3. Restaura sobre la base real: `npm run restaurar -- storage/respaldos/2026-09-29_230000 --confirmar`
 4. Inicia el servicio y abre `/health`.
 
-El usuario de BD necesita permiso para crear la base destino. Si no lo tiene, crea la base antes o usa un usuario administrador así: `DB_USER=root DB_PASSWORD=… npm run restaurar …`.
+La base destino debe existir (la del paso 2 se crea antes, p. ej. `CREATE DATABASE mesa_ayuda_verificacion OWNER mesa_app`). Antes de cargar, el script aplica las migraciones; la carga es una sola transacción: si algo falla, la base queda como estaba. Para otro servidor (p. ej. una base nueva en Render) usa `--url postgresql://…` en lugar de `--bd`.
+
+Los respaldos de la versión con MySQL (`bd.sql.gz`) no se pueden cargar en PostgreSQL.
 
 ## Salud y registros
 

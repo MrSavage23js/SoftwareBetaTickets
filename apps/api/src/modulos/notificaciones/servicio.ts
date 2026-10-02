@@ -112,6 +112,6 @@ export async function marcarTodasLeidas(u: UsuarioActual): Promise<number> {
 
 /** Tarea periódica: las leídas de más de 90 días ya no aportan. */
 export async function limpiarNotificaciones(): Promise<number> {
-  const r = await db.deleteFrom('notificaciones').where('leida', '=', 1).where('creado_at', '<', sql<Date>`NOW(3) - INTERVAL 90 DAY`).executeTakeFirst();
+  const r = await db.deleteFrom('notificaciones').where('leida', '=', 1).where('creado_at', '<', sql<Date>`now() - make_interval(days => 90)`).executeTakeFirst();
   return Number(r.numDeletedRows);
 }
