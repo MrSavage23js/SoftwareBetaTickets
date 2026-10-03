@@ -46,6 +46,8 @@ export interface UsuariosTabla {
   eliminado_at: FechaNula;
   origen: Generated<'SISTEMA' | 'IMPORTADO'>;
   id_anterior: number | null;
+  /** Modo y paleta elegidos (JSONB); se lee con leerApariencia() de @mesa/shared. */
+  apariencia: ColumnType<unknown, string | null | undefined, string | null>;
   creado_at: Generated<Date>;
   actualizado_at: Generated<Date>;
 }

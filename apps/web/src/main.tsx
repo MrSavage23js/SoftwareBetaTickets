@@ -7,6 +7,7 @@ import '@fontsource-variable/archivo/wdth.css';
 import './estilos/app.css';
 import { PERMISOS } from '@mesa/shared';
 import { ErrorCliente } from './api/cliente';
+import { aparienciaGuardada, aplicarApariencia } from './lib/apariencia';
 import { ProveedorAvisos } from './componentes/ui';
 import { Estructura, NoEncontrado, Protegida, RedireccionInicial } from './diseno/Estructura';
 import { ErrorDePagina } from './diseno/ErrorDePagina';
@@ -18,6 +19,9 @@ import { Inicio } from './paginas/Inicio';
 import { Tickets } from './paginas/tickets/Tickets';
 import { Usuarios } from './paginas/Usuarios';
 import { ProveedorSesion } from './sesion/Sesion';
+
+// Modo y paleta de la última vez en este navegador, antes de dibujar (la sesión trae la del usuario).
+aplicarApariencia(aparienciaGuardada());
 
 // Instalable como aplicación (PWA). Solo en la compilación: en desarrollo Vite recarga los módulos por su cuenta.
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {

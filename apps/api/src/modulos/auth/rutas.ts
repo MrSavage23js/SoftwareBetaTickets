@@ -1,6 +1,14 @@
 import { Router, type Request } from 'express';
 import argon2 from 'argon2';
-import { esquemaCambiarPassword, esquemaLogin, esquemaPassword, type RespuestaSesion, type UsuarioSesion } from '@mesa/shared';
+import {
+  esquemaApariencia,
+  esquemaCambiarPassword,
+  esquemaLogin,
+  esquemaPassword,
+  leerApariencia,
+  type RespuestaSesion,
+  type UsuarioSesion,
+} from '@mesa/shared';
 import { COOKIE_SESION } from '../../config/env';
 import { db } from '../../db/conexion';
 import { OPCIONES_ARGON2 } from '../../db/seeds';
@@ -48,6 +56,7 @@ async function datosSesion(u: UsuarioActual): Promise<UsuarioSesion> {
     .orderBy('e.orden')
     .orderBy('e.nombre')
     .execute();
+  const { apariencia } = await db.selectFrom('usuarios').select('apariencia').where('id', '=', u.id).executeTakeFirstOrThrow();
   return {
     id: u.id,
     username: u.username,
@@ -64,6 +73,7 @@ async function datosSesion(u: UsuarioActual): Promise<UsuarioSesion> {
       maxPorMensaje: ajustes['adjuntos.max_por_mensaje'],
       tipos: ajustes['adjuntos.tipos'],
     },
+    apariencia: leerApariencia(apariencia),
   };
 }
 
@@ -219,6 +229,13 @@ rutasAuth.post('/cambiar-password', limiteLogin, requiereSesion, async (req, res
     csrfToken: req.sesion!.csrfToken,
   };
   res.json(cuerpo);
+});
+
+/** Guarda el modo claro/oscuro y la paleta del propio usuario (no requiere permisos: es su preferencia). */
+rutasAuth.put('/apariencia', requiereSesion, async (req, res) => {
+  const d = validar(esquemaApariencia, req.body);
+  await db.updateTable('usuarios').set({ apariencia: JSON.stringify(d) }).where('id', '=', actor(req).id).execute();
+  res.json(d);
 });
 
 /** La web lo llama (máx. 1 vez por minuto) cuando el usuario movió el ratón o escribió: mantiene viva la sesión. */

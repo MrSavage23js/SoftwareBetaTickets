@@ -13,6 +13,7 @@ const TRAZOS = {
   send: <path d="M21 3L10 14M21 3l-7 18-4-7-7-4z" />,
   x: <path d="M6 6l12 12M18 6L6 18" />,
   check: <path d="M5 12l5 5 9-10" />,
+  paleta: <><path d="M12 3a9 9 0 100 18c1.3 0 1.9-1 1.3-2.1-.6-1.1-.1-2.4 1.3-2.4H17a4 4 0 004-4c0-5-4.2-9.5-9-9.5z" /><circle cx="7.5" cy="11" r="1.2" /><circle cx="10" cy="7" r="1.2" /><circle cx="15" cy="7.5" r="1.2" /></>,
   upload: <path d="M12 16V4M7 9l5-5 5 5M4 20h16" />,
   logout: <path d="M10 5H6a2 2 0 00-2 2v10a2 2 0 002 2h4M15 8l4 4-4 4M19 12H9" />,
   pause: <path d="M8 5v14M16 5v14" />,

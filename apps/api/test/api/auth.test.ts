@@ -202,3 +202,28 @@ describe('cambio de contraseña', () => {
     expect((await celular.get('/auth/yo')).status).toBe(401);
   });
 });
+
+describe('apariencia', () => {
+  it('cada usuario guarda su modo y su paleta; viaja con la sesión y no afecta a los demás', async () => {
+    const u1 = await entrar('usuario_uno');
+    expect((await u1.get('/auth/yo')).body.usuario.apariencia).toEqual({ tema: 'sistema', acento: 'aqua' });
+
+    const r = await u1.put('/auth/apariencia', { tema: 'oscuro', acento: 'ciruela' });
+    expect(r.status).toBe(200);
+    expect((await u1.get('/auth/yo')).body.usuario.apariencia).toEqual({ tema: 'oscuro', acento: 'ciruela' });
+    // Al volver a entrar (otro equipo) la trae el inicio de sesión.
+    const otraVez = await anonimo().post('/api/auth/login').send({ username: 'usuario_uno', password: PASSWORD });
+    expect(otraVez.body.usuario.apariencia).toEqual({ tema: 'oscuro', acento: 'ciruela' });
+
+    const u2 = await entrar('usuario_dos');
+    expect((await u2.get('/auth/yo')).body.usuario.apariencia).toEqual({ tema: 'sistema', acento: 'aqua' });
+  });
+
+  it('valores inválidos → 400; sin sesión → 401', async () => {
+    const u1 = await entrar('usuario_uno');
+    expect((await u1.put('/auth/apariencia', { tema: 'neon', acento: 'aqua' })).status).toBe(400);
+    expect((await u1.put('/auth/apariencia', { tema: 'claro', acento: '#ff0000' })).status).toBe(400);
+    expect((await u1.put('/auth/apariencia', {})).status).toBe(400);
+    expect((await anonimo().put('/api/auth/apariencia').send({ tema: 'claro', acento: 'aqua' })).status).toBe(401);
+  });
+});

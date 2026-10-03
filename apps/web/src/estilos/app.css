@@ -144,7 +144,7 @@ textarea.inp { padding: 12px 14px; line-height: 1.5; resize: vertical; }
 
 /* ---------- inicio de sesión ---------- */
 .login { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); min-height: 100vh; }
-.login .brandside { background: radial-gradient(900px 520px at 0% 100%, rgba(0, 212, 198, 0.3), transparent 60%), radial-gradient(700px 420px at 100% 0%, rgba(15, 166, 157, 0.3), transparent 60%), var(--grad-lateral); color: #fff; padding: 56px; display: flex; flex-direction: column; justify-content: space-between; gap: 48px; }
+.login .brandside { background: radial-gradient(900px 520px at 0% 100%, color-mix(in srgb, var(--marca-1) 30%, transparent), transparent 60%), radial-gradient(700px 420px at 100% 0%, color-mix(in srgb, var(--marca-2) 30%, transparent), transparent 60%), var(--grad-lateral); color: #fff; padding: 56px; display: flex; flex-direction: column; justify-content: space-between; gap: 48px; }
 .logo { display: flex; align-items: center; gap: 14px; font-family: var(--display); font-stretch: var(--ancho-titulo); font-weight: 750; font-size: 22px; letter-spacing: -0.01em; }
 .logo .mark { width: 48px; height: 48px; border-radius: 12px; background: var(--grad-acento); display: flex; align-items: center; justify-content: center; color: var(--accent-ink); box-shadow: var(--sombra-acento); }
 .login h2 { margin: 0; font-family: var(--display); font-stretch: var(--ancho-titulo); font-weight: 800; font-size: clamp(32px, 4.2vw, 54px); line-height: 1.02; letter-spacing: -0.02em; max-width: 11em; }
@@ -165,7 +165,7 @@ textarea.inp { padding: 12px 14px; line-height: 1.5; resize: vertical; }
 .side nav h3 { margin: 0; padding: 0 14px 6px; font-size: 13px; font-weight: 600; color: var(--side-muted); }
 .navbtn { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 14px; border-radius: 10px; border: 0; width: 100%; text-align: left; background: transparent; color: var(--side-ink); font-weight: 550; font-size: 15px; text-decoration: none; position: relative; }
 .navbtn:hover { background: var(--side-2); }
-.navbtn[aria-current='page'] { background: linear-gradient(90deg, rgba(0, 212, 198, 0.24), rgba(0, 212, 198, 0.04)); color: #fff; }
+.navbtn[aria-current='page'] { background: linear-gradient(90deg, color-mix(in srgb, var(--marca-1) 24%, transparent), color-mix(in srgb, var(--marca-1) 4%, transparent)); color: #fff; }
 /* Marca de la seccion actual: una barra de acento a la izquierda. */
 .navbtn::before { content: ''; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; border-radius: 0 3px 3px 0; background: var(--grad-acento); transform: scaleY(0); }
 .navbtn[aria-current='page']::before { transform: scaleY(1); }
@@ -177,6 +177,10 @@ textarea.inp { padding: 12px 14px; line-height: 1.5; resize: vertical; }
 .me span { display: block; font-size: 12px; color: var(--side-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .me .out { flex: none; width: 32px; height: 32px; border: 0; border-radius: 8px; background: transparent; color: var(--side-ink); display: flex; align-items: center; justify-content: center; }
 .me .out:hover { background: var(--side-on); }
+/* Acciones del usuario en su propio renglón, bajo el nombre: así el nombre no se corta.
+   (.me .me-acciones gana a las reglas ".me div" / ".me > div" que ocultan el nombre en otros diseños.) */
+.me { flex-wrap: wrap; row-gap: 4px; }
+.me .me-acciones { display: flex; gap: 2px; flex-basis: 100%; padding-left: 40px; }
 .main { min-width: 0; display: flex; flex-direction: column; }
 .head { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; padding: 28px 32px 0; }
 .head h1 { margin: 0; font-family: var(--display); font-stretch: var(--ancho-titulo); font-weight: 780; font-size: 30px; line-height: 1.1; letter-spacing: -0.015em; color: var(--ink-strong); }
@@ -480,6 +484,7 @@ div.tarjeta { cursor: default; }
 .app.contraido .side-toggle .ic { transform: rotate(180deg); }
 .app.contraido .me { flex-direction: column; padding: 10px 0; gap: 6px; background: transparent; }
 .app.contraido .me > div { display: none; }
+.app.contraido .me .me-acciones { display: flex; flex-direction: column; flex-basis: auto; padding-left: 0; gap: 6px; }
 
 @media (prefers-reduced-motion: no-preference) {
   .app { transition: grid-template-columns 0.28s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -617,3 +622,116 @@ div.tarjeta { cursor: default; }
 /* La vela del logo ocupa más del recuadro que un ícono normal. */
 .logo .mark .ic { width: 30px; height: 30px; stroke-width: 1.7; }
 .side .logo .mark .ic { width: 24px; height: 24px; }
+
+/* =====================================================================
+   Paletas de color (Apariencia). Sin atributo, la página usa el aqua original de arriba, ajustado a mano.
+   Cada paleta define pocos valores base (degradado de marca, texto de acento y tinta de los botones,
+   elegidos con contraste WCAG medido) y el resto se deriva aquí: los neutros también toman el tono de la
+   paleta, para que el color se sienta del sistema y no un filtro encima. Estatus, urgencia y gráficas no
+   cambian: informan. Las reglas usan [data-acento] y no solo :root para que las miniaturas del selector
+   muestren cada paleta dentro de la página.
+   ===================================================================== */
+[data-acento='aqua'] { --pa-1: #00d4c6; --pa-2: #0fa69d; --pa-3: #028183; --pa-texto: #027477; --pa-tinta: #032b30; --pa-texto-osc: #4fe6db; }
+[data-acento='oceano'] { --pa-1: #5ec8ff; --pa-2: #2b8fe0; --pa-3: #2271cc; --pa-texto: #155aa8; --pa-tinta: #04213f; --pa-texto-osc: #7cc4ff; }
+[data-acento='bosque'] { --pa-1: #7be08f; --pa-2: #2fa85a; --pa-3: #1f8a4a; --pa-texto: #16693a; --pa-tinta: #052812; --pa-texto-osc: #86e3a0; }
+[data-acento='ambar'] { --pa-1: #ffd25e; --pa-2: #f2a516; --pa-3: #c47500; --pa-texto: #8a5200; --pa-tinta: #2e1a00; --pa-texto-osc: #ffc95c; }
+[data-acento='ciruela'] { --pa-1: #d6a4ff; --pa-2: #9d64e8; --pa-3: #7c4bd0; --pa-texto: #6232b3; --pa-tinta: #1f0b3d; --pa-texto-osc: #cfa6ff; }
+[data-acento='coral'] { --pa-1: #ffa196; --pa-2: #f0655a; --pa-3: #c4403a; --pa-texto: #b0332e; --pa-tinta: #3a0806; --pa-texto-osc: #ffa49b; }
+[data-acento='grafito'] { --pa-1: #b3c0c7; --pa-2: #7a8a94; --pa-3: #5f6f79; --pa-texto: #45535c; --pa-tinta: #0f171c; --pa-texto-osc: #c5d1d7; }
+
+/* Claro */
+[data-acento] {
+  --marca-1: var(--pa-1); --marca-2: var(--pa-2); --marca-3: var(--pa-3);
+  --accent: var(--pa-2); --accent-strong: var(--pa-3); --accent-text: var(--pa-texto); --accent-ink: var(--pa-tinta);
+  --accent-soft: color-mix(in oklab, var(--pa-2) 14%, #fff); --accent-line: color-mix(in oklab, var(--pa-2) 45%, #fff);
+  --sel: color-mix(in oklab, var(--pa-2) 8%, #fff);
+  --bg: color-mix(in oklab, var(--pa-3) 7%, #f5f7f7); --surface: #fff; --surface-2: color-mix(in oklab, var(--pa-3) 3%, #fff);
+  --line: color-mix(in oklab, var(--pa-3) 14%, #dfe3e4); --line-2: color-mix(in oklab, var(--pa-3) 8%, #eaedee);
+  --ink: color-mix(in oklab, var(--pa-3) 22%, #121a20); --ink-strong: color-mix(in oklab, var(--pa-3) 15%, #0a1015);
+  --muted: color-mix(in oklab, var(--pa-3) 22%, #57636a);
+  --field: #fff; --field-line: color-mix(in oklab, var(--pa-3) 18%, #cdd4d7);
+  --chip: color-mix(in oklab, var(--pa-3) 10%, #e9edee); --chip-ink: color-mix(in oklab, var(--pa-3) 28%, #34434b);
+  --type-bg: var(--chip); --type-fg: var(--chip-ink); --toolbar: color-mix(in oklab, var(--pa-3) 5%, #f4f6f6);
+  --grad-acento: linear-gradient(135deg, var(--pa-1) 0%, var(--pa-2) 55%, var(--pa-3) 100%);
+  --grad-acento-hover: linear-gradient(135deg, color-mix(in oklab, var(--pa-1) 82%, #fff) 0%, color-mix(in oklab, var(--pa-2) 88%, #fff) 55%, color-mix(in oklab, var(--pa-3) 90%, #fff) 100%);
+  --grad-lateral: linear-gradient(180deg, color-mix(in oklab, var(--pa-3) 78%, #000) 0%, color-mix(in oklab, var(--pa-3) 58%, #000) 45%, color-mix(in oklab, var(--pa-3) 38%, #000) 100%);
+  --grad-pagina: radial-gradient(1200px 380px at 70% -120px, color-mix(in srgb, var(--pa-1) 16%, transparent), transparent 70%);
+  --side: color-mix(in oklab, var(--pa-3) 58%, #000); --side-on: color-mix(in srgb, var(--pa-1) 16%, transparent);
+  --side-ink: color-mix(in oklab, var(--pa-1) 14%, #eef2f3); --side-muted: color-mix(in oklab, var(--pa-1) 26%, #9aa6ab);
+  --sombra-acento: 0 6px 18px -6px color-mix(in srgb, var(--pa-3) 55%, transparent);
+}
+
+/* Oscuro (elegido, o el de Windows/Android en modo Automático) */
+:root[data-theme='dark'][data-acento], :root[data-theme='dark'] [data-acento] {
+  --accent: var(--pa-1); --accent-strong: color-mix(in oklab, var(--pa-1) 80%, #fff); --accent-text: var(--pa-texto-osc);
+  --bg: color-mix(in oklab, var(--pa-3) 18%, #06090b); --surface: color-mix(in oklab, var(--pa-3) 16%, #0d1215);
+  --surface-2: color-mix(in oklab, var(--pa-3) 18%, #11171a); --line: color-mix(in oklab, var(--pa-3) 28%, #1c2428); --line-2: color-mix(in oklab, var(--pa-3) 22%, #172024);
+  --ink: color-mix(in oklab, var(--pa-1) 8%, #e7eef0); --ink-strong: #fff; --muted: color-mix(in oklab, var(--pa-1) 18%, #a1aeb3);
+  --field: color-mix(in oklab, var(--pa-3) 14%, #0a0e10); --field-line: color-mix(in oklab, var(--pa-3) 34%, #2b353a);
+  --chip: color-mix(in oklab, var(--pa-3) 24%, #162024); --chip-ink: color-mix(in oklab, var(--pa-1) 14%, #d3dcdf);
+  --type-bg: var(--chip); --type-fg: var(--chip-ink); --toolbar: var(--surface-2);
+  --accent-soft: color-mix(in oklab, var(--pa-2) 24%, var(--surface)); --accent-line: color-mix(in oklab, var(--pa-2) 48%, var(--surface));
+  --sel: color-mix(in oklab, var(--pa-2) 16%, var(--surface));
+  --grad-lateral: linear-gradient(180deg, color-mix(in oklab, var(--pa-3) 55%, #000) 0%, color-mix(in oklab, var(--pa-3) 36%, #000) 45%, color-mix(in oklab, var(--pa-3) 20%, #000) 100%);
+  --grad-pagina: radial-gradient(1200px 380px at 70% -120px, color-mix(in srgb, var(--pa-1) 12%, transparent), transparent 70%);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light'])[data-acento], :root:not([data-theme='light']) [data-acento] {
+    --accent: var(--pa-1); --accent-strong: color-mix(in oklab, var(--pa-1) 80%, #fff); --accent-text: var(--pa-texto-osc);
+    --bg: color-mix(in oklab, var(--pa-3) 18%, #06090b); --surface: color-mix(in oklab, var(--pa-3) 16%, #0d1215);
+    --surface-2: color-mix(in oklab, var(--pa-3) 18%, #11171a); --line: color-mix(in oklab, var(--pa-3) 28%, #1c2428); --line-2: color-mix(in oklab, var(--pa-3) 22%, #172024);
+    --ink: color-mix(in oklab, var(--pa-1) 8%, #e7eef0); --ink-strong: #fff; --muted: color-mix(in oklab, var(--pa-1) 18%, #a1aeb3);
+    --field: color-mix(in oklab, var(--pa-3) 14%, #0a0e10); --field-line: color-mix(in oklab, var(--pa-3) 34%, #2b353a);
+    --chip: color-mix(in oklab, var(--pa-3) 24%, #162024); --chip-ink: color-mix(in oklab, var(--pa-1) 14%, #d3dcdf);
+    --type-bg: var(--chip); --type-fg: var(--chip-ink); --toolbar: var(--surface-2);
+    --accent-soft: color-mix(in oklab, var(--pa-2) 24%, var(--surface)); --accent-line: color-mix(in oklab, var(--pa-2) 48%, var(--surface));
+    --sel: color-mix(in oklab, var(--pa-2) 16%, var(--surface));
+    --grad-lateral: linear-gradient(180deg, color-mix(in oklab, var(--pa-3) 55%, #000) 0%, color-mix(in oklab, var(--pa-3) 36%, #000) 45%, color-mix(in oklab, var(--pa-3) 20%, #000) 100%);
+    --grad-pagina: radial-gradient(1200px 380px at 70% -120px, color-mix(in srgb, var(--pa-1) 12%, transparent), transparent 70%);
+  }
+}
+
+/* ---------- ventana Apariencia ---------- */
+.apariencia { display: grid; gap: 12px; }
+.apariencia h3 { margin: 12px 0 0; font-size: 15px; font-weight: 680; color: var(--ink-strong); }
+.apariencia-nota { margin: 0; color: var(--muted); font-size: 14px; }
+.ap-modos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.ap-modo { position: relative; display: grid; gap: 10px; padding: 10px; border-radius: 12px; border: 1px solid var(--field-line); background: var(--surface); text-align: left; }
+.ap-modo:hover { border-color: var(--accent); }
+.ap-modo[aria-checked='true'] { border-color: var(--accent-strong); box-shadow: inset 0 0 0 1px var(--accent-strong); background: var(--sel); }
+.ap-modo > .ic { position: absolute; top: 16px; right: 16px; color: var(--accent-ink); background: var(--grad-acento); border-radius: 999px; padding: 2px; width: 20px; height: 20px; }
+.ap-modo-vista { display: grid; grid-template-columns: 26% 1fr; height: 64px; border-radius: 8px; overflow: hidden; border: 1px solid var(--line); }
+.ap-modo-vista .lado { background: var(--grad-lateral); }
+.ap-modo-vista .hoja { display: flex; flex-direction: column; gap: 6px; padding: 10px; }
+.ap-modo-vista .renglon { height: 6px; border-radius: 3px; background: rgba(128, 142, 148, 0.45); }
+.ap-modo-vista .renglon.corto { width: 55%; background: var(--grad-acento); }
+.ap-modo-vista.claro .hoja { background: #f4f7f8; }
+.ap-modo-vista.oscuro .hoja { background: #121a1e; }
+/* Automático: mitad clara y mitad oscura, como el equipo decida. */
+.ap-modo-vista.sistema .hoja { background: linear-gradient(135deg, #f4f7f8 50%, #121a1e 50%); }
+.ap-texto { display: grid; gap: 2px; }
+.ap-texto b { font-size: 14px; color: var(--ink-strong); }
+.ap-texto small { font-size: 12.5px; color: var(--muted); }
+
+.ap-paletas { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 14px 12px; }
+.ap-paleta { display: grid; gap: 7px; padding: 0; border: 0; background: transparent; text-align: left; border-radius: 12px; --anillo: transparent; }
+.ap-paleta[aria-checked='true'] { --anillo: var(--accent-strong); }
+.ap-paleta:hover .mini { border-color: var(--field-line); }
+/* La miniatura toma la paleta de su propio data-acento (reglas de arriba); el anillo, la de la página. */
+.mini { display: grid; grid-template-columns: 30% 1fr; aspect-ratio: 4 / 3; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); outline: 2px solid var(--anillo); outline-offset: 2px; }
+.mini-lado { display: flex; flex-direction: column; gap: 5px; padding: 8px 6px; background: var(--grad-lateral); }
+.mini-punto { width: 11px; height: 11px; border-radius: 4px; background: var(--grad-acento); margin-bottom: 3px; }
+.mini-item { height: 5px; border-radius: 3px; background: color-mix(in srgb, var(--side-ink) 28%, transparent); }
+.mini-item.on { background: color-mix(in srgb, var(--marca-1) 55%, transparent); }
+.mini-pagina { display: flex; flex-direction: column; gap: 7px; padding: 8px; background: var(--grad-pagina) no-repeat, var(--bg); }
+.mini-tarjeta { display: grid; gap: 4px; padding: 6px; border-radius: 5px; background: var(--surface); border: 1px solid var(--line-2); }
+.mini-renglon { height: 4px; border-radius: 2px; background: var(--line); }
+.mini-renglon.corto { width: 60%; background: var(--accent-soft); }
+.mini-boton { margin-top: auto; align-self: flex-end; width: 50%; height: 11px; border-radius: 4px; background: var(--grad-acento); box-shadow: var(--sombra-acento); }
+.ap-nombre { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--ink); }
+.ap-nombre .ic { color: var(--accent-text); }
+@media (max-width: 560px) {
+  .ap-modos { grid-template-columns: 1fr; }
+  .ap-modo { grid-template-columns: 96px 1fr; align-items: center; }
+  .ap-modo-vista { height: 56px; }
+}

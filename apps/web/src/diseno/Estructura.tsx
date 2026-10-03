@@ -5,6 +5,7 @@ import { Campana } from '../componentes/Campana';
 import { Icono, type NombreIcono } from '../componentes/Icono';
 import { Cargando, EstadoVacio } from '../componentes/ui';
 import { iniciales } from '../lib/formato';
+import { VentanaApariencia } from '../componentes/Apariencia';
 import { CambioObligatorio, VentanaCambiarPassword } from '../paginas/CambiarPassword';
 import { useSesion } from '../sesion/Sesion';
 
@@ -51,6 +52,7 @@ function useAngosta(): boolean {
 export function Estructura() {
   const { usuario, puede, salir } = useSesion();
   const [cambiarPassword, setCambiarPassword] = useState(false);
+  const [apariencia, setApariencia] = useState(false);
   // Pantalla ancha: barra contraída a solo íconos (se recuerda). Pantalla angosta: menú desplegable.
   const [contraido, setContraido] = useState(leerContraido);
   const [abierto, setAbierto] = useState(false);
@@ -126,12 +128,17 @@ export function Estructura() {
                 <b title={usuario.nombre}>{usuario.nombre}</b>
                 <span>{esSoporte ? usuario.rol.nombre : 'Usuario solicitante'}</span>
               </div>
-              <button className="out" aria-label="Cambiar contraseña" title="Cambiar contraseña" onClick={() => setCambiarPassword(true)}>
-                <Icono n="lock" />
-              </button>
-              <button className="out" aria-label="Cerrar sesión" title="Cerrar sesión" onClick={() => void salir()}>
-                <Icono n="logout" />
-              </button>
+              <div className="me-acciones">
+                <button className="out" aria-label="Apariencia" title="Apariencia: modo y color" onClick={() => setApariencia(true)}>
+                  <Icono n="paleta" />
+                </button>
+                <button className="out" aria-label="Cambiar contraseña" title="Cambiar contraseña" onClick={() => setCambiarPassword(true)}>
+                  <Icono n="lock" />
+                </button>
+                <button className="out" aria-label="Cerrar sesión" title="Cerrar sesión" onClick={() => void salir()}>
+                  <Icono n="logout" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -140,6 +147,7 @@ export function Estructura() {
         <Outlet />
       </div>
       {cambiarPassword && <VentanaCambiarPassword alCerrar={() => setCambiarPassword(false)} />}
+      {apariencia && <VentanaApariencia alCerrar={() => setApariencia(false)} />}
     </div>
   );
 }

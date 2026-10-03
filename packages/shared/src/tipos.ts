@@ -1,4 +1,5 @@
 // Formas de las respuestas de la API (contrato entre servidor y web). Las fechas viajan como ISO 8601 UTC.
+import type { Apariencia } from './apariencia';
 import type { Estatus } from './estatus';
 import type { Accion } from './maquina-estados';
 import type { Urgencia } from './urgencia';
@@ -43,6 +44,8 @@ export interface UsuarioSesion {
   debeCambiarPassword: boolean;
   /** Límites de adjuntos vigentes (la web valida antes de subir; el servidor vuelve a validar). */
   adjuntos: { maxMb: number; maxPorMensaje: number; tipos: string[] };
+  /** Modo claro/oscuro y paleta de color que eligió el usuario. */
+  apariencia: Apariencia;
 }
 
 export interface RespuestaSesion {

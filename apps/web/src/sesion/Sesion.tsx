@@ -3,8 +3,9 @@
 // abierta no mantiene la sesión. Un minuto antes del cierre se muestra un aviso para continuar.
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import type { RespuestaSesion, UsuarioSesion } from '@mesa/shared';
+import type { Apariencia, RespuestaSesion, UsuarioSesion } from '@mesa/shared';
 import { api, ErrorCliente, EVENTO_SESION_EXPIRADA, fijarCsrf } from '../api/cliente';
+import { aplicarApariencia } from '../lib/apariencia';
 
 type Estado = 'cargando' | 'anonimo' | 'autenticado' | 'sin-servidor';
 
@@ -17,6 +18,8 @@ interface Sesion {
   entrar: (username: string, password: string) => Promise<void>;
   /** Aplica una respuesta de sesión nueva (p. ej. después de cambiar la contraseña). */
   actualizar: (r: RespuestaSesion) => void;
+  /** Aplica al instante el modo/paleta y lo guarda para el usuario; si no se guarda, vuelve al anterior. */
+  cambiarApariencia: (a: Apariencia) => Promise<void>;
   salir: () => Promise<void>;
   reintentar: () => void;
 }
@@ -37,6 +40,7 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
 
   const aplicar = useCallback((r: RespuestaSesion) => {
     fijarCsrf(r.csrfToken);
+    aplicarApariencia(r.usuario.apariencia);
     setUsuario(r.usuario);
     setEstado('autenticado');
     setMotivo(null);
@@ -116,6 +120,19 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
       puede: (p) => permisos.has(p),
       entrar: async (username, password) => aplicar(await api.post<RespuestaSesion>('/auth/login', { username, password })),
       actualizar: aplicar,
+      cambiarApariencia: async (a) => {
+        if (!usuario) return;
+        const anterior = usuario.apariencia;
+        aplicarApariencia(a);
+        setUsuario({ ...usuario, apariencia: a });
+        try {
+          await api.put('/auth/apariencia', a);
+        } catch (e) {
+          aplicarApariencia(anterior);
+          setUsuario((u) => (u ? { ...u, apariencia: anterior } : u));
+          throw e;
+        }
+      },
       salir: async () => {
         await api.post('/auth/logout').catch(() => undefined);
         terminar(null);

@@ -13,6 +13,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado
   - Respaldo y restauración sin programas externos: funcionan igual contra la base local que contra una remota (`--url`). Los respaldos anteriores de MySQL no se pueden cargar.
 
 ### Agregado
+- **Apariencia por usuario** (botón de paleta junto a tu nombre): modo Automático, Claro u Oscuro y siete paletas de color (Aqua, Océano, Bosque, Ámbar, Ciruela, Coral y Grafito), con vista previa en miniatura. Se guarda en el usuario y se aplica en cualquier equipo; los colores de estatus, urgencia y gráficas no cambian.
 - Aplicación instalable (PWA) y guía de despliegue en Render y en PC de oficina.
 - Aviso de ticket nuevo a varios correos, con la urgencia en el asunto; "Enviar copia a" acepta varios correos y no deja pasar uno mal escrito.
 
