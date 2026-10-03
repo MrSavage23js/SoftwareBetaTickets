@@ -10,6 +10,7 @@ Sistema de tickets de soporte. Tiene dos vistas: la del **solicitante** (Mis tic
 | `docs/EXTENDER.md` | Cómo agregar tipos, módulos, empresas, campos, estatus, roles y plantillas |
 | `docs/DESPLIEGUE.md` | Instalación en el servidor (Windows, Linux o Render) |
 | `docs/CORREO_M365.md` | Qué pedirle al administrador de Microsoft 365 |
+| `docs/AVISOS_SOPORTE.md` | Avisos por correo a soporte (ticket nuevo y cierre): ajustes, código y cuidados |
 | `docs/SEGURIDAD.md` | Controles de seguridad y **lista obligatoria antes de publicar** |
 | `CHECKLIST_QA.md` | Pruebas manuales antes de presentar |
 | `CHANGELOG.md` | Historial de cambios |
