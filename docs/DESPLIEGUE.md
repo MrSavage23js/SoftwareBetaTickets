@@ -153,7 +153,7 @@ COOKIE_SECURE=true
 TRUST_PROXY=1                               # Render pone un proxy delante
 DATABASE_URL=<Internal Database URL>        # postgresql://usuario:contraseña@host/base
 MAIL_TRANSPORT=smtp  MAIL_FROM=…  MAIL_FROM_NAME=…
-SMTP_HOST=…  SMTP_PORT=465  SMTP_SECURE=true  SMTP_USER=…  SMTP_PASS=…
+SMTP_HOST=mail.aramo.com.mx  SMTP_PORT=26  SMTP_SECURE=false  SMTP_USER=…  SMTP_PASS=…   # ver "Correo" abajo
 ADMIN_INICIAL_USUARIO=admin  ADMIN_INICIAL_EMAIL=…  ADMIN_INICIAL_PASSWORD=<temporal; cambiarla al entrar>
 ```
 Los destinatarios del aviso de ticket nuevo no van aquí: se configuran en **Ajustes → Correos**.
@@ -169,8 +169,12 @@ Limitaciones del **plan gratuito** de Render que afectan a este sistema:
   4. Cambiar `DATABASE_URL` del Web Service por la *Internal URL* nueva.
   Con un plan de pago de la base esto no hace falta.
 - **Correo**: el plan gratuito bloquea la salida a los puertos SMTP 25, 465 y 587
-  ([aviso de Render](https://render.com/changelog/free-web-services-will-no-longer-allow-outbound-traffic-to-smtp-ports)):
-  **con SMTP no sale ningún correo**. Se necesita un plan de pago del Web Service, o `MAIL_TRANSPORT=graph` (va por HTTPS).
+  ([aviso de Render](https://render.com/changelog/free-web-services-will-no-longer-allow-outbound-traffic-to-smtp-ports)).
+  El servidor de Aramo (cPanel) también recibe en el **puerto 26** con STARTTLS y usuario/contraseña, que Render no bloquea:
+  `SMTP_PORT=26` y `SMTP_SECURE=false` (con `false` el sistema exige STARTTLS, así que el envío sigue cifrado).
+  Probado el 02/10/2026: entrega en la bandeja de sistemas@aramo.com.mx, también con enlaces a `onrender.com`
+  (los enlaces a `trycloudflare.com`, en cambio, los borra el antispam de Aramo).
+  Si un correo falla, queda en **Correos → Cola de salida** con el error y se reintenta solo.
 - **Adjuntos**: el disco del servicio se borra en cada despliegue y reinicio. Para conservarlos hace falta un
   *Persistent Disk* (planes de pago) montado en la ruta de `STORAGE_DIR`.
 - **El servicio se duerme** sin visitas; mientras duerme no envía la cola de correos ni corre las tareas periódicas.
