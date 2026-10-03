@@ -162,7 +162,8 @@ Limitaciones del **plan gratuito** de Render que afectan a este sistema:
 - **La base gratuita caduca a los 30 días** de creada y, 14 días después, Render la borra con todos los datos
   ([límites del plan gratuito](https://render.com/docs/free)). Solo puede haber una base gratuita por cuenta.
   Para no perder nada, **antes del día 30**:
-  1. Respaldo desde cualquier PC con el proyecto, usando la *External Database URL*:
+  1. Respaldo desde una PC con el proyecto, usando la *External Database URL*. La IP pública de esa PC debe estar
+     en la base → *Networking* → *Access Control* (por omisión Render no acepta conexiones externas):
      `DATABASE_URL="<External URL>?sslmode=require" npm run respaldo`
   2. En Render, borrar la base vieja y crear una nueva (otra vez gratuita).
   3. Restaurar en la nueva: `npm run restaurar -- storage/respaldos/<carpeta> --url "<External URL nueva>?sslmode=require" --confirmar`
