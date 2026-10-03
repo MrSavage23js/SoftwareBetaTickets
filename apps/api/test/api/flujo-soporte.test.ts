@@ -124,6 +124,36 @@ describe('flujo completo', () => {
     expect(aviso.cuerpo_html).toContain('usuario_uno@prueba.local');
     expect(aviso.cuerpo_html).toContain('En copia: externo@prueba.local');
   });
+
+  it('aviso a soporte al cerrar: va a los mismos correos y se puede apagar', async () => {
+    const avisos = async (ticket: number) =>
+      db.selectFrom('correos_salida').select(['para', 'asunto', 'cuerpo_html']).where('plantilla_codigo', '=', 'TICKET_CERRADO_SOPORTE').where('ticket_id', '=', ticket).execute();
+    // Sin correos de destino no se envía nada aunque el ajuste esté encendido (valor inicial).
+    await admin.post(`/tickets/${id}/tomar`).expect(204);
+    await admin.form(`/tickets/${id}/cerrar`, { resolucionHtml: '<p>Listo.</p>', version: (await detalle()).version }).expect(204);
+    expect(await avisos(id)).toHaveLength(0);
+
+    await admin.put('/ajustes', { 'correo.aviso_soporte_destino': 'uno@prueba.local, dos@prueba.local' }).expect(200);
+    const { id: otro, folio } = (await u1.form('/tickets', ticketValido(f))).body;
+    await admin.post(`/tickets/${otro}/tomar`).expect(204);
+    await admin.form(`/tickets/${otro}/cerrar`, { resolucionHtml: '<p>Se reinició el servicio.</p>', version: (await admin.get(`/tickets/${otro}`)).body.version }).expect(204);
+    const [aviso] = await avisos(otro);
+    const para = (typeof aviso!.para === 'string' ? JSON.parse(aviso!.para) : aviso!.para) as { email: string }[];
+    expect(para.map((d) => d.email)).toEqual(['uno@prueba.local', 'dos@prueba.local']);
+    expect(aviso!.asunto).toContain(folio);
+    expect(aviso!.cuerpo_html).toContain('Se reinició el servicio.');
+    expect(aviso!.cuerpo_html).toContain('usuario_uno@prueba.local');
+
+    // "No procede" también avisa; con el ajuste apagado, ya no.
+    const { id: tercero } = (await u1.form('/tickets', ticketValido(f))).body;
+    await admin.post(`/tickets/${tercero}/no-procede`, { motivo: 'Duplicado', version: (await admin.get(`/tickets/${tercero}`)).body.version }).expect(204);
+    expect((await avisos(tercero))[0]!.cuerpo_html).toContain('Duplicado');
+
+    await admin.put('/ajustes', { 'correo.aviso_cierre_activo': false }).expect(200);
+    const { id: cuarto } = (await u1.form('/tickets', ticketValido(f))).body;
+    await admin.post(`/tickets/${cuarto}/no-procede`, { motivo: 'Otro', version: (await admin.get(`/tickets/${cuarto}`)).body.version }).expect(204);
+    expect(await avisos(cuarto)).toHaveLength(0);
+  });
 });
 
 describe('no procede', () => {

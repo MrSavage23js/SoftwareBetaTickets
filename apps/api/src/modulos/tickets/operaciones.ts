@@ -461,6 +461,26 @@ export async function comentar(u: UsuarioActual, id: number, entrada: unknown, a
   );
 }
 
+/**
+ * Correos de cierre (Cerrar y No procede): al solicitante y, si el ajuste está encendido, al buzón de soporte.
+ * Devuelve si se encoló el del solicitante.
+ */
+async function correosCierre(c: Contexto, u: UsuarioActual, resolucionHtml: string): Promise<boolean> {
+  const { vars, solicitante } = await variablesTicket(c.tx, c.t.id);
+  const variables = { ...vars, tecnico: nombreVisible(u), fecha_cierre: fechaLarga(c.ahora), resolucion_html: resolucionHtml };
+  const encolado = await encolarCorreo(c.tx, { plantilla: CODIGOS_PLANTILLA.TICKET_CERRADO, para: [solicitante], variables, ticketId: c.t.id });
+  const ajustes = await obtenerAjustes();
+  if (ajustes['correo.aviso_cierre_activo'] && ajustes['correo.aviso_soporte_destino']) {
+    await encolarCorreo(c.tx, {
+      plantilla: CODIGOS_PLANTILLA.TICKET_CERRADO_SOPORTE,
+      para: listaCorreos(ajustes['correo.aviso_soporte_destino']).map((email) => ({ email })),
+      variables,
+      ticketId: c.t.id,
+    });
+  }
+  return encolado;
+}
+
 export async function cerrar(u: UsuarioActual, id: number, entrada: unknown, archivos: Express.Multer.File[]) {
   const d = validar(esquemaCerrar, entrada);
   const html = htmlDeMensaje(d.resolucionHtml, 'resolucionHtml', 'La resolución es obligatoria para cerrar el ticket.');
@@ -474,13 +494,7 @@ export async function cerrar(u: UsuarioActual, id: number, entrada: unknown, arc
         pausado_at: null,
         ...(c.t.primera_respuesta_at ? {} : { primera_respuesta_at: c.ahora }),
       });
-      const { vars, solicitante } = await variablesTicket(c.tx, id);
-      const encolado = await encolarCorreo(c.tx, {
-        plantilla: CODIGOS_PLANTILLA.TICKET_CERRADO,
-        para: [solicitante],
-        variables: { ...vars, tecnico: nombreVisible(u), fecha_cierre: fechaLarga(c.ahora), resolucion_html: html },
-        ticketId: id,
-      });
+      const encolado = await correosCierre(c, u, html);
       await evento(c, u, TIPOS_EVENTO.CERRADO, { mensajeId, adjuntos: guardados.length, correoEncolado: encolado });
     }),
   );
@@ -493,13 +507,7 @@ export async function noProcede(u: UsuarioActual, id: number, entrada: unknown) 
   await conTicket(u, id, 'noProcede', d.version, async (c) => {
     const mensajeId = await guardarMensaje(c, u, 'RESOLUCION', html, []);
     await actualizar(c, { estatus: c.estatusNuevo, cerrado_at: c.ahora, cerrado_por_id: u.id, pausado_at: null });
-    const { vars, solicitante } = await variablesTicket(c.tx, id);
-    const encolado = await encolarCorreo(c.tx, {
-      plantilla: CODIGOS_PLANTILLA.TICKET_CERRADO,
-      para: [solicitante],
-      variables: { ...vars, tecnico: nombreVisible(u), fecha_cierre: fechaLarga(c.ahora), resolucion_html: html },
-      ticketId: id,
-    });
+    const encolado = await correosCierre(c, u, html);
     await evento(c, u, TIPOS_EVENTO.NO_PROCEDE, { motivo: d.motivo, mensajeId, correoEncolado: encolado });
   });
 }

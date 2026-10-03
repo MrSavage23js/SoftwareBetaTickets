@@ -134,6 +134,8 @@ export function valoresInicialesAjustes(): Record<ClaveAjuste, unknown> {
       : ['pdf', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'doc', 'docx', 'xls', 'xlsx', 'csv', 'txt', 'xml', 'zip'],
     'correo.respuestas_activas': false,
     'correo.aviso_soporte_activo': false,
+    // Encendido: solo se envía si además hay correos en "correo.aviso_soporte_destino".
+    'correo.aviso_cierre_activo': true,
     'correo.aviso_soporte_destino': '',
     'kanban.tarjetas_por_columna': 50,
   };

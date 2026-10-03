@@ -106,4 +106,21 @@ export const PLANTILLAS = [
         <div style="margin:16px 0 0;padding:14px 16px;background:#FAFBFC;border:1px solid #DDE3E9;border-radius:8px;color:#17222D;font-size:14px">{{{descripcion_html}}}</div>${boton}`,
     ),
   },
+  {
+    codigo: 'TICKET_CERRADO_SOPORTE',
+    nombre: 'Aviso de ticket cerrado a soporte',
+    descripcion: 'Se envía al buzón de soporte cuando se cierra un ticket o se marca "No procede" (solo si el ajuste "correo.aviso_cierre_activo" está encendido).',
+    asunto: 'Ticket cerrado: {{folio}} — {{estatus}}',
+    variables: [
+      ...VARIABLES_TICKET,
+      { nombre: 'tecnico', descripcion: 'Quién cerró el ticket' },
+      { nombre: 'fecha_cierre', descripcion: 'Fecha y hora de cierre' },
+      { nombre: 'resolucion_html', descripcion: 'Texto de resolución (HTML; usar con triple llave)' },
+    ],
+    cuerpoHtml: envoltura(
+      'Ticket cerrado',
+      `        <p style="margin:0 0 16px;color:#17222D;font-size:15px"><strong>{{tecnico}}</strong> cerró el ticket <strong>{{folio}}</strong> de {{solicitante}} ({{solicitante_email}}) el {{fecha_cierre}}.</p>
+        <div style="margin:0 0 16px;padding:14px 16px;background:#EAF3F3;border:1px solid #BFDCDC;border-radius:8px;color:#17222D;font-size:14px"><div style="font-weight:700;margin-bottom:6px">Resolución</div>{{{resolucion_html}}}</div>${tablaDatos}${boton}`,
+    ),
+  },
 ];

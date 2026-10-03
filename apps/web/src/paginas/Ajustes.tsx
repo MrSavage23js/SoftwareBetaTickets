@@ -12,7 +12,7 @@ interface Respuesta {
 const GRUPOS: { titulo: string; claves: string[] }[] = [
   { titulo: 'Sesión y acceso', claves: ['sesion.inactividad_min', 'sesion.max_horas', 'login.max_intentos', 'login.bloqueo_min', 'password.min_caracteres'] },
   { titulo: 'Archivos adjuntos', claves: ['adjuntos.max_mb', 'adjuntos.max_por_mensaje', 'adjuntos.tipos'] },
-  { titulo: 'Correos', claves: ['correo.respuestas_activas', 'correo.aviso_soporte_activo', 'correo.aviso_soporte_destino'] },
+  { titulo: 'Correos', claves: ['correo.respuestas_activas', 'correo.aviso_soporte_activo', 'correo.aviso_cierre_activo', 'correo.aviso_soporte_destino'] },
   { titulo: 'Bandeja', claves: ['kanban.tarjetas_por_columna'] },
 ];
 

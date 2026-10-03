@@ -59,8 +59,12 @@ export const DEFINICION_AJUSTES = {
     descripcion: 'Avisar por correo a soporte cuando se crea un ticket',
     esquema: z.boolean(),
   },
+  'correo.aviso_cierre_activo': {
+    descripcion: 'Avisar por correo a soporte cuando se cierra un ticket (también "No procede")',
+    esquema: z.boolean(),
+  },
   'correo.aviso_soporte_destino': {
-    descripcion: 'Correos que reciben el aviso de ticket nuevo (varios separados por coma)',
+    descripcion: 'Correos que reciben los avisos a soporte de ticket nuevo y de cierre (varios separados por coma)',
     esquema: z
       .string()
       .transform((s) => listaCorreos(s).join(', '))

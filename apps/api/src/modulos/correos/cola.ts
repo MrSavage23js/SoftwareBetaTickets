@@ -11,6 +11,7 @@ export const CODIGOS_PLANTILLA = {
   TICKET_CERRADO: 'TICKET_CERRADO',
   TICKET_RESPUESTA: 'TICKET_RESPUESTA',
   TICKET_NUEVO_SOPORTE: 'TICKET_NUEVO_SOPORTE',
+  TICKET_CERRADO_SOPORTE: 'TICKET_CERRADO_SOPORTE',
 } as const;
 
 function depurar(lista: Destinatario[], excluir: Set<string> = new Set()): Destinatario[] {
