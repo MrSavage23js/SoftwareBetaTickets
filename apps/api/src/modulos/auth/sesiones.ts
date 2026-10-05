@@ -4,6 +4,7 @@
 // - "En línea" = sesión abierta, no expirada y con actividad dentro del tiempo de inactividad.
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { sql } from 'kysely';
+import { PERMISOS } from '@mesa/shared';
 import { db, type Ejecutor } from '../../db/conexion';
 import type { MotivoCierreSesion } from '../../db/tipos';
 import { minutos } from '../../lib/fechas';
@@ -57,7 +58,16 @@ export async function permisosDeRol(rolId: number): Promise<Set<string>> {
   cachePermisos.set(rolId, { permisos, hasta: Date.now() + 30_000 });
   return permisos;
 }
+/** Permisos del rol y si se le exige cambiar la contraseña. */
+export async function permisosYCambio(rolId: number, marcada: number) {
+  const permisos = await permisosDeRol(rolId);
+  return { permisos, debeCambiarPassword: debeCambiarPassword(marcada, permisos) };
+}
 export const invalidarPermisos = () => cachePermisos.clear();
+
+/** Solo los admins pueden cambiar su contraseña: a los demás no se les pide aunque el admin se la haya asignado. */
+export const debeCambiarPassword = (marcada: number, permisos: Set<string>) =>
+  !!marcada && permisos.has(PERMISOS.USUARIOS_ADMINISTRAR);
 
 export type ResultadoSesion =
   | { ok: true; usuario: UsuarioActual; sesion: SesionActual; ultimaActividad: Date }
@@ -116,8 +126,7 @@ export async function resolverSesion(token: string): Promise<ResultadoSesion> {
       rolId: fila.rol_id,
       rolCodigo: fila.rol_codigo,
       rolNombre: fila.rol_nombre,
-      permisos: await permisosDeRol(fila.rol_id),
-      debeCambiarPassword: !!fila.debe_cambiar_password,
+      ...(await permisosYCambio(fila.rol_id, fila.debe_cambiar_password)),
     },
   };
 }

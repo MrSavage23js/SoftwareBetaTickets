@@ -132,9 +132,11 @@ export function Estructura() {
                 <button className="out" aria-label="Apariencia" title="Apariencia: modo y color" onClick={() => setApariencia(true)}>
                   <Icono n="paleta" />
                 </button>
-                <button className="out" aria-label="Cambiar contraseña" title="Cambiar contraseña" onClick={() => setCambiarPassword(true)}>
-                  <Icono n="lock" />
-                </button>
+                {puede(PERMISOS.USUARIOS_ADMINISTRAR) && (
+                  <button className="out" aria-label="Cambiar contraseña" title="Cambiar contraseña" onClick={() => setCambiarPassword(true)}>
+                    <Icono n="lock" />
+                  </button>
+                )}
                 <button className="out" aria-label="Cerrar sesión" title="Cerrar sesión" onClick={() => void salir()}>
                   <Icono n="logout" />
                 </button>

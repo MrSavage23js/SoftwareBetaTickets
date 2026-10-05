@@ -145,7 +145,8 @@ export async function crearUsuario(entrada: UsuarioCrearEntrada, actorId: number
           departamento_id: d.departamentoId,
           activo: d.activo ? 1 : 0,
           password_cambiado_at: new Date(),
-          // La contraseña la eligió el admin: el usuario la cambia en su primer inicio de sesión.
+          // La contraseña la eligió el admin: si el nuevo es admin, la cambia en su primer inicio de sesión
+          // (a los demás no se les pide porque no pueden cambiarla; ver debeCambiarPassword en sesiones.ts).
           debe_cambiar_password: 1,
           id_anterior: null,
         })

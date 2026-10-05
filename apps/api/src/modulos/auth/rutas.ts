@@ -6,6 +6,7 @@ import {
   esquemaLogin,
   esquemaPassword,
   leerApariencia,
+  PERMISOS,
   type RespuestaSesion,
   type UsuarioSesion,
 } from '@mesa/shared';
@@ -16,11 +17,11 @@ import { ErrorApp, errores } from '../../lib/errores';
 import { sumarMinutos } from '../../lib/fechas';
 import { validar } from '../../lib/validar';
 import { limiteLogin } from '../../middleware/limites';
-import { opcionesCookie, requiereSesion } from '../../middleware/sesion';
+import { opcionesCookie, requierePermiso, requiereSesion } from '../../middleware/sesion';
 import { obtenerAjustes } from '../ajustes/servicio';
 import { auditar } from '../eventos/servicio';
 import { actor, ipDe, nombreVisible, type UsuarioActual } from './contexto';
-import { cerrarSesion, cerrarSesionesDeUsuario, crearSesion, permisosDeRol, registrarActividad } from './sesiones';
+import { cerrarSesion, cerrarSesionesDeUsuario, crearSesion, permisosYCambio, registrarActividad } from './sesiones';
 
 export const rutasAuth = Router();
 
@@ -176,8 +177,7 @@ rutasAuth.post('/login', limiteLogin, async (req: Request, res) => {
     rolId: u.rol_id,
     rolCodigo: u.rol_codigo,
     rolNombre: u.rol_nombre,
-    permisos: await permisosDeRol(u.rol_id),
-    debeCambiarPassword: !!u.debe_cambiar_password,
+    ...(await permisosYCambio(u.rol_id, u.debe_cambiar_password)),
   };
   const cuerpo: RespuestaSesion = { usuario: await datosSesion(actual), csrfToken };
   res.json(cuerpo);
@@ -195,10 +195,11 @@ rutasAuth.get('/yo', requiereSesion, async (req, res) => {
 });
 
 /**
- * Cambio de la propia contraseña (obligatorio si el admin la asignó). Pide la actual,
- * cierra las demás sesiones del usuario y mantiene abierta la actual.
+ * Cambio de la propia contraseña, solo para admins (obligatorio si otro admin la asignó). A los
+ * demás usuarios se la cambia un admin desde Usuarios. Pide la actual, cierra las demás
+ * sesiones del usuario y mantiene abierta la actual.
  */
-rutasAuth.post('/cambiar-password', limiteLogin, requiereSesion, async (req, res) => {
+rutasAuth.post('/cambiar-password', limiteLogin, requiereSesion, requierePermiso(PERMISOS.USUARIOS_ADMINISTRAR), async (req, res) => {
   const d = validar(esquemaCambiarPassword, req.body);
   const u = actor(req);
   const min = (await obtenerAjustes())['password.min_caracteres'];

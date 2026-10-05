@@ -160,7 +160,7 @@ describe('protección CSRF', () => {
 });
 
 describe('cambio de contraseña', () => {
-  it('un usuario creado por el admin debe cambiar su contraseña antes de usar el sistema', async () => {
+  it('un admin creado por otro admin debe cambiar su contraseña antes de usar el sistema', async () => {
     const admin = await entrar('admin_prueba');
     const roles = (await admin.get('/usuarios/roles')).body as { id: number; codigo: string }[];
     await admin
@@ -169,8 +169,8 @@ describe('cambio de contraseña', () => {
         email: 'nuevo@prueba.local',
         password: 'Temporal123',
         confirmarPassword: 'Temporal123',
-        rolId: roles.find((r) => r.codigo === 'USUARIO')!.id,
-        empresaIds: [f.empresaAS],
+        rolId: roles.find((r) => r.codigo === 'ADMIN_SOPORTE')!.id,
+        empresaIds: [],
       })
       .expect(201);
 
@@ -194,9 +194,31 @@ describe('cambio de contraseña', () => {
     await entrar('nuevo_empleado', 'MiClave2026');
   });
 
+  it('un usuario que no es admin no puede cambiar su contraseña ni se le pide hacerlo', async () => {
+    const admin = await entrar('admin_prueba');
+    const roles = (await admin.get('/usuarios/roles')).body as { id: number; codigo: string }[];
+    await admin
+      .post('/usuarios', {
+        username: 'nuevo_empleado',
+        email: 'nuevo@prueba.local',
+        password: 'Temporal123',
+        confirmarPassword: 'Temporal123',
+        rolId: roles.find((r) => r.codigo === 'USUARIO')!.id,
+        empresaIds: [f.empresaAS],
+      })
+      .expect(201);
+
+    const c = await entrar('nuevo_empleado', 'Temporal123');
+    expect((await c.get('/auth/yo')).body.usuario.debeCambiarPassword).toBe(false);
+    expect((await c.get('/tickets')).status).toBe(200);
+    const r = await c.post('/auth/cambiar-password', { actual: 'Temporal123', nueva: 'MiClave2026', confirmar: 'MiClave2026' });
+    expect(r.status).toBe(403);
+    await entrar('nuevo_empleado', 'Temporal123');
+  });
+
   it('cambiar la contraseña cierra las otras sesiones y mantiene la actual', async () => {
-    const pc = await entrar('usuario_uno');
-    const celular = await entrar('usuario_uno');
+    const pc = await entrar('admin_prueba');
+    const celular = await entrar('admin_prueba');
     expect((await pc.post('/auth/cambiar-password', { actual: PASSWORD, nueva: 'OtraClave99', confirmar: 'OtraClave99' })).status).toBe(200);
     expect((await pc.get('/auth/yo')).status).toBe(200);
     expect((await celular.get('/auth/yo')).status).toBe(401);

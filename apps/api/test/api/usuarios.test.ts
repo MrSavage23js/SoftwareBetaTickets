@@ -81,7 +81,18 @@ describe('edición', () => {
     expect((await u1.get('/auth/yo')).status).toBe(401);
   });
 
-  it('restablecer la contraseña obliga al usuario a cambiarla', async () => {
+  it('restablecer la contraseña de otro admin lo obliga a cambiarla; a un usuario no', async () => {
+    await admin.put(`/usuarios/${f.tecnico}`, {
+      username: 'tecnico_prueba',
+      email: 'tecnico@prueba.local',
+      rolId: rolAdmin,
+      empresaIds: [],
+      password: 'Reinicio123',
+      confirmarPassword: 'Reinicio123',
+    }).expect(200);
+    const t = await entrar('tecnico_prueba', 'Reinicio123');
+    expect((await t.get('/auth/yo')).body.usuario.debeCambiarPassword).toBe(true);
+
     await admin.put(`/usuarios/${f.u1}`, {
       username: 'usuario_uno',
       email: 'usuario_uno@prueba.local',
@@ -91,7 +102,7 @@ describe('edición', () => {
       confirmarPassword: 'Reinicio123',
     }).expect(200);
     const c = await entrar('usuario_uno', 'Reinicio123');
-    expect((await c.get('/auth/yo')).body.usuario.debeCambiarPassword).toBe(true);
+    expect((await c.get('/auth/yo')).body.usuario.debeCambiarPassword).toBe(false);
   });
 
   it('sin contraseña no la cambia', async () => {
