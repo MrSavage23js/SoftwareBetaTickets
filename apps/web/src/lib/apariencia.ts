@@ -14,6 +14,8 @@ const COLOR_BARRA: Record<Acento, string> = {
   ciruela: '#7c4bd0',
   coral: '#c4403a',
   grafito: '#5f6f79',
+  rosa: '#c42f7c',
+  muertos: '#4a1f73',
 };
 
 export function aparienciaGuardada(): Apariencia {

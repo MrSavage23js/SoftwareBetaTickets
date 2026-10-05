@@ -21,6 +21,8 @@ const PALETAS: { valor: Acento; nombre: string }[] = [
   { valor: 'ciruela', nombre: 'Ciruela' },
   { valor: 'coral', nombre: 'Coral' },
   { valor: 'grafito', nombre: 'Grafito' },
+  { valor: 'rosa', nombre: 'Rosa' },
+  { valor: 'muertos', nombre: 'Día de Muertos' },
 ];
 
 /** Radio accesible: flechas para moverse entre opciones, como un grupo de radio nativo. */

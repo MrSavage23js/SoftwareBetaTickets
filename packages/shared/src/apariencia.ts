@@ -3,7 +3,17 @@
 import { z } from 'zod';
 
 export const TEMAS = ['sistema', 'claro', 'oscuro'] as const;
-export const ACENTOS = ['aqua', 'oceano', 'bosque', 'ambar', 'ciruela', 'coral', 'grafito'] as const;
+export const ACENTOS = [
+  'aqua',
+  'oceano',
+  'bosque',
+  'ambar',
+  'ciruela',
+  'coral',
+  'grafito',
+  'rosa',
+  'muertos',
+] as const;
 
 export type Tema = (typeof TEMAS)[number];
 export type Acento = (typeof ACENTOS)[number];

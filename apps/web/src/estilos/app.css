@@ -631,6 +631,8 @@ div.tarjeta { cursor: default; }
    cambian: informan. Las reglas usan [data-acento] y no solo :root para que las miniaturas del selector
    muestren cada paleta dentro de la página.
    ===================================================================== */
+/* --pa-lado (color base de la barra lateral) solo lo define la paleta que lo necesita; las demás no lo heredan. */
+[data-acento] { --pa-lado: initial; }
 [data-acento='aqua'] { --pa-1: #00d4c6; --pa-2: #0fa69d; --pa-3: #028183; --pa-texto: #027477; --pa-tinta: #032b30; --pa-texto-osc: #4fe6db; }
 [data-acento='oceano'] { --pa-1: #5ec8ff; --pa-2: #2b8fe0; --pa-3: #2271cc; --pa-texto: #155aa8; --pa-tinta: #04213f; --pa-texto-osc: #7cc4ff; }
 [data-acento='bosque'] { --pa-1: #7be08f; --pa-2: #2fa85a; --pa-3: #1f8a4a; --pa-texto: #16693a; --pa-tinta: #052812; --pa-texto-osc: #86e3a0; }
@@ -638,6 +640,9 @@ div.tarjeta { cursor: default; }
 [data-acento='ciruela'] { --pa-1: #d6a4ff; --pa-2: #9d64e8; --pa-3: #7c4bd0; --pa-texto: #6232b3; --pa-tinta: #1f0b3d; --pa-texto-osc: #cfa6ff; }
 [data-acento='coral'] { --pa-1: #ffa196; --pa-2: #f0655a; --pa-3: #c4403a; --pa-texto: #b0332e; --pa-tinta: #3a0806; --pa-texto-osc: #ffa49b; }
 [data-acento='grafito'] { --pa-1: #b3c0c7; --pa-2: #7a8a94; --pa-3: #5f6f79; --pa-texto: #45535c; --pa-tinta: #0f171c; --pa-texto-osc: #c5d1d7; }
+[data-acento='rosa'] { --pa-1: #ff9ccf; --pa-2: #ec4c9a; --pa-3: #c42f7c; --pa-texto: #a3205f; --pa-tinta: #3b0420; --pa-texto-osc: #ff9fcf; }
+/* De temporada: cempasúchil y rosa mexicano sobre una barra lateral morada de noche (--pa-lado) con papel picado. */
+[data-acento='muertos'] { --pa-1: #ffb627; --pa-2: #f2622e; --pa-3: #c81d6a; --pa-texto: #a8195c; --pa-tinta: #2b0612; --pa-texto-osc: #ffb24d; --pa-lado: #5a2a8a; }
 
 /* Claro */
 [data-acento] {
@@ -654,9 +659,9 @@ div.tarjeta { cursor: default; }
   --type-bg: var(--chip); --type-fg: var(--chip-ink); --toolbar: color-mix(in oklab, var(--pa-3) 5%, #f4f6f6);
   --grad-acento: linear-gradient(135deg, var(--pa-1) 0%, var(--pa-2) 55%, var(--pa-3) 100%);
   --grad-acento-hover: linear-gradient(135deg, color-mix(in oklab, var(--pa-1) 82%, #fff) 0%, color-mix(in oklab, var(--pa-2) 88%, #fff) 55%, color-mix(in oklab, var(--pa-3) 90%, #fff) 100%);
-  --grad-lateral: linear-gradient(180deg, color-mix(in oklab, var(--pa-3) 78%, #000) 0%, color-mix(in oklab, var(--pa-3) 58%, #000) 45%, color-mix(in oklab, var(--pa-3) 38%, #000) 100%);
+  --grad-lateral: linear-gradient(180deg, color-mix(in oklab, var(--pa-lado, var(--pa-3)) 78%, #000) 0%, color-mix(in oklab, var(--pa-lado, var(--pa-3)) 58%, #000) 45%, color-mix(in oklab, var(--pa-lado, var(--pa-3)) 38%, #000) 100%);
   --grad-pagina: radial-gradient(1200px 380px at 70% -120px, color-mix(in srgb, var(--pa-1) 16%, transparent), transparent 70%);
-  --side: color-mix(in oklab, var(--pa-3) 58%, #000); --side-on: color-mix(in srgb, var(--pa-1) 16%, transparent);
+  --side: color-mix(in oklab, var(--pa-lado, var(--pa-3)) 58%, #000); --side-on: color-mix(in srgb, var(--pa-1) 16%, transparent);
   --side-ink: color-mix(in oklab, var(--pa-1) 14%, #eef2f3); --side-muted: color-mix(in oklab, var(--pa-1) 26%, #9aa6ab);
   --sombra-acento: 0 6px 18px -6px color-mix(in srgb, var(--pa-3) 55%, transparent);
 }
@@ -672,7 +677,7 @@ div.tarjeta { cursor: default; }
   --type-bg: var(--chip); --type-fg: var(--chip-ink); --toolbar: var(--surface-2);
   --accent-soft: color-mix(in oklab, var(--pa-2) 24%, var(--surface)); --accent-line: color-mix(in oklab, var(--pa-2) 48%, var(--surface));
   --sel: color-mix(in oklab, var(--pa-2) 16%, var(--surface));
-  --grad-lateral: linear-gradient(180deg, color-mix(in oklab, var(--pa-3) 55%, #000) 0%, color-mix(in oklab, var(--pa-3) 36%, #000) 45%, color-mix(in oklab, var(--pa-3) 20%, #000) 100%);
+  --grad-lateral: linear-gradient(180deg, color-mix(in oklab, var(--pa-lado, var(--pa-3)) 55%, #000) 0%, color-mix(in oklab, var(--pa-lado, var(--pa-3)) 36%, #000) 45%, color-mix(in oklab, var(--pa-lado, var(--pa-3)) 20%, #000) 100%);
   --grad-pagina: radial-gradient(1200px 380px at 70% -120px, color-mix(in srgb, var(--pa-1) 12%, transparent), transparent 70%);
 }
 @media (prefers-color-scheme: dark) {
@@ -686,10 +691,14 @@ div.tarjeta { cursor: default; }
     --type-bg: var(--chip); --type-fg: var(--chip-ink); --toolbar: var(--surface-2);
     --accent-soft: color-mix(in oklab, var(--pa-2) 24%, var(--surface)); --accent-line: color-mix(in oklab, var(--pa-2) 48%, var(--surface));
     --sel: color-mix(in oklab, var(--pa-2) 16%, var(--surface));
-    --grad-lateral: linear-gradient(180deg, color-mix(in oklab, var(--pa-3) 55%, #000) 0%, color-mix(in oklab, var(--pa-3) 36%, #000) 45%, color-mix(in oklab, var(--pa-3) 20%, #000) 100%);
+    --grad-lateral: linear-gradient(180deg, color-mix(in oklab, var(--pa-lado, var(--pa-3)) 55%, #000) 0%, color-mix(in oklab, var(--pa-lado, var(--pa-3)) 36%, #000) 45%, color-mix(in oklab, var(--pa-lado, var(--pa-3)) 20%, #000) 100%);
     --grad-pagina: radial-gradient(1200px 380px at 70% -120px, color-mix(in srgb, var(--pa-1) 12%, transparent), transparent 70%);
   }
 }
+
+/* Papel picado de Día de Muertos: tira de banderitas arriba de la barra lateral y de su miniatura. */
+:root[data-acento='muertos'] .side { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='22' viewBox='0 0 90 22'%3E%3Cpath stroke='%23ffffff' stroke-opacity='.55' d='M0 3.5H90'/%3E%3Cpath fill='%23ffb627' fill-rule='evenodd' d='M2 3H28V17L28.0 17L21.5 20L15.0 17L8.5 20L2.0 17ZM15 6.1L18.4 9.5L15 12.9L11.6 9.5ZM7.5 5.4L9.1 7L7.5 8.6L5.9 7ZM22.5 5.4L24.1 7L22.5 8.6L20.9 7ZM7.5 11.4L9.1 13L7.5 14.6L5.9 13ZM22.5 11.4L24.1 13L22.5 14.6L20.9 13Z'/%3E%3Cpath fill='%23ec3d8c' fill-rule='evenodd' d='M32 3H58V17L58.0 17L51.5 20L45.0 17L38.5 20L32.0 17ZM45 6.1L48.4 9.5L45 12.9L41.6 9.5ZM37.5 5.4L39.1 7L37.5 8.6L35.9 7ZM52.5 5.4L54.1 7L52.5 8.6L50.9 7ZM37.5 11.4L39.1 13L37.5 14.6L35.9 13ZM52.5 11.4L54.1 13L52.5 14.6L50.9 13Z'/%3E%3Cpath fill='%23ffe066' fill-rule='evenodd' d='M62 3H88V17L88.0 17L81.5 20L75.0 17L68.5 20L62.0 17ZM75 6.1L78.4 9.5L75 12.9L71.6 9.5ZM67.5 5.4L69.1 7L67.5 8.6L65.9 7ZM82.5 5.4L84.1 7L82.5 8.6L80.9 7ZM67.5 11.4L69.1 13L67.5 14.6L65.9 13ZM82.5 11.4L84.1 13L82.5 14.6L80.9 13Z'/%3E%3C/svg%3E") 0 0 / 90px 22px repeat-x, var(--grad-lateral); padding-top: 34px; }
+.mini[data-acento='muertos'] .mini-lado { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='22' viewBox='0 0 90 22'%3E%3Cpath stroke='%23ffffff' stroke-opacity='.55' d='M0 3.5H90'/%3E%3Cpath fill='%23ffb627' fill-rule='evenodd' d='M2 3H28V17L28.0 17L21.5 20L15.0 17L8.5 20L2.0 17ZM15 6.1L18.4 9.5L15 12.9L11.6 9.5ZM7.5 5.4L9.1 7L7.5 8.6L5.9 7ZM22.5 5.4L24.1 7L22.5 8.6L20.9 7ZM7.5 11.4L9.1 13L7.5 14.6L5.9 13ZM22.5 11.4L24.1 13L22.5 14.6L20.9 13Z'/%3E%3Cpath fill='%23ec3d8c' fill-rule='evenodd' d='M32 3H58V17L58.0 17L51.5 20L45.0 17L38.5 20L32.0 17ZM45 6.1L48.4 9.5L45 12.9L41.6 9.5ZM37.5 5.4L39.1 7L37.5 8.6L35.9 7ZM52.5 5.4L54.1 7L52.5 8.6L50.9 7ZM37.5 11.4L39.1 13L37.5 14.6L35.9 13ZM52.5 11.4L54.1 13L52.5 14.6L50.9 13Z'/%3E%3Cpath fill='%23ffe066' fill-rule='evenodd' d='M62 3H88V17L88.0 17L81.5 20L75.0 17L68.5 20L62.0 17ZM75 6.1L78.4 9.5L75 12.9L71.6 9.5ZM67.5 5.4L69.1 7L67.5 8.6L65.9 7ZM82.5 5.4L84.1 7L82.5 8.6L80.9 7ZM67.5 11.4L69.1 13L67.5 14.6L65.9 13ZM82.5 11.4L84.1 13L82.5 14.6L80.9 13Z'/%3E%3C/svg%3E") 0 0 / 30px 7px repeat-x, var(--grad-lateral); padding-top: 12px; }
 
 /* ---------- ventana Apariencia ---------- */
 .apariencia { display: grid; gap: 12px; }
