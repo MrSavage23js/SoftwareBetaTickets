@@ -13,25 +13,24 @@ import {
 } from '../src';
 
 describe('folio DEPTO-AÑO-CONSECUTIVO', () => {
-  it('formato de la especificación: SIS-2026-0001, RH-2026-0001', () => {
-    expect(formatearFolio('SIS', 2026, 1)).toBe('SIS-2026-0001');
-    expect(formatearFolio('SIS', 2026, 2)).toBe('SIS-2026-0002');
-    expect(formatearFolio('RH', 2026, 1)).toBe('RH-2026-0001');
-    expect(formatearFolio(' sis ', 2027, 47)).toBe('SIS-2027-0047');
+  it('formato sin año: SIS-0001, VEN-0001', () => {
+    expect(formatearFolio('SIS', 1)).toBe('SIS-0001');
+    expect(formatearFolio('SIS', 2)).toBe('SIS-0002');
+    expect(formatearFolio('VEN', 1)).toBe('VEN-0001');
+    expect(formatearFolio(' sis ', 47)).toBe('SIS-0047');
   });
 
   it('rellena a 4 dígitos y crece después de 9999', () => {
-    expect(formatearFolio('SIS', 2026, 9999)).toBe('SIS-2026-9999');
-    expect(formatearFolio('SIS', 2026, 10000)).toBe('SIS-2026-10000');
+    expect(formatearFolio('SIS', 9999)).toBe('SIS-9999');
+    expect(formatearFolio('SIS', 10000)).toBe('SIS-10000');
   });
 
   it('rechaza códigos, años o consecutivos inválidos', () => {
-    expect(() => formatearFolio('S', 2026, 1)).toThrow();
-    expect(() => formatearFolio('SI-S', 2026, 1)).toThrow();
-    expect(() => formatearFolio('DEMASIADO', 2026, 1)).toThrow();
-    expect(() => formatearFolio('SIS', 26, 1)).toThrow();
-    expect(() => formatearFolio('SIS', 2026, 0)).toThrow();
-    expect(() => formatearFolio('SIS', 2026, 1.5)).toThrow();
+    expect(() => formatearFolio('S', 1)).toThrow();
+    expect(() => formatearFolio('SI-S', 1)).toThrow();
+    expect(() => formatearFolio('DEMASIADO', 1)).toThrow();
+        expect(() => formatearFolio('SIS', 0)).toThrow();
+    expect(() => formatearFolio('SIS', 1.5)).toThrow();
   });
 
   it('el año es el de la zona horaria indicada (cambio de año en México)', () => {

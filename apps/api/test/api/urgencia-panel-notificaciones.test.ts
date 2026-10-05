@@ -1,6 +1,6 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db/conexion';
-import { entrar, folio, reiniciarBD, ticketValido, type Cliente, type Fixtures } from '../ayudas';
+import { entrar, folio, quitarDepartamento, reiniciarBD, ticketValido, type Cliente, type Fixtures } from '../ayudas';
 
 let f: Fixtures;
 let u1: Cliente;
@@ -56,6 +56,7 @@ describe('dashboard de administración', () => {
     const critica = await crear({ urgencia: 'CRITICA' });
     await crear({ urgencia: 'ALTA' });
     const alta2 = await crear({ urgencia: 'ALTA' });
+    await quitarDepartamento(f.u1);
     const cerrar = await crear({ urgencia: 'BAJA', departamentoId: f.deptoRH });
 
     // Uno alta en proceso (ya atendido) y uno cerrado hoy.
@@ -83,7 +84,8 @@ describe('dashboard de administración', () => {
       { urgencia: 'BAJA', total: 0 },
     ]);
     const deptos = Object.fromEntries(r.body.abiertosPorDepartamento.map((d: { codigo: string; total: number }) => [d.codigo, d.total]));
-    expect(deptos).toEqual({ SIS: 3, RH: 0 });
+    // Salen todos los departamentos activos, aunque no tengan tickets abiertos.
+    expect(deptos).toEqual({ SIS: 3, RH: 0, VEN: 0, COM: 0, CON: 0, FAC: 0, APT: 0, AMT: 0, PRO: 0, CAL: 0 });
     void critica;
   });
 

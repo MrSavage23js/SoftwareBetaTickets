@@ -39,7 +39,10 @@ function Columna({ estatus, filtros, abrir }: { estatus: Estatus; filtros: Filtr
       {tickets.map((t) => (
         <button key={t.id} className="kc" data-flip={t.id} onClick={() => abrir(t.id)} style={franja(t.urgencia)}>
           <span className="row" style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-            <span className="folio">{t.folio}</span>
+            <span className="folio-depto">
+              <span className="folio">{t.folio}</span>
+              <span className="depto">{t.departamento.nombre}</span>
+            </span>
             <BadgeUrgencia urgencia={t.urgencia} compacto />
           </span>
           <div className="t">{t.tipo.nombre}</div>

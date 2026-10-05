@@ -12,7 +12,10 @@ export function TarjetaTicket({ t, sel, mostrarTecnico, alAbrir }: { t: TicketRe
   return (
     <button className={`tk ${sel ? 'sel' : ''}`} data-flip={t.id} onClick={alAbrir} aria-current={sel || undefined} style={franja(t.urgencia)}>
       <span className="row">
-        <span className="folio">{t.folio}</span>
+        <span className="folio-depto">
+          <span className="folio">{t.folio}</span>
+          <span className="depto">{t.departamento.nombre}</span>
+        </span>
         <span style={{ display: 'flex', gap: 6 }}>
           <BadgeUrgencia urgencia={t.urgencia} compacto />
           <PillEstatus estatus={t.estatus} />

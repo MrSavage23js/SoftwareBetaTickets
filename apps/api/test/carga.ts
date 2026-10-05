@@ -9,8 +9,8 @@ const N = Number(process.env.CARGA_TICKETS ?? 20_000);
 const { sql } = await import('kysely');
 const { db, cerrarBD } = await import('../src/db/conexion');
 const { migrarAlUltimo } = await import('../src/db/migrador');
-const { reiniciarBD, entrar, ANIO } = await import('./ayudas');
-const { anioEnZona, formatearFolio } = await import('@mesa/shared');
+const { reiniciarBD, entrar } = await import('./ayudas');
+const { formatearFolio } = await import('@mesa/shared');
 
 await migrarAlUltimo();
 const f = await reiniciarBD();
@@ -32,14 +32,13 @@ for (let i = 0; i < N; i += LOTE) {
     const t = tipos[(j * 7) % tipos.length]!;
     const dep = departamentos[j % departamentos.length]!;
     const creado = new Date(Date.now() - (N - j) * 20 * 60_000);
-    const anio = anioEnZona(creado, 'America/Mexico_City');
-    const clave = `${dep.codigo}|${anio}`;
+    const clave = dep.codigo;
     const n = (consecutivo.get(clave) ?? 0) + 1;
     consecutivo.set(clave, n);
     const est = estatus[j % estatus.length]!;
     const texto = Array.from({ length: 12 }, (_, k) => palabras[(j + k * 3) % palabras.length]).join(' ');
     filas.push({
-      folio: formatearFolio(dep.codigo, anio, n),
+      folio: formatearFolio(dep.codigo, n),
       departamento_id: dep.id,
       tipo_id: t.id,
       empresa_id: e.id,
@@ -61,7 +60,7 @@ for (let i = 0; i < N; i += LOTE) {
 }
 await db
   .insertInto('folio_contadores')
-  .values([...consecutivo].map(([clave, ultimo]) => ({ departamento: clave.split('|')[0]!, anio: Number(clave.split('|')[1]), ultimo_consecutivo: ultimo })))
+  .values([...consecutivo].map(([clave, ultimo]) => ({ departamento: clave, anio: 0, ultimo_consecutivo: ultimo })))
   .execute();
 await sql`ANALYZE tickets`.execute(db);
 console.log(`Listo en ${((Date.now() - t0) / 1000).toFixed(1)} s\n`);
@@ -76,7 +75,7 @@ const casos: [string, () => Promise<{ status: number }>][] = [
   ['Bandeja página 200', () => admin.get('/tickets?pagina=200')],
   ['Filtro empresa + tipo + fechas', () => admin.get(`/tickets?empresaId=${f.empresaAS}&tipoId=${f.tipoCA}&desde=2025-01-01&hasta=2026-12-31`)],
   ['Filtro por técnico', () => admin.get(`/tickets?asignadoAId=${f.tecnico}&estatus=EN_PROCESO`)],
-  ['Búsqueda por folio', () => admin.get(`/tickets?q=SIS-${ANIO}-0100`)],
+  ['Búsqueda por folio', () => admin.get('/tickets?q=SIS-0100')],
   ['Filtro por departamento', () => admin.get(`/tickets?departamentoId=${departamentos[0]!.id}`)],
   ['Búsqueda por texto (fulltext)', () => admin.get('/tickets?q=inventario%20proveedor')],
   ['Búsqueda por empresa', () => admin.get('/tickets?q=Asturcones')],

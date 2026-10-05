@@ -36,7 +36,7 @@ import { CODIGOS_PLANTILLA, encolarCorreo } from '../correos/cola';
 import { escaparHtml, type Variables } from '../correos/plantillas';
 import { registrarEvento, TIPOS_EVENTO, type TipoEvento } from '../eventos/servicio';
 import { empresasDe, puedeVerTicket } from './acceso';
-import { anioActual, siguienteFolio } from './folio';
+import { siguienteFolio } from './folio';
 import { notificarNuevoTicket, notificarSolicitante } from '../notificaciones/servicio';
 
 const urlTicket = (id: number) => `${env.APP_URL.replace(/\/$/, '')}/tickets/${id}`;
@@ -104,13 +104,25 @@ export async function crearTicket(u: UsuarioActual, entrada: unknown, archivos: 
   if (!tipo) throw errores.validacion('Selecciona un tipo de solicitud válido.', { tipoId: 'Selecciona un tipo de solicitud válido.' });
   const empresa = await db.selectFrom('empresas').selectAll().where('id', '=', d.empresaId).where('activa', '=', 1).executeTakeFirst();
   if (!empresa) campos.empresaId = 'Selecciona una empresa válida.';
-  // El departamento forma el folio: SIS-2026-0001.
-  const departamento = await db
-    .selectFrom('departamentos')
-    .select(['id', 'codigo'])
-    .where('id', '=', d.departamentoId)
-    .where('activo', '=', 1)
-    .executeTakeFirst();
+  // El departamento forma el folio: VEN-0001. Quien no es de soporte y tiene un departamento asignado (activo)
+  // siempre crea con el suyo, aunque mande otro; si no tiene uno, lo elige. Soporte elige cualquiera.
+  const propio = u.permisos.has(PERMISOS.TICKETS_VER_TODOS)
+    ? undefined
+    : await db
+        .selectFrom('usuarios as us')
+        .innerJoin('departamentos as dp', 'dp.id', 'us.departamento_id')
+        .select(['dp.id', 'dp.codigo'])
+        .where('us.id', '=', u.id)
+        .where('dp.activo', '=', 1)
+        .executeTakeFirst();
+  const departamento =
+    propio ??
+    (await db
+      .selectFrom('departamentos')
+      .select(['id', 'codigo'])
+      .where('id', '=', d.departamentoId)
+      .where('activo', '=', 1)
+      .executeTakeFirst());
   if (!departamento) campos.departamentoId = 'Selecciona el departamento.';
 
   let moduloId: number | null = null;
@@ -167,12 +179,11 @@ export async function crearTicket(u: UsuarioActual, entrada: unknown, archivos: 
   const guardados = await procesarArchivos(archivos);
   try {
     return await db.transaction().execute(async (tx) => {
-      const anio = anioActual();
       let ticketId = 0;
       let folio = '';
       // Si un folio ya existe (p. ej. importado del sistema anterior) se toma el siguiente.
       for (let intento = 0; intento < 20 && !ticketId; intento++) {
-        folio = await siguienteFolio(tx, departamento!.codigo, anio);
+        folio = await siguienteFolio(tx, departamento!.codigo);
         // En PostgreSQL un error invalida toda la transacción: el punto de guardado permite descartar
         // solo el INSERT fallido y seguir con el siguiente folio.
         await sql`SAVEPOINT folio_libre`.execute(tx);
@@ -206,7 +217,7 @@ export async function crearTicket(u: UsuarioActual, entrada: unknown, archivos: 
           await sql`ROLLBACK TO SAVEPOINT folio_libre`.execute(tx);
         }
       }
-      if (!ticketId) throw new Error(`No se pudo asignar un folio libre para ${departamento!.codigo}-${anio}`);
+      if (!ticketId) throw new Error(`No se pudo asignar un folio libre para ${departamento!.codigo}`);
 
       if (unicas.length) await tx.insertInto('ticket_copias').values(unicas.map((c) => ({ ...c, ticket_id: ticketId }))).execute();
       await insertarAdjuntos(tx, guardados, { ticketId, mensajeId: null, subidoPorId: u.id, enLinea: false });

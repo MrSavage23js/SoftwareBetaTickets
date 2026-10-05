@@ -28,8 +28,8 @@ test('ciclo de vida completo de un ticket', async ({ page }) => {
   const confirmacion = page.getByRole('dialog', { name: 'Ticket creado' });
   await expect(confirmacion).toBeVisible();
   const folio = (await confirmacion.locator('.folio').textContent())!.trim();
-  // Formato DEPTO-AÑO-CONSECUTIVO; el departamento del usuario viene preseleccionado (SIS).
-  expect(folio).toMatch(/^SIS-\d{4}-\d{4,}$/);
+  // Formato DEPTO-CONSECUTIVO (sin año); el departamento del usuario viene preseleccionado (SIS).
+  expect(folio).toMatch(/^SIS-\d{4,}$/);
   await expect(confirmacion.getByText(/Enviamos una copia a usuario_uno@prueba\.local/)).toBeVisible();
   await confirmacion.getByRole('button', { name: 'Ver ticket' }).click();
 

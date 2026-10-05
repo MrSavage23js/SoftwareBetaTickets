@@ -1,7 +1,8 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db/conexion';
-import { anioActual, siguienteConsecutivo } from '../../src/modulos/tickets/folio';
-import { ANIO, entrar, folio, reiniciarBD, ticketValido, type Cliente, type Fixtures } from '../ayudas';
+import { anioActual, CONTADOR_CONTINUO, siguienteConsecutivo } from '../../src/modulos/tickets/folio';
+import { up as migrarFolioContinuo } from '../../src/db/migraciones/0004_folio_continuo';
+import { ANIO, entrar, folio, quitarDepartamento, reiniciarBD, ticketValido, type Cliente, type Fixtures } from '../ayudas';
 
 let f: Fixtures;
 let u1: Cliente;
@@ -40,34 +41,65 @@ describe('crear ticket', () => {
     expect(d.body.descripcionHtml).toBe('<p>Hola</p>');
   });
 
-  it('folio DEPTO-AÑO-CONSECUTIVO: consecutivo independiente por departamento, sin importar empresa ni tipo', async () => {
+  it('folio DEPTO-CONSECUTIVO: consecutivo independiente por departamento, sin importar empresa ni tipo', async () => {
     expect((await u1.form('/tickets', ticketValido(f))).body.folio).toBe(folio('SIS', 1));
     expect((await u1.form('/tickets', ticketValido(f))).body.folio).toBe(folio('SIS', 2));
     expect((await u1.form('/tickets', { ...ticketValido(f), tipoId: f.tipoCG })).body.folio).toBe(folio('SIS', 3));
-    expect((await u1.form('/tickets', ticketValido(f, { departamentoId: f.deptoRH }))).body.folio).toBe(folio('RH', 1));
     const u2 = await entrar('usuario_dos');
-    expect((await u2.form('/tickets', ticketValido(f, { departamentoId: f.deptoRH, empresaId: f.empresaMA }))).body.folio).toBe(folio('RH', 2));
-    expect(folio('SIS', 1)).toMatch(/^SIS-\d{4}-0001$/);
+    expect((await u2.form('/tickets', ticketValido(f, { departamentoId: f.deptoRH, empresaId: f.empresaMA }))).body.folio).toBe(folio('RH', 1));
+    expect(folio('SIS', 1)).toBe('SIS-0001');
   });
 
-  it('un registro de contador por departamento + año', async () => {
+  it('quien tiene departamento asignado siempre crea con el suyo; sin departamento lo elige; soporte elige cualquiera', async () => {
+    // usuario_uno es de Sistemas: aunque mande Recursos Humanos, el ticket sale de Sistemas.
+    const fijo = await u1.form('/tickets', ticketValido(f, { departamentoId: f.deptoRH }));
+    expect(fijo.body.folio).toBe(folio('SIS', 1));
+    expect((await u1.get(`/tickets/${fijo.body.id}`)).body.departamento.nombre).toBe('Sistemas / TI');
+    // Sin departamento asignado, elige.
+    await quitarDepartamento(f.u1);
+    expect((await u1.form('/tickets', ticketValido(f, { departamentoId: f.deptoRH }))).body.folio).toBe(folio('RH', 1));
+    // Soporte elige cualquiera (p. ej. al crear a nombre de alguien).
+    await db.updateTable('usuarios').set({ departamento_id: f.deptoSIS }).where('id', '=', f.admin).execute();
+    const admin = await entrar('admin_prueba');
+    const r = await admin.form('/tickets', ticketValido(f, { departamentoId: f.deptoRH, solicitanteId: f.u1 }));
+    expect(r.body.folio).toBe(folio('RH', 2));
+  });
+
+  it('un contador continuo (sin año) por departamento', async () => {
+    await quitarDepartamento(f.u1);
     await u1.form('/tickets', ticketValido(f));
     await u1.form('/tickets', ticketValido(f));
     await u1.form('/tickets', ticketValido(f, { departamentoId: f.deptoRH }));
     const contadores = await db.selectFrom('folio_contadores').selectAll().orderBy('departamento').execute();
     expect(contadores.map((c) => [c.departamento, c.anio, c.ultimo_consecutivo])).toEqual([
-      ['RH', ANIO, 1],
-      ['SIS', ANIO, 2],
+      ['RH', CONTADOR_CONTINUO, 1],
+      ['SIS', CONTADOR_CONTINUO, 2],
     ]);
   });
 
-  it('el consecutivo se reinicia en 0001 al cambiar de año', async () => {
-    // Así queda el contador al terminar el año anterior.
-    await db.insertInto('folio_contadores').values({ departamento: 'SIS', anio: ANIO - 1, ultimo_consecutivo: 47 }).execute();
-    expect((await u1.form('/tickets', ticketValido(f))).body.folio).toBe(folio('SIS', 1));
-    // El del año anterior no se toca (sirve para reportes).
-    const anterior = await db.selectFrom('folio_contadores').selectAll().where('anio', '=', ANIO - 1).executeTakeFirstOrThrow();
+  it('el consecutivo no se reinicia con el año y no toca los contadores viejos con año', async () => {
+    // Contador continuo a mitad de camino y un contador del formato anterior (SIS-2026-0047).
+    await db.insertInto('folio_contadores').values([
+      { departamento: 'SIS', anio: CONTADOR_CONTINUO, ultimo_consecutivo: 120 },
+      { departamento: 'SIS', anio: ANIO, ultimo_consecutivo: 47 },
+    ]).execute();
+    expect((await u1.form('/tickets', ticketValido(f))).body.folio).toBe('SIS-0121');
+    const anterior = await db.selectFrom('folio_contadores').selectAll().where('anio', '=', ANIO).executeTakeFirstOrThrow();
     expect(anterior.ultimo_consecutivo).toBe(47);
+  });
+
+  it('la migración al folio continuo sigue desde el último número de cada departamento y reactiva RH', async () => {
+    // Como estaba producción: SIS-2026-0007 y RH desactivado (con folios de dos años).
+    await db.insertInto('folio_contadores').values([
+      { departamento: 'SIS', anio: ANIO, ultimo_consecutivo: 7 },
+      { departamento: 'RH', anio: ANIO - 1, ultimo_consecutivo: 3 },
+      { departamento: 'RH', anio: ANIO, ultimo_consecutivo: 1 },
+    ]).execute();
+    await db.updateTable('departamentos').set({ activo: 0 }).where('codigo', '=', 'RH').execute();
+    await migrarFolioContinuo(db as never);
+    await quitarDepartamento(f.u1);
+    expect((await u1.form('/tickets', ticketValido(f))).body.folio).toBe('SIS-0008');
+    expect((await u1.form('/tickets', ticketValido(f, { departamentoId: f.deptoRH }))).body.folio).toBe('RH-0004');
   });
 
   it('el año se toma en la hora de México, no en UTC', () => {
@@ -90,12 +122,12 @@ describe('crear ticket', () => {
     await db
       .transaction()
       .execute(async (tx) => {
-        expect(await siguienteConsecutivo(tx, 'ZZZ', ANIO)).toBe(1);
+        expect(await siguienteConsecutivo(tx, 'ZZZ')).toBe(1);
         throw new Error('revertir');
       })
       .catch(() => undefined);
     await db.transaction().execute(async (tx) => {
-      expect(await siguienteConsecutivo(tx, 'ZZZ', ANIO)).toBe(1);
+      expect(await siguienteConsecutivo(tx, 'ZZZ')).toBe(1);
     });
   });
 
@@ -106,6 +138,7 @@ describe('crear ticket', () => {
   });
 
   it('un departamento desactivado ya no se puede usar', async () => {
+    await quitarDepartamento(f.u1);
     await db.updateTable('departamentos').set({ activo: 0 }).where('id', '=', f.deptoRH).execute();
     const r = await u1.form('/tickets', ticketValido(f, { departamentoId: f.deptoRH }));
     expect(r.status).toBe(400);
@@ -125,6 +158,7 @@ describe('crear ticket', () => {
     ['concepto de más de 200 caracteres', { concepto: 'x'.repeat(201) }, 'concepto'],
     ['correo en copia inválido', { copias: [{ email: 'no-correo' }] }, 'copias.0.email'],
   ])('validación: %s → 400', async (_n, cambio, campo) => {
+    await quitarDepartamento(f.u1);
     const r = await u1.form('/tickets', { ...ticketValido(f), ...cambio });
     expect(r.status).toBe(400);
     expect(r.body.error.campos).toHaveProperty(campo);
@@ -161,7 +195,8 @@ describe('visibilidad: nadie ve tickets ajenos', () => {
     const lista = await u2.get('/tickets');
     expect(lista.body.total).toBe(1);
     expect(lista.body.contadores.total).toBe(1);
-    expect(lista.body.datos[0].folio).toBe(folio('SIS', 2));
+    // usuario_dos es de Recursos Humanos: su ticket sale con su departamento.
+    expect(lista.body.datos[0].folio).toBe(folio('RH', 1));
 
     for (const r of [
       await u2.get(`/tickets/${propio.body.id}`),
@@ -196,6 +231,7 @@ describe('visibilidad: nadie ve tickets ajenos', () => {
 
 describe('lista, búsqueda y filtros', () => {
   beforeEach(async () => {
+    await quitarDepartamento(f.u1);
     await u1.form('/tickets', ticketValido(f, { concepto: 'CARTA PORTE', foliosRef: 'B12345' }));
     await u1.form('/tickets', ticketValido(f, { concepto: 'Ajuste de inventario', foliosRef: 'INV-1024', descripcionHtml: '<p>Nómina de septiembre</p>' }));
     await u1.form('/tickets', { tipoId: f.tipoCG, departamentoId: f.deptoRH, empresaId: f.empresaAS, concepto: 'Duda de bancos', descripcionHtml: '<p>pregunta</p>' });
@@ -205,7 +241,7 @@ describe('lista, búsqueda y filtros', () => {
     const admin = await entrar('admin_prueba');
     const total = async (q: string) => (await admin.get(`/tickets?q=${encodeURIComponent(q)}`)).body.total;
     expect(await total(folio('SIS', 2))).toBe(1);
-    expect(await total(`sis-${ANIO}`)).toBe(2);
+    expect(await total('sis-')).toBe(2);
     expect(await total(folio('RH', 1))).toBe(1);
     expect(await total('carta')).toBe(1);
     expect(await total('INV-1024')).toBe(1);

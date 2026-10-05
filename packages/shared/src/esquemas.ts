@@ -158,7 +158,7 @@ const copia = z.union([
 
 export const esquemaTicketCrear = z.object({
   tipoId: idEntero,
-  /** Departamento que crea el ticket: forma el folio (SIS-2026-0001). */
+  /** Departamento que crea el ticket: forma el folio (VEN-0001). */
   departamentoId: idEntero,
   /** Quien reporta elige el nivel; si no, "media". */
   urgencia: z.enum(URGENCIAS, { error: 'Selecciona una urgencia válida.' }).default(URGENCIA_POR_OMISION),

@@ -160,8 +160,10 @@ PK (`usuario_id`, `empresa_id`); índice (`empresa_id`) para saber qué usuarios
 
 ## 3. Tickets
 
-### Folio: `[DEPTO]-[AÑO]-[CONSECUTIVO]` (migración 0003)
-Ejemplos: `SIS-2026-0001`, `SIS-2026-0002`, `RH-2026-0001`. El consecutivo tiene 4 dígitos (crece a 5 después de 9999) y se **reinicia en 0001 cada 1 de enero, de forma independiente por departamento**. El año es el de la zona horaria del sistema (`APP_TZ`), no UTC.
+### Folio: `[DEPTO]-[CONSECUTIVO]` (migración 0004, octubre de 2026)
+Ejemplos: `VEN-0001`, `SIS-0008`. El consecutivo tiene 4 dígitos (crece a 5 después de 9999), es **independiente por departamento y nunca se reinicia**, así un folio jamás se repite; el año se ve en la fecha del ticket.
+
+Antes el folio era `[DEPTO]-[AÑO]-[CONSECUTIVO]` (`SIS-2026-0007`) y se reiniciaba cada 1 de enero. Esos tickets conservan su folio, y la migración 0004 arrancó el contador nuevo de cada departamento en su último número (`SIS-2026-0007` → el siguiente es `SIS-0008`).
 
 ### `departamentos`
 | Campo | Tipo | Notas |
@@ -175,19 +177,19 @@ Ejemplos: `SIS-2026-0001`, `SIS-2026-0002`, `RH-2026-0001`. El consecutivo tiene
 | Campo | Tipo | Notas |
 |---|---|---|
 | departamento | VARCHAR(6) | Código del departamento (PK compuesta) |
-| anio | SMALLINT UNSIGNED | Año (PK compuesta) |
+| anio | SMALLINT UNSIGNED | `0` = contador continuo actual; un año real = contador del formato anterior, solo para reportes (PK compuesta) |
 | ultimo_consecutivo | INT UNSIGNED | Último número emitido |
 | actualizado_at | DATETIME(3) | |
 
 Dentro de la transacción de creación del ticket:
 `INSERT INTO folio_contadores (departamento, anio, ultimo_consecutivo) VALUES (?, ?, LAST_INSERT_ID(1)) ON DUPLICATE KEY UPDATE ultimo_consecutivo = LAST_INSERT_ID(ultimo_consecutivo + 1)` y después `SELECT LAST_INSERT_ID()`.
-"Crear el registro si no existe e incrementarlo" ocurre en **una sola sentencia atómica**. La fila queda bloqueada hasta el `COMMIT`: las creaciones simultáneas del mismo departamento se forman en fila, las de otros departamentos no se estorban, y si la transacción falla el número no se pierde. (Hacerlo con `INSERT IGNORE` + `UPDATE` provoca interbloqueos con muchas creaciones simultáneas.) Como cada año tiene su propio registro, el 1 de enero no hay que hacer nada. `UNIQUE(folio)` es la red de seguridad.
+"Crear el registro si no existe e incrementarlo" ocurre en **una sola sentencia atómica**. La fila queda bloqueada hasta el `COMMIT`: las creaciones simultáneas del mismo departamento se forman en fila, las de otros departamentos no se estorban, y si la transacción falla el número no se pierde. (Hacerlo con `INSERT IGNORE` + `UPDATE` provoca interbloqueos con muchas creaciones simultáneas.) El 1 de enero no pasa nada: el contador sigue. `UNIQUE(folio)` es la red de seguridad.
 
 ### `tickets`
 | Campo | Tipo | Notas |
 |---|---|---|
 | id | BIGINT UNSIGNED PK | |
-| folio | VARCHAR(20) UNIQUE | `SIS-2026-0001` (los tickets anteriores a la migración 0003 conservan su folio) |
+| folio | VARCHAR(20) UNIQUE | `VEN-0001` (los tickets anteriores conservan su folio con año, `SIS-2026-0001`) |
 | departamento_id | SMALLINT UNSIGNED FK | Departamento que creó el ticket; forma el folio |
 | tipo_id | SMALLINT UNSIGNED FK | |
 | empresa_id | SMALLINT UNSIGNED FK | |

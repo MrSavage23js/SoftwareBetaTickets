@@ -2,9 +2,19 @@
 // ya no forman parte del folio (quedan como códigos cortos). Todo se cambia desde Catálogos.
 
 /** Departamentos: su código forma el folio (SIS-2026-0001). Se administran en Catálogos → Departamentos. */
+// Se siembran al arrancar si faltan (por nombre o código): agregar uno aquí lo da de alta en producción.
+// Uno que el admin desactive o renombre en Catálogos no se vuelve a tocar.
 export const DEPARTAMENTOS: { nombre: string; codigo: string }[] = [
   { nombre: 'Sistemas / TI', codigo: 'SIS' },
   { nombre: 'Recursos Humanos', codigo: 'RH' },
+  { nombre: 'Ventas', codigo: 'VEN' },
+  { nombre: 'Compras', codigo: 'COM' },
+  { nombre: 'Contabilidad', codigo: 'CON' },
+  { nombre: 'Facturación', codigo: 'FAC' },
+  { nombre: 'Almacén PT', codigo: 'APT' },
+  { nombre: 'Almacén materiales', codigo: 'AMT' },
+  { nombre: 'Producción', codigo: 'PRO' },
+  { nombre: 'Calidad', codigo: 'CAL' },
 ];
 
 export const EMPRESAS: { nombre: string; codigo: string }[] = [

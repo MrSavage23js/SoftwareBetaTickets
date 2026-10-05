@@ -17,8 +17,8 @@ export const PASSWORD = 'Prueba12345';
 
 /** Año en curso en la zona del sistema (el folio lo usa). */
 export const ANIO = anioEnZona(new Date(), 'America/Mexico_City');
-/** Folio esperado: folio('SIS', 1) → SIS-2026-0001. */
-export const folio = (departamento: string, n: number, anio = ANIO) => formatearFolio(departamento, anio, n);
+/** Folio esperado: folio('SIS', 1) → SIS-0001. */
+export const folio = (departamento: string, n: number) => formatearFolio(departamento, n);
 
 const TABLAS = [
   'respuestas_guardadas',
@@ -152,6 +152,10 @@ export async function entrar(username: string, password = PASSWORD): Promise<Cli
     },
   };
 }
+
+/** Deja al usuario sin departamento asignado: así puede elegir uno al crear tickets (con uno, se usa ese). */
+export const quitarDepartamento = (usuarioId: number) =>
+  db.updateTable('usuarios').set({ departamento_id: null }).where('id', '=', usuarioId).execute();
 
 export const anonimo = () => request(aplicacion());
 

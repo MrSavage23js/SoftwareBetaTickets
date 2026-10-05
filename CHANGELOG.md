@@ -5,6 +5,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado
 ## [Sin publicar]
 
 ### Cambiado
+- **Folio sin año:** `VEN-0001`, con un consecutivo por departamento que nunca se reinicia (migración `0004`). Los tickets anteriores conservan su folio (`SIS-2026-0007`) y el siguiente de cada departamento continúa en su número (`SIS-0008`).
 - **Base de datos: de MySQL 8.4 a PostgreSQL 17**, para desplegar en Render.
   - Una sola variable de conexión, `DATABASE_URL` (reemplaza `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD` y `DB_NAME`).
   - Las migraciones de MySQL quedaron reunidas en una sola migración base. Se mantiene que usuario, correo y búsquedas no distingan mayúsculas ni acentos.
@@ -14,6 +15,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado
 - **Solo los admins cambian su propia contraseña.** A los demás se la cambia un admin desde Usuarios, y ya no se les pide cambiarla al entrar.
 
 ### Agregado
+- **Departamentos de Aramo:** Ventas, Compras, Contabilidad, Facturación, Almacén PT, Almacén materiales, Producción y Calidad, además de Sistemas; Recursos Humanos se reactiva. Quien tiene un departamento asignado crea siempre con ese (lo ve fijo, sin lista; el servidor también lo impone); quien no tiene, lo elige; soporte elige cualquiera. El departamento aparece también en las tarjetas de la lista y del Kanban.
 - **Los avisos de ticket nuevo y de ticket cerrado llegan a todos los admins activos**, incluido quien creó o cerró el ticket. Los correos de Ajustes → Correos ahora son extra y pueden quedar vacíos; ya no hace falta agregar ahí a cada admin nuevo.
 - **Respuestas guardadas** (botón "Respuestas" en la barra al responder un ticket): cada técnico guarda sus propios textos y los inserta con un clic; también puede guardar lo que acaba de escribir. Solo él las ve; sin imágenes; hasta 50 por persona (migración `0003`).
 - **Temas de temporada automáticos:** quien usa Aqua ve sola la paleta de Navidad (1 dic – 6 ene), San Valentín (7 – 15 feb), Fiestas patrias (septiembre) o Día de Muertos (25 oct – 3 nov), y después vuelve a Aqua. Se puede apagar en Apariencia, y cualquiera puede elegir una de temporada a mano. Cada una lleva su adorno en la barra lateral (luces, corazones, papel picado).

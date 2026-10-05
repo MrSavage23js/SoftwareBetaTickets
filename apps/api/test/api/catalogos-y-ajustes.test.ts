@@ -1,6 +1,8 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { db } from '../../src/db/conexion';
-import { entrar, folio, reiniciarBD, ticketValido, type Cliente, type Fixtures } from '../ayudas';
+import { entrar, folio, quitarDepartamento, reiniciarBD, ticketValido, type Cliente, type Fixtures } from '../ayudas';
+
+const DEPTOS_INICIALES = ['SIS', 'RH', 'VEN', 'COM', 'CON', 'FAC', 'APT', 'AMT', 'PRO', 'CAL'];
 
 let f: Fixtures;
 let admin: Cliente;
@@ -58,13 +60,14 @@ describe('catálogos', () => {
     expect(nuevo.body.error.campos).toHaveProperty('tipoId');
   });
 
-  it('departamentos iniciales SIS y RH; se agregan nuevos sin tocar código y su código forma el folio', async () => {
+  it('departamentos iniciales; se agregan nuevos sin tocar código y su código forma el folio', async () => {
     const cat = (await admin.get('/catalogos?admin=1')).body;
-    expect(cat.departamentos.map((d: { codigo: string }) => d.codigo)).toEqual(['SIS', 'RH']);
-    const r = await admin.post('/catalogos/departamentos', { nombre: 'Contabilidad', codigo: 'conta' });
+    expect(cat.departamentos.map((d: { codigo: string }) => d.codigo)).toEqual(DEPTOS_INICIALES);
+    const r = await admin.post('/catalogos/departamentos', { nombre: 'Mantenimiento', codigo: 'mant' });
     expect(r.status).toBe(201);
+    await quitarDepartamento(f.u1);
     const u1 = await entrar('usuario_uno');
-    expect((await u1.form('/tickets', ticketValido(f, { departamentoId: r.body.id }))).body.folio).toBe(folio('CONTA', 1));
+    expect((await u1.form('/tickets', ticketValido(f, { departamentoId: r.body.id }))).body.folio).toBe('MANT-0001');
   });
 
   it.each([
@@ -87,10 +90,11 @@ describe('catálogos', () => {
   });
 
   it('desactivar un departamento lo quita del formulario; sus tickets siguen igual', async () => {
+    await quitarDepartamento(f.u1);
     const u1 = await entrar('usuario_uno');
     const t = await u1.form('/tickets', ticketValido(f, { departamentoId: f.deptoRH }));
     await admin.put(`/catalogos/departamentos/${f.deptoRH}`, { nombre: 'Recursos Humanos', codigo: 'RH', activo: false, orden: 2 }).expect(200);
-    expect((await u1.get('/catalogos')).body.departamentos.map((d: { codigo: string }) => d.codigo)).toEqual(['SIS']);
+    expect((await u1.get('/catalogos')).body.departamentos.map((d: { codigo: string }) => d.codigo)).toEqual(DEPTOS_INICIALES.filter((c) => c !== 'RH'));
     expect((await u1.get(`/tickets/${t.body.id}`)).body.departamento.nombre).toBe('Recursos Humanos');
   });
 

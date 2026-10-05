@@ -11,7 +11,7 @@ type Pestana = 'departamentos' | 'empresas' | 'tipos' | 'modulos';
 type Fila = DepartamentoFila | EmpresaFila | TipoSolicitudFila | ModuloFila;
 
 const TITULOS: Record<Pestana, { plural: string; singular: string; ayuda: string }> = {
-  departamentos: { plural: 'Departamentos', singular: 'departamento', ayuda: 'El código (2 a 6 letras) forma el folio: SIS → SIS-2026-0001. El consecutivo se reinicia cada 1 de enero.' },
+  departamentos: { plural: 'Departamentos', singular: 'departamento', ayuda: 'El código (2 a 6 letras) forma el folio: VEN → VEN-0001. Cada departamento lleva su propio consecutivo, que no se reinicia.' },
   empresas: { plural: 'Empresas', singular: 'empresa', ayuda: 'El usuario solo puede crear tickets de sus empresas asignadas. El código es corto, para reportes.' },
   tipos: { plural: 'Tipos de solicitud', singular: 'tipo de solicitud', ayuda: 'El título es el encabezado de la sección en "Nuevo ticket". El código es corto, para reportes.' },
   modulos: { plural: 'Módulos', singular: 'módulo', ayuda: 'El código es opcional (para reportes).' },

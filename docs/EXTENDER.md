@@ -14,7 +14,7 @@ Para que el tipo exista también en instalaciones nuevas, agrégalo a `apps/api/
 **Catálogos → Módulos → Agregar.** El código es opcional y no forma parte del folio. Para instalaciones nuevas, agrégalo también a `MODULOS` en el mismo archivo de seeds.
 
 ## 2 bis. Agregar un departamento (y su serie de folios)
-**Catálogos → Departamentos → Agregar**: nombre y código de 2 a 6 letras (p. ej. `CONTA`). Sus tickets tendrán folio `CONTA-2026-0001`, `CONTA-2026-0002`… y el consecutivo se reinicia cada 1 de enero. Asígnalo a los usuarios en **Usuarios → Editar → Departamento** para que venga preseleccionado al crear tickets.
+**Catálogos → Departamentos → Agregar**: nombre y código de 2 a 6 letras (p. ej. `CONTA`). Sus tickets tendrán folio `CONTA-0001`, `CONTA-0002`…; cada departamento lleva su propio consecutivo, que no se reinicia. Asígnalo a los usuarios en **Usuarios → Editar → Departamento** para que venga preseleccionado al crear tickets.
 - No se borran: se desactivan (los tickets viejos conservan su departamento y folio).
 - Cambiar el código no cambia folios emitidos; los tickets nuevos usan el código nuevo empezando en 0001.
 
@@ -84,4 +84,4 @@ El menú, los botones y el servidor se ajustan solos porque todo revisa **permis
 ## 8. Otros puntos de extensión
 - **Reportes y notificaciones**: `ticket_eventos` registra todo lo que le pasa a un ticket (tipo, actor, estatus antes y después, datos JSON). Un reporte de "tiempo en cada estatus" sale directo de esa tabla.
 - **Importar el sistema anterior**: ver `apps/api/src/modulos/importacion/README.md`.
-- **Formato del folio** (`DEPTO-AÑO-CONSECUTIVO`): `packages/shared/src/folio.ts` (`formatearFolio`) es el único lugar donde se define; el contador está en `apps/api/src/modulos/tickets/folio.ts`.
+- **Formato del folio** (`DEPTO-CONSECUTIVO`, continuo por departamento): `packages/shared/src/folio.ts` (`formatearFolio`) es el único lugar donde se define; el contador está en `apps/api/src/modulos/tickets/folio.ts`.

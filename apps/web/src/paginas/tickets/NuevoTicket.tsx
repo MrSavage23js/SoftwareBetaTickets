@@ -38,8 +38,10 @@ export function NuevoTicket({ alCerrar, alCrear }: { alCerrar: () => void; alCre
   const tipo = cat.data?.tipos.find((t) => String(t.id) === tipoId);
   // Si el usuario solo tiene una empresa, se preselecciona.
   const empresaEfectiva = empresaId || (empresas.length === 1 ? String(empresas[0]!.id) : '');
-  // Departamento: el del usuario (o el único que exista), pero se puede cambiar. Forma el folio: SIS-2026-0001.
+  // Departamento: forma el folio (VEN-0001). Quien no es de soporte y tiene uno asignado no lo puede cambiar
+  // (el servidor también lo impone); si no tiene, lo elige. Soporte puede elegir cualquiera.
   const departamentos = cat.data?.departamentos ?? [];
+  const departamentoFijo = !puede(PERMISOS.TICKETS_VER_TODOS) && departamentos.some((d) => d.id === usuario?.departamento?.id);
   const departamentoPropio = departamentos.find((d) => d.id === usuario?.departamento?.id);
   const departamentoEfectivo =
     departamentoId || (departamentoPropio ? String(departamentoPropio.id) : departamentos.length === 1 ? String(departamentos[0]!.id) : '');
@@ -211,20 +213,34 @@ export function NuevoTicket({ alCerrar, alCrear }: { alCerrar: () => void; alCre
                 </div>
               )}
               <div>
-                <label className="lbl" htmlFor="nt-depto">
-                  Departamento
-                </label>
-                <select id="nt-depto" className="inp" value={departamentoEfectivo} onChange={(e) => setDepartamentoId(e.target.value)} {...campo('departamentoId')}>
-                  <option value="">Selecciona…</option>
-                  {departamentos.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.nombre} ({d.codigo})
-                    </option>
-                  ))}
-                </select>
-                {errores.departamentoId
-                  ? error('departamentoId')
-                  : departamentoElegido && <div className="help">El folio será {departamentoElegido.codigo}-{new Date().getFullYear()}-####.</div>}
+                {departamentoFijo ? (
+                  <>
+                    <span className="lbl" id="nt-depto">
+                      Departamento
+                    </span>
+                    <div className="inp fijo" aria-labelledby="nt-depto">
+                      {departamentoElegido?.nombre}
+                    </div>
+                    <div className="help">Es el departamento de tu usuario. Si no es correcto, pídele al administrador que lo cambie.</div>
+                  </>
+                ) : (
+                  <>
+                    <label className="lbl" htmlFor="nt-depto">
+                      Departamento
+                    </label>
+                    <select id="nt-depto" className="inp" value={departamentoEfectivo} onChange={(e) => setDepartamentoId(e.target.value)} {...campo('departamentoId')}>
+                      <option value="">Selecciona…</option>
+                      {departamentos.map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.nombre} ({d.codigo})
+                        </option>
+                      ))}
+                    </select>
+                    {errores.departamentoId
+                      ? error('departamentoId')
+                      : departamentoElegido && <div className="help">El folio será {departamentoElegido.codigo}-####.</div>}
+                  </>
+                )}
               </div>
               <div>
                 <span className="lbl" id="nt-urg">Urgencia</span>
