@@ -62,9 +62,13 @@ export function ListaTickets({
   if (isError && !data) return <EstadoError error={error} reintentar={() => void refetch()} />;
   if (!data.datos.length) {
     return hayFiltros ? (
-      <EstadoVacio icono="search" titulo="Sin resultados" texto="Ningún ticket coincide con la búsqueda o los filtros." />
+      <EstadoVacio icono="search" titulo="No encontramos nada" texto="Ningún ticket coincide. Prueba con otras palabras o quita algún filtro." />
     ) : (
-      <EstadoVacio icono="ticket" titulo="Aún no hay tickets" texto="Cuando se cree un ticket aparecerá aquí.">
+      <EstadoVacio
+        icono="ticket"
+        titulo="Todo en calma por aquí"
+        texto={alCrear ? 'No hay tickets todavía. Si necesitas ayuda, crea uno y soporte lo atenderá.' : 'No hay tickets todavía. Cuando se cree uno, aparecerá aquí.'}
+      >
         {alCrear && (
           <button className="btn p" onClick={alCrear}>
             <Icono n="plus" />

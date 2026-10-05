@@ -288,3 +288,10 @@ export interface ListaNotificaciones {
   noLeidas: number;
   datos: NotificacionInfo[];
 }
+
+/** Texto que un técnico guardó para insertarlo al responder (solo lo ve él). */
+export interface RespuestaGuardada {
+  id: number;
+  titulo: string;
+  cuerpoHtml: string;
+}

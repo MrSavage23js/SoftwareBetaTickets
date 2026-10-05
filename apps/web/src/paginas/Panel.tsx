@@ -347,7 +347,7 @@ function Analitica({ a }: { a: PanelAnalitica }) {
   const resueltos = a.tendencia.reduce((s, d) => s + d.resueltos, 0);
   const barras = (xs: { id: number | null; nombre: string; total: number }[]) =>
     xs.map((x) => ({ clave: String(x.id ?? 'otras'), etiqueta: x.nombre, valor: x.total, color: COLOR_DEPTO }));
-  const vacio = <EstadoVacio icono="chart" titulo="Sin datos en este periodo" />;
+  const vacio = <EstadoVacio icono="chart" titulo="Sin datos en este periodo" texto="Prueba con un periodo más largo." />;
   const porCada = { dia: 'día', semana: 'semana', mes: 'mes' }[a.agrupacion];
 
   return (

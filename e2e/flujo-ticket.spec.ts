@@ -120,6 +120,9 @@ test('"Enviar copia a" acepta varios correos separados por coma y no deja pasar 
 
   // Corregido (y sin pulsar Enter): se agrega al salir del cuadro y el ticket se crea con ambas copias.
   await copia.fill('dos@prueba.local');
+  // Salir del cuadro también cierra las sugerencias (coincide con usuario_dos), que si no tapan el botón.
+  await copia.blur();
+  await expect(ventana.locator('button[role="option"]')).toHaveCount(0);
   await ventana.getByRole('button', { name: 'Crear ticket' }).click();
   const confirmacion = page.getByRole('dialog', { name: 'Ticket creado' });
   await expect(confirmacion.getByText(/y a los contactos en copia/)).toBeVisible();

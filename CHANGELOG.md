@@ -14,6 +14,9 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Versionado
 - **Solo los admins cambian su propia contraseña.** A los demás se la cambia un admin desde Usuarios, y ya no se les pide cambiarla al entrar.
 
 ### Agregado
+- **Respuestas guardadas** (botón "Respuestas" en la barra al responder un ticket): cada técnico guarda sus propios textos y los inserta con un clic; también puede guardar lo que acaba de escribir. Solo él las ve; sin imágenes; hasta 50 por persona (migración `0003`).
+- **Temas de temporada automáticos:** quien usa Aqua ve sola la paleta de Navidad (1 dic – 6 ene), San Valentín (7 – 15 feb), Fiestas patrias (septiembre) o Día de Muertos (25 oct – 3 nov), y después vuelve a Aqua. Se puede apagar en Apariencia, y cualquiera puede elegir una de temporada a mano. Cada una lleva su adorno en la barra lateral (luces, corazones, papel picado).
+- **Pantallas vacías ilustradas:** dibujos con los colores de tu paleta y textos más amables (sin tickets, sin resultados, página que no existe, sin acceso, sin conexión, etc.).
 - **Apariencia por usuario** (botón de paleta junto a tu nombre): modo Automático, Claro u Oscuro y nueve paletas de color (Aqua, Océano, Bosque, Ámbar, Ciruela, Coral, Grafito y Rosa) más una de temporada, Día de Muertos (cempasúchil y rosa mexicano, barra lateral morada con papel picado), con vista previa en miniatura. Se guarda en el usuario y se aplica en cualquier equipo; los colores de estatus, urgencia y gráficas no cambian.
 - Aplicación instalable (PWA) y guía de despliegue en Render y en PC de oficina.
 - Aviso de ticket nuevo a varios correos, con la urgencia en el asunto; "Enviar copia a" acepta varios correos y no deja pasar uno mal escrito.

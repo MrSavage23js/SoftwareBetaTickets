@@ -287,6 +287,15 @@ export interface AuditoriaTabla {
   creado_at: Generated<Date>;
 }
 
+export interface RespuestasGuardadasTabla {
+  id: Generated<number>;
+  usuario_id: number;
+  titulo: string;
+  cuerpo_html: string;
+  creado_at: Generated<Date>;
+  actualizado_at: Generated<Date>;
+}
+
 export interface BD {
   roles: RolesTabla;
   permisos: PermisosTabla;
@@ -311,6 +320,7 @@ export interface BD {
   ajustes: AjustesTabla;
   notificaciones: NotificacionesTabla;
   auditoria: AuditoriaTabla;
+  respuestas_guardadas: RespuestasGuardadasTabla;
 }
 
 export type Usuario = Selectable<UsuariosTabla>;

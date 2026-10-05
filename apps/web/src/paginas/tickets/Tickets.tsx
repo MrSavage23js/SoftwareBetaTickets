@@ -164,7 +164,7 @@ export function Tickets() {
             {seleccionado !== null ? (
               <Detalle id={seleccionado} />
             ) : (
-              <EstadoVacio icono="ticket" titulo="Selecciona un ticket" texto="Elige un ticket de la lista para ver su detalle y conversación." />
+              <EstadoVacio icono="ticket" dibujo="tarjetas" titulo="Selecciona un ticket" texto="Elige un ticket de la lista para ver su detalle y conversación." />
             )}
           </section>
         </div>

@@ -167,7 +167,7 @@ export function Protegida({ permisos, children }: { permisos?: string[]; childre
   if (estado === 'cargando') return <Cargando texto="Cargando el sistema de tickets…" />;
   if (estado === 'sin-servidor') {
     return (
-      <EstadoVacio icono="alert" titulo="No se pudo conectar con el servidor" texto="Revisa tu conexión o inténtalo en unos momentos.">
+      <EstadoVacio icono="alert" titulo="No pudimos conectar con el servidor" texto="Revisa tu internet o inténtalo de nuevo en unos momentos.">
         <button className="btn p" onClick={reintentar}>
           Reintentar
         </button>
@@ -200,7 +200,7 @@ export function NoEncontrado() {
   return (
     <div className="pagina" style={{ paddingTop: 32 }}>
       <div className="panel">
-        <EstadoVacio icono="search" titulo="Esta página no existe" texto="Revisa la dirección o regresa al inicio.">
+        <EstadoVacio icono="search" dibujo="senal" titulo="Esta página se perdió" texto="La dirección no existe o cambió. Te llevamos de vuelta:">
           <NavLink className="btn p" to="/tickets">
             Ir a tickets
           </NavLink>

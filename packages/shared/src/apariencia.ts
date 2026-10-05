@@ -13,6 +13,9 @@ export const ACENTOS = [
   'grafito',
   'rosa',
   'muertos',
+  'navidad',
+  'patrias',
+  'sanvalentin',
 ] as const;
 
 export type Tema = (typeof TEMAS)[number];
@@ -21,17 +24,57 @@ export type Acento = (typeof ACENTOS)[number];
 export interface Apariencia {
   tema: Tema;
   acento: Acento;
+  /** Si usa la paleta de omisión (Aqua), en cada temporada cambia sola a la de temporada. */
+  temporada: boolean;
 }
 
-export const APARIENCIA_INICIAL: Apariencia = { tema: 'sistema', acento: 'aqua' };
+export const APARIENCIA_INICIAL: Apariencia = { tema: 'sistema', acento: 'aqua', temporada: true };
 
 export const esquemaApariencia = z.object({
   tema: z.enum(TEMAS, 'Modo no válido.'),
   acento: z.enum(ACENTOS, 'Color no válido.'),
+  // Las apariencias guardadas antes de existir las temporadas no lo traen: se toman como encendidas.
+  temporada: z.boolean('Valor no válido.').default(true),
 });
 
 /** Lo guardado (o nada, o un valor viejo) convertido siempre en una apariencia válida. */
 export function leerApariencia(valor: unknown): Apariencia {
   const r = esquemaApariencia.safeParse(valor);
   return r.success ? r.data : APARIENCIA_INICIAL;
+}
+
+// ---------------------------------------------------------------- Temporadas
+export interface Temporada {
+  acento: Acento;
+  nombre: string;
+  /** [mes, día] de inicio y fin, ambos incluidos. Si el fin es antes que el inicio, cruza el año. */
+  desde: [number, number];
+  hasta: [number, number];
+}
+
+export const TEMPORADAS: Temporada[] = [
+  { acento: 'sanvalentin', nombre: 'San Valentín', desde: [2, 7], hasta: [2, 15] },
+  { acento: 'patrias', nombre: 'Fiestas patrias', desde: [9, 1], hasta: [9, 30] },
+  { acento: 'muertos', nombre: 'Día de Muertos', desde: [10, 25], hasta: [11, 3] },
+  { acento: 'navidad', nombre: 'Navidad', desde: [12, 1], hasta: [1, 6] },
+];
+
+const clave = ([mes, dia]: [number, number]) => mes * 100 + dia;
+
+/** La temporada que corre en esa fecha (en la hora local de quien la llama), o null. */
+export function temporadaEn(fecha: Date): Temporada | null {
+  const hoy = clave([fecha.getMonth() + 1, fecha.getDate()]);
+  return (
+    TEMPORADAS.find((t) => {
+      const desde = clave(t.desde);
+      const hasta = clave(t.hasta);
+      return desde <= hasta ? hoy >= desde && hoy <= hasta : hoy >= desde || hoy <= hasta;
+    }) ?? null
+  );
+}
+
+/** La paleta que se ve: la elegida, salvo que use Aqua con temporadas encendidas y haya una en curso. */
+export function acentoVisible(a: Apariencia, fecha = new Date()): Acento {
+  if (!a.temporada || a.acento !== 'aqua') return a.acento;
+  return temporadaEn(fecha)?.acento ?? a.acento;
 }

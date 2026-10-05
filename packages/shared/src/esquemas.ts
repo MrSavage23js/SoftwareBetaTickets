@@ -211,6 +211,14 @@ export const esquemaCerrar = z.object({
   adjuntosEnLinea: z.array(z.uuid()).max(50).default([]),
 });
 
+// ---------------------------------------------------------------- Respuestas guardadas
+export const MAX_RESPUESTAS_GUARDADAS = 50;
+export const esquemaRespuestaGuardada = z.object({
+  titulo: texto('El título', 80),
+  cuerpoHtml: html('La respuesta'),
+});
+export type RespuestaGuardadaEntrada = z.input<typeof esquemaRespuestaGuardada>;
+
 // ---------------------------------------------------------------- Plantillas y ajustes
 export const esquemaPlantilla = z.object({
   asunto: texto('El asunto', 255),

@@ -3,6 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useId, useRef, useSt
 import { INFO_ESTATUS, type Estatus } from '@mesa/shared';
 import { mensajeDe } from '../api/cliente';
 import { menosMovimiento } from '../lib/movimiento';
+import { Ilustracion, type Dibujo } from './Dibujos';
 import { Icono, type NombreIcono } from './Icono';
 
 // ---------------------------------------------------------------- Estados
@@ -25,12 +26,41 @@ export function Esqueletos({ n = 3 }: { n?: number }) {
   );
 }
 
-export function EstadoVacio({ icono = 'ticket', titulo, texto, children }: { icono?: NombreIcono; titulo: string; texto?: string; children?: ReactNode }) {
+/** Ilustración que corresponde a cada ícono si no se pide otra. */
+const DIBUJO_DE: Partial<Record<NombreIcono, Dibujo>> = {
+  ticket: 'buzon',
+  search: 'lupa',
+  chart: 'grafica',
+  lock: 'candado',
+  alert: 'nube',
+  mail: 'sobre',
+  users: 'personas',
+  respuestas: 'globo',
+};
+
+export function EstadoVacio({
+  icono = 'ticket',
+  dibujo,
+  titulo,
+  texto,
+  children,
+}: {
+  icono?: NombreIcono;
+  dibujo?: Dibujo;
+  titulo: string;
+  texto?: string;
+  children?: ReactNode;
+}) {
+  const ilustracion = dibujo ?? DIBUJO_DE[icono];
   return (
     <div className="empty">
-      <span className="ico">
-        <Icono n={icono} />
-      </span>
+      {ilustracion ? (
+        <Ilustracion dibujo={ilustracion} />
+      ) : (
+        <span className="ico">
+          <Icono n={icono} />
+        </span>
+      )}
       <b>{titulo}</b>
       {texto && <span>{texto}</span>}
       {children}

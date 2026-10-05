@@ -21,6 +21,7 @@ import { rutasCatalogos } from './modulos/catalogos/rutas';
 import { rutasCorreos } from './modulos/correos/rutas';
 import { rutasNotificaciones } from './modulos/notificaciones/rutas';
 import { rutasPanel } from './modulos/panel/rutas';
+import { rutasRespuestas } from './modulos/respuestas/rutas';
 import { rutasTickets } from './modulos/tickets/rutas';
 import { rutasUsuarios } from './modulos/usuarios/rutas';
 
@@ -126,6 +127,7 @@ export function crearApp() {
   });
   api.use('/usuarios', rutasUsuarios);
   api.use('/catalogos', rutasCatalogos);
+  api.use('/respuestas', rutasRespuestas);
   api.use('/tickets', rutasTickets);
   api.use('/adjuntos', rutasAdjuntos);
   api.use('/correos', rutasCorreos);

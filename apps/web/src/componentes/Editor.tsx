@@ -1,7 +1,7 @@
 // Editor de texto enriquecido (barra de la maqueta: negrita, cursiva, subrayado, listas, color, enlace,
 // imagen y quitar formato). Las imágenes se suben como adjunto y el HTML solo guarda su URL.
 // OJO: el servidor vuelve a sanitizar todo; esto es comodidad, no seguridad.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { EditorContent, useEditor, useEditorState } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
@@ -22,9 +22,11 @@ interface Props {
   etiqueta?: string;
   /** Si es false no se muestra el botón de imagen (p. ej. quien no puede subir archivos). */
   imagenes?: boolean;
+  /** Botones extra al final de la barra; reciben cómo insertar HTML donde está el cursor. */
+  extra?: (insertar: (html: string) => void) => ReactNode;
 }
 
-export function Editor({ id, valor, alCambiar, placeholder, invalido, corto, etiqueta, imagenes = true }: Props) {
+export function Editor({ id, valor, alCambiar, placeholder, invalido, corto, etiqueta, imagenes = true, extra }: Props) {
   const avisar = useAvisos();
   const { usuario } = useSesion();
   const [subiendo, setSubiendo] = useState(0);
@@ -133,6 +135,7 @@ export function Editor({ id, valor, alCambiar, placeholder, invalido, corto, eti
         {imagenes && boton('image', 'Insertar imagen', () => archivoRef.current?.click())}
         {boton('clear', 'Quitar formato', () => editor?.chain().focus().unsetAllMarks().clearNodes().run())}
         {subiendo > 0 && <span className="help" style={{ margin: '0 8px' }}>Subiendo imagen…</span>}
+        {extra?.((html) => editor?.chain().focus().insertContent(html).run())}
       </div>
       {enlace !== null && (
         <div className="tb" style={{ gap: 8 }}>

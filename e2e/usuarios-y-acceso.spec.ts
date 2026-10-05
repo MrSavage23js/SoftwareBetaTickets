@@ -34,16 +34,13 @@ test('alta, edición, cierre de sesión y baja de un usuario', async ({ page, br
   await expect(page.getByText('Usuario Elena_Vargas actualizado.')).toBeVisible();
   await expect(fila.getByText(/Elena Vargas ·/)).toBeVisible();
 
-  // ---------------------------------------------------------------- La nueva usuaria entra (y debe cambiar su contraseña)
+  // ---------------------------------------------------------------- La nueva usuaria entra directo
+  // (solo los admins cambian su propia contraseña: a ella no se le pide ni ve el botón)
   const otra = await browser.newContext();
   const marta = await otra.newPage();
   await iniciarSesion(marta, 'Elena_Vargas', 'Temporal123');
-  await expect(marta.getByRole('heading', { name: 'Cambia tu contraseña' })).toBeVisible();
-  await marta.getByLabel('Contraseña actual').fill('Temporal123');
-  await marta.getByLabel('Contraseña nueva', { exact: true }).fill('MiClave2026');
-  await marta.getByLabel('Confirmar contraseña nueva').fill('MiClave2026');
-  await marta.getByRole('button', { name: 'Cambiar contraseña y entrar' }).click();
   await expect(marta.getByRole('heading', { name: 'Mis tickets' })).toBeVisible();
+  await expect(marta.getByRole('button', { name: 'Cambiar contraseña' })).toHaveCount(0);
 
   // ---------------------------------------------------------------- El admin la ve en línea y le cierra la sesión
   await page.reload();
@@ -70,7 +67,7 @@ test('alta, edición, cierre de sesión y baja de un usuario', async ({ page, br
   // Ya no puede entrar.
   const tercera = await browser.newContext();
   const intento = await tercera.newPage();
-  await iniciarSesion(intento, 'Elena_Vargas', 'MiClave2026');
+  await iniciarSesion(intento, 'Elena_Vargas', 'Temporal123');
   await expect(intento.getByText('Usuario o contraseña incorrectos.')).toBeVisible();
   await tercera.close();
 });

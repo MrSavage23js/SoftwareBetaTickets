@@ -3,6 +3,7 @@ import { PERMISOS, pasosCompletados, INFO_ESTATUS, type EventoInfo, type TicketD
 import { api, camposDe, ErrorCliente, mensajeDe } from '../../api/cliente';
 import { ListaAdjuntos, SelectorArchivos } from '../../componentes/Archivos';
 import { Editor } from '../../componentes/Editor';
+import { BotonRespuestas } from '../../componentes/RespuestasGuardadas';
 import { Icono, type NombreIcono } from '../../componentes/Icono';
 import { Avatar, Cargando, EstadoError, Modal, PillEstatus, useAvisos } from '../../componentes/ui';
 import { BadgeUrgencia } from '../../componentes/Urgencia';
@@ -267,6 +268,7 @@ function Redactar({ t, tipo }: { t: TicketDetalle; tipo: 'comentario' | 'respues
         corto
         invalido={!!error}
         placeholder={respuesta ? 'Escribe aquí la respuesta al solicitante…' : 'Agregar información al ticket…'}
+        extra={respuesta ? (insertar) => <BotonRespuestas insertar={insertar} textoActual={html} /> : undefined}
       />
       {respuesta && (
         <div className="notice">
