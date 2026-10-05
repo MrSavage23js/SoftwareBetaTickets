@@ -92,7 +92,7 @@ export const PLANTILLAS = [
   {
     codigo: 'TICKET_NUEVO_SOPORTE',
     nombre: 'Aviso de ticket nuevo a soporte',
-    descripcion: 'Se envía al buzón de soporte cuando se crea un ticket (solo si el ajuste "correo.aviso_soporte_activo" está encendido).',
+    descripcion: 'Se envía a todos los admins (y a los correos extra de Ajustes) cuando se crea un ticket (solo si el ajuste "correo.aviso_soporte_activo" está encendido).',
     asunto: 'Nuevo ticket: {{folio}} — Urgencia {{urgencia}}',
     variables: [
       ...VARIABLES_TICKET,
@@ -109,7 +109,7 @@ export const PLANTILLAS = [
   {
     codigo: 'TICKET_CERRADO_SOPORTE',
     nombre: 'Aviso de ticket cerrado a soporte',
-    descripcion: 'Se envía al buzón de soporte cuando se cierra un ticket o se marca "No procede" (solo si el ajuste "correo.aviso_cierre_activo" está encendido).',
+    descripcion: 'Se envía a todos los admins (y a los correos extra de Ajustes) cuando se cierra un ticket o se marca "No procede" (solo si el ajuste "correo.aviso_cierre_activo" está encendido).',
     asunto: 'Ticket cerrado: {{folio}} — {{estatus}}',
     variables: [
       ...VARIABLES_TICKET,

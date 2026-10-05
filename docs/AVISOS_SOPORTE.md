@@ -7,7 +7,9 @@ Correos que recibe el buzón de soporte, aparte de los que recibe el solicitante
 | Ticket nuevo | Al crear un ticket | `correo.aviso_soporte_activo` (apagado al inicio) | `TICKET_NUEVO_SOPORTE` |
 | Ticket cerrado | Al **Cerrar** o marcar **No procede** | `correo.aviso_cierre_activo` (encendido al inicio) | `TICKET_CERRADO_SOPORTE` |
 
-Los dos van a los correos de `correo.aviso_soporte_destino` (varios separados por coma). **Si ese campo está vacío no se envía ninguno.** Cada aviso se puede apagar por separado. Las respuestas de la conversación no se avisan a soporte.
+Los dos van a **todos los admins activos** (los usuarios cuyo rol ve la bandeja de soporte, permiso `tickets.ver_todos`), incluido quien creó o cerró el ticket, **más** los correos extra de `correo.aviso_soporte_destino` (varios separados por coma; puede quedar vacío). No se repite un correo aunque esté en los dos lados. Un admin desactivado o dado de baja deja de recibirlos. Cada aviso se puede apagar por separado. Las respuestas de la conversación no se avisan a soporte.
+
+Desde el 2026-10-05: antes solo iban a `correo.aviso_soporte_destino`, y si estaba vacío no salía ninguno; un admin nuevo no recibía nada hasta agregarlo ahí.
 
 Todo se configura en **Ajustes → Correos**. El texto de los correos se edita en **Plantillas de correo**, donde también se pueden desactivar.
 
@@ -23,13 +25,13 @@ Agregado el 2026-10-03 (commit `d970a27`).
 
 | Archivo | Qué contiene |
 | --- | --- |
-| `apps/api/src/modulos/tickets/operaciones.ts` | `correosCierre()`: encola el correo al solicitante y el aviso a soporte. La usan `cerrar()` y `noProcede()`. El aviso de ticket nuevo está en `crearTicket`. |
+| `apps/api/src/modulos/tickets/operaciones.ts` | `destinatariosSoporte()`: admins activos + correos extra, sin repetir. `correosCierre()`: encola el correo al solicitante y el aviso a soporte; la usan `cerrar()` y `noProcede()`. El aviso de ticket nuevo está en `crearTicket`. |
 | `apps/api/src/db/seeds/plantillas-iniciales.ts` | Texto inicial de las plantillas |
 | `apps/api/src/modulos/correos/cola.ts` | `CODIGOS_PLANTILLA` y `encolarCorreo()` |
 | `packages/shared/src/ajustes.ts` | Definición y validación de los ajustes |
 | `apps/api/src/db/seeds/index.ts` | Valor inicial de los ajustes |
 | `apps/web/src/paginas/Ajustes.tsx` | En qué grupo aparecen en pantalla |
-| `apps/api/test/api/flujo-soporte.test.ts` | Pruebas "aviso a soporte al crear" y "aviso a soporte al cerrar" |
+| `apps/api/test/api/flujo-soporte.test.ts` | Pruebas de los avisos: a todos los admins activos, correos extra, sin repetir, al crear y al cerrar |
 
 ## Cosas a tener en cuenta si se cambia
 

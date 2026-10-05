@@ -107,6 +107,16 @@ describe('flujo completo', () => {
     expect(r.body.correosEncolados).toBe(2);
   });
 
+  it('el aviso de ticket nuevo llega a todos los admins activos aunque no haya correos extra', async () => {
+    await admin.put('/ajustes', { 'correo.aviso_soporte_activo': true, 'correo.aviso_soporte_destino': 'Admin_Prueba@prueba.local' }).expect(200);
+    // Un admin desactivado y un usuario normal no lo reciben; el correo extra repetido no se duplica.
+    await db.updateTable('usuarios').set({ activo: 0 }).where('id', '=', f.tecnico).execute();
+    const { id: nuevo } = (await u1.form('/tickets', ticketValido(f))).body;
+    const aviso = await db.selectFrom('correos_salida').select('para').where('plantilla_codigo', '=', 'TICKET_NUEVO_SOPORTE').where('ticket_id', '=', nuevo).executeTakeFirstOrThrow();
+    const para = (typeof aviso.para === 'string' ? JSON.parse(aviso.para) : aviso.para) as { email: string }[];
+    expect(para.map((d) => d.email)).toEqual(['admin_prueba@prueba.local']);
+  });
+
   it('el aviso a soporte admite varios correos separados por coma', async () => {
     const r = await admin.put('/ajustes', { 'correo.aviso_soporte_activo': true, 'correo.aviso_soporte_destino': ' Uno@prueba.local ; dos@prueba.local,' });
     expect(r.status).toBe(200);
@@ -118,28 +128,28 @@ describe('flujo completo', () => {
       .where('ticket_id', '=', nuevo)
       .executeTakeFirstOrThrow();
     const para = (typeof aviso.para === 'string' ? JSON.parse(aviso.para) : aviso.para) as { email: string }[];
-    expect(para.map((d) => d.email)).toEqual(['uno@prueba.local', 'dos@prueba.local']);
+    expect(para.map((d) => d.email)).toEqual(['admin_prueba@prueba.local', 'tecnico_prueba@prueba.local', 'uno@prueba.local', 'dos@prueba.local']);
     // Asunto con folio y urgencia; el cuerpo dice quién lo reportó (con su correo) y a quién se envió copia.
     expect(aviso.asunto).toMatch(new RegExp(`^Nuevo ticket: ${folio} — Urgencia \\S+`));
     expect(aviso.cuerpo_html).toContain('usuario_uno@prueba.local');
     expect(aviso.cuerpo_html).toContain('En copia: externo@prueba.local');
   });
 
-  it('aviso a soporte al cerrar: va a los mismos correos y se puede apagar', async () => {
+  it('aviso a soporte al cerrar: va a los admins y a los mismos correos extra, y se puede apagar', async () => {
     const avisos = async (ticket: number) =>
       db.selectFrom('correos_salida').select(['para', 'asunto', 'cuerpo_html']).where('plantilla_codigo', '=', 'TICKET_CERRADO_SOPORTE').where('ticket_id', '=', ticket).execute();
-    // Sin correos de destino no se envía nada aunque el ajuste esté encendido (valor inicial).
+    const correos = (a: { para: unknown }) => ((typeof a.para === 'string' ? JSON.parse(a.para) : a.para) as { email: string }[]).map((d) => d.email);
+    // Sin correos extra (valor inicial) igual llega a todos los admins, incluido quien lo cerró.
     await admin.post(`/tickets/${id}/tomar`).expect(204);
     await admin.form(`/tickets/${id}/cerrar`, { resolucionHtml: '<p>Listo.</p>', version: (await detalle()).version }).expect(204);
-    expect(await avisos(id)).toHaveLength(0);
+    expect((await avisos(id)).map(correos)).toEqual([['admin_prueba@prueba.local', 'tecnico_prueba@prueba.local']]);
 
     await admin.put('/ajustes', { 'correo.aviso_soporte_destino': 'uno@prueba.local, dos@prueba.local' }).expect(200);
     const { id: otro, folio } = (await u1.form('/tickets', ticketValido(f))).body;
     await admin.post(`/tickets/${otro}/tomar`).expect(204);
     await admin.form(`/tickets/${otro}/cerrar`, { resolucionHtml: '<p>Se reinició el servicio.</p>', version: (await admin.get(`/tickets/${otro}`)).body.version }).expect(204);
     const [aviso] = await avisos(otro);
-    const para = (typeof aviso!.para === 'string' ? JSON.parse(aviso!.para) : aviso!.para) as { email: string }[];
-    expect(para.map((d) => d.email)).toEqual(['uno@prueba.local', 'dos@prueba.local']);
+    expect(correos(aviso!)).toEqual(['admin_prueba@prueba.local', 'tecnico_prueba@prueba.local', 'uno@prueba.local', 'dos@prueba.local']);
     expect(aviso!.asunto).toContain(folio);
     expect(aviso!.cuerpo_html).toContain('Se reinició el servicio.');
     expect(aviso!.cuerpo_html).toContain('usuario_uno@prueba.local');

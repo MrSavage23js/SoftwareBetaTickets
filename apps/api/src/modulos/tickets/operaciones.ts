@@ -216,11 +216,12 @@ export async function crearTicket(u: UsuarioActual, entrada: unknown, archivos: 
       let correos = 0;
       if (await encolarCorreo(tx, { plantilla: CODIGOS_PLANTILLA.TICKET_CREADO, para: [solicitante], cc: unicas.map((c) => ({ email: c.email, nombre: c.nombre ?? undefined })), variables: vars, ticketId })) correos++;
       const ajustes = await obtenerAjustes();
-      if (ajustes['correo.aviso_soporte_activo'] && ajustes['correo.aviso_soporte_destino']) {
+      const soporte = ajustes['correo.aviso_soporte_activo'] ? await destinatariosSoporte(tx, ajustes['correo.aviso_soporte_destino']) : [];
+      if (soporte.length) {
         if (
           await encolarCorreo(tx, {
             plantilla: CODIGOS_PLANTILLA.TICKET_NUEVO_SOPORTE,
-            para: listaCorreos(ajustes['correo.aviso_soporte_destino']).map((email) => ({ email })),
+            para: soporte,
             variables: { ...vars, copias: unicas.map((c) => c.email).join(', ') },
             ticketId,
           })
@@ -462,7 +463,30 @@ export async function comentar(u: UsuarioActual, id: number, entrada: unknown, a
 }
 
 /**
- * Correos de cierre (Cerrar y No procede): al solicitante y, si el ajuste está encendido, al buzón de soporte.
+ * Quién recibe los avisos a soporte (ticket nuevo y cierre): todos los admins activos (quienes ven la
+ * bandeja de soporte), incluido quien hizo la acción, más los correos extra de Ajustes → Correos.
+ * Sin repetir correos.
+ */
+async function destinatariosSoporte(tx: Tx, extra: string): Promise<Destinatario[]> {
+  const admins = await tx
+    .selectFrom('usuarios as u')
+    .innerJoin('rol_permisos as rp', 'rp.rol_id', 'u.rol_id')
+    .innerJoin('permisos as p', 'p.id', 'rp.permiso_id')
+    .select(['u.email', 'u.nombre', 'u.username'])
+    .where('p.codigo', '=', PERMISOS.TICKETS_VER_TODOS)
+    .where('u.activo', '=', 1)
+    .where('u.eliminado_at', 'is', null)
+    .orderBy('u.id')
+    .execute();
+  const lista: Destinatario[] = [
+    ...admins.map((a) => ({ email: a.email.toLowerCase(), nombre: nombreVisible(a) })),
+    ...listaCorreos(extra).map((email) => ({ email: email.toLowerCase() })),
+  ];
+  return [...new Map(lista.map((d) => [d.email, d])).values()];
+}
+
+/**
+ * Correos de cierre (Cerrar y No procede): al solicitante y, si el ajuste está encendido, a soporte.
  * Devuelve si se encoló el del solicitante.
  */
 async function correosCierre(c: Contexto, u: UsuarioActual, resolucionHtml: string): Promise<boolean> {
@@ -470,13 +494,9 @@ async function correosCierre(c: Contexto, u: UsuarioActual, resolucionHtml: stri
   const variables = { ...vars, tecnico: nombreVisible(u), fecha_cierre: fechaLarga(c.ahora), resolucion_html: resolucionHtml };
   const encolado = await encolarCorreo(c.tx, { plantilla: CODIGOS_PLANTILLA.TICKET_CERRADO, para: [solicitante], variables, ticketId: c.t.id });
   const ajustes = await obtenerAjustes();
-  if (ajustes['correo.aviso_cierre_activo'] && ajustes['correo.aviso_soporte_destino']) {
-    await encolarCorreo(c.tx, {
-      plantilla: CODIGOS_PLANTILLA.TICKET_CERRADO_SOPORTE,
-      para: listaCorreos(ajustes['correo.aviso_soporte_destino']).map((email) => ({ email })),
-      variables,
-      ticketId: c.t.id,
-    });
+  const soporte = ajustes['correo.aviso_cierre_activo'] ? await destinatariosSoporte(c.tx, ajustes['correo.aviso_soporte_destino']) : [];
+  if (soporte.length) {
+    await encolarCorreo(c.tx, { plantilla: CODIGOS_PLANTILLA.TICKET_CERRADO_SOPORTE, para: soporte, variables, ticketId: c.t.id });
   }
   return encolado;
 }
