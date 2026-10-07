@@ -658,6 +658,8 @@ div.tarjeta { cursor: default; }
 [data-acento='ciruela'] { --pa-1: #d6a4ff; --pa-2: #9d64e8; --pa-3: #7c4bd0; --pa-texto: #6232b3; --pa-tinta: #1f0b3d; --pa-texto-osc: #cfa6ff; }
 [data-acento='coral'] { --pa-1: #ffa196; --pa-2: #f0655a; --pa-3: #c4403a; --pa-texto: #b0332e; --pa-tinta: #3a0806; --pa-texto-osc: #ffa49b; }
 [data-acento='grafito'] { --pa-1: #b3c0c7; --pa-2: #7a8a94; --pa-3: #5f6f79; --pa-texto: #45535c; --pa-tinta: #0f171c; --pa-texto-osc: #c5d1d7; }
+/* Vino: tonos oscuros, así que los botones llevan texto blanco (contraste ≥ 4.8 en todo el degradado). */
+[data-acento='vino'] { --pa-1: #c2466b; --pa-2: #9c2648; --pa-3: #7a1533; --pa-texto: #7a1533; --pa-tinta: #ffffff; --pa-texto-osc: #f2a3b8; }
 [data-acento='rosa'] { --pa-1: #ff9ccf; --pa-2: #ec4c9a; --pa-3: #c42f7c; --pa-texto: #a3205f; --pa-tinta: #3b0420; --pa-texto-osc: #ff9fcf; }
 /* De temporada: cempasúchil y rosa mexicano sobre una barra lateral morada de noche (--pa-lado) con papel picado. */
 [data-acento='muertos'] { --pa-1: #ffb627; --pa-2: #f2622e; --pa-3: #c81d6a; --pa-texto: #a8195c; --pa-tinta: #2b0612; --pa-texto-osc: #ffb24d; --pa-lado: #5a2a8a; }
@@ -788,6 +790,14 @@ div.tarjeta { cursor: default; }
 .mini-boton { margin-top: auto; align-self: flex-end; width: 50%; height: 11px; border-radius: 4px; background: var(--grad-acento); box-shadow: var(--sombra-acento); }
 .ap-nombre { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--ink); }
 .ap-nombre .ic { color: var(--accent-text); }
+.avatar-dibujo { width: 70%; height: 70%; }
+.me .face .avatar-dibujo { width: 28px; height: 28px; }
+.ap-beta { margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-text); font-size: 11.5px; font-weight: 700; vertical-align: 2px; }
+.ap-avatares { display: grid; grid-template-columns: repeat(auto-fill, minmax(56px, 1fr)); gap: 10px; }
+.ap-avatar { display: flex; justify-content: center; padding: 4px; border: 0; background: transparent; border-radius: 999px; }
+.ap-avatar-cara { width: 48px; height: 48px; border-radius: 999px; background: var(--grad-acento); color: var(--accent-ink); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; outline: 2px solid transparent; outline-offset: 3px; transition: transform var(--t-rapido, 0.12s); }
+.ap-avatar:hover .ap-avatar-cara { transform: scale(1.06); }
+.ap-avatar[aria-checked='true'] .ap-avatar-cara { outline-color: var(--accent-strong); }
 .ap-detalle { margin-top: -4px; font-size: 12.5px; color: var(--muted); }
 .ap-interruptor { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); cursor: pointer; }
 .ap-interruptor input { flex: none; width: 20px; height: 20px; margin: 1px 0 0; accent-color: var(--accent-strong); }

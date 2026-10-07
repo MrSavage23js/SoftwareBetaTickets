@@ -6,6 +6,7 @@ import { Icono, type NombreIcono } from '../componentes/Icono';
 import { Cargando, EstadoVacio } from '../componentes/ui';
 import { iniciales } from '../lib/formato';
 import { VentanaApariencia } from '../componentes/Apariencia';
+import { DibujoAvatar } from '../componentes/Avatares';
 import { CambioObligatorio, VentanaCambiarPassword } from '../paginas/CambiarPassword';
 import { useSesion } from '../sesion/Sesion';
 
@@ -122,7 +123,7 @@ export function Estructura() {
             </nav>
             <div className="me">
               <span className="face" aria-hidden="true" title={iconos ? usuario.nombre : undefined}>
-                {iniciales(usuario.nombre)}
+                {usuario.apariencia.avatar ? <DibujoAvatar avatar={usuario.apariencia.avatar} /> : iniciales(usuario.nombre)}
               </span>
               <div>
                 <b title={usuario.nombre}>{usuario.nombre}</b>

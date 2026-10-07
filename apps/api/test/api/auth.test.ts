@@ -228,21 +228,25 @@ describe('cambio de contraseña', () => {
 describe('apariencia', () => {
   it('cada usuario guarda su modo y su paleta; viaja con la sesión y no afecta a los demás', async () => {
     const u1 = await entrar('usuario_uno');
-    expect((await u1.get('/auth/yo')).body.usuario.apariencia).toEqual({ tema: 'sistema', acento: 'aqua', temporada: true });
+    expect((await u1.get('/auth/yo')).body.usuario.apariencia).toEqual({ tema: 'sistema', acento: 'aqua', temporada: true, avatar: null });
 
     const r = await u1.put('/auth/apariencia', { tema: 'oscuro', acento: 'ciruela' });
     expect(r.status).toBe(200);
-    expect((await u1.get('/auth/yo')).body.usuario.apariencia).toEqual({ tema: 'oscuro', acento: 'ciruela', temporada: true });
+    expect((await u1.get('/auth/yo')).body.usuario.apariencia).toEqual({ tema: 'oscuro', acento: 'ciruela', temporada: true, avatar: null });
     // Al volver a entrar (otro equipo) la trae el inicio de sesión.
     const otraVez = await anonimo().post('/api/auth/login').send({ username: 'usuario_uno', password: PASSWORD });
-    expect(otraVez.body.usuario.apariencia).toEqual({ tema: 'oscuro', acento: 'ciruela', temporada: true });
+    expect(otraVez.body.usuario.apariencia).toEqual({ tema: 'oscuro', acento: 'ciruela', temporada: true, avatar: null });
+
+    // El avatar de la galería se guarda y viaja con la sesión.
+    await u1.put('/auth/apariencia', { tema: 'oscuro', acento: 'ciruela', temporada: true, avatar: 'zorro' }).expect(200);
+    expect((await u1.get('/auth/yo')).body.usuario.apariencia.avatar).toBe('zorro');
 
     // Apagar las temporadas también se guarda.
-    await u1.put('/auth/apariencia', { tema: 'oscuro', acento: 'aqua', temporada: false }).expect(200);
-    expect((await u1.get('/auth/yo')).body.usuario.apariencia).toEqual({ tema: 'oscuro', acento: 'aqua', temporada: false });
+    await u1.put('/auth/apariencia', { tema: 'oscuro', acento: 'aqua', temporada: false, avatar: null }).expect(200);
+    expect((await u1.get('/auth/yo')).body.usuario.apariencia).toEqual({ tema: 'oscuro', acento: 'aqua', temporada: false, avatar: null });
 
     const u2 = await entrar('usuario_dos');
-    expect((await u2.get('/auth/yo')).body.usuario.apariencia).toEqual({ tema: 'sistema', acento: 'aqua', temporada: true });
+    expect((await u2.get('/auth/yo')).body.usuario.apariencia).toEqual({ tema: 'sistema', acento: 'aqua', temporada: true, avatar: null });
   });
 
   it('valores inválidos → 400; sin sesión → 401', async () => {
@@ -250,6 +254,7 @@ describe('apariencia', () => {
     expect((await u1.put('/auth/apariencia', { tema: 'neon', acento: 'aqua' })).status).toBe(400);
     expect((await u1.put('/auth/apariencia', { tema: 'claro', acento: '#ff0000' })).status).toBe(400);
     expect((await u1.put('/auth/apariencia', {})).status).toBe(400);
+    expect((await u1.put('/auth/apariencia', { tema: 'claro', acento: 'aqua', avatar: 'dragon' })).status).toBe(400);
     expect((await u1.put('/auth/apariencia', { tema: 'claro', acento: 'aqua', temporada: 'sí' })).status).toBe(400);
     expect((await anonimo().put('/api/auth/apariencia').send({ tema: 'claro', acento: 'aqua' })).status).toBe(401);
   });

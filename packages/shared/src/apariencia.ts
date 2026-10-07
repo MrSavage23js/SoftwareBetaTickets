@@ -12,29 +12,55 @@ export const ACENTOS = [
   'coral',
   'grafito',
   'rosa',
+  'vino',
   'muertos',
   'navidad',
   'patrias',
   'sanvalentin',
 ] as const;
 
+/** Avatares de la galería (dibujos en la web: componentes/Avatares.tsx). null = las iniciales. */
+export const AVATARES = [
+  'gato',
+  'perro',
+  'zorro',
+  'oso',
+  'panda',
+  'buho',
+  'conejo',
+  'pinguino',
+  'robot',
+  'astronauta',
+  'cohete',
+  'cactus',
+  'cafe',
+  'estrella',
+  'rayo',
+  'planta',
+] as const;
+
 export type Tema = (typeof TEMAS)[number];
 export type Acento = (typeof ACENTOS)[number];
+export type Avatar = (typeof AVATARES)[number];
 
 export interface Apariencia {
   tema: Tema;
   acento: Acento;
   /** Si usa la paleta de omisión (Aqua), en cada temporada cambia sola a la de temporada. */
   temporada: boolean;
+  /** Dibujo de la galería en lugar de las iniciales (por ahora solo lo ve el propio usuario). */
+  avatar: Avatar | null;
 }
 
-export const APARIENCIA_INICIAL: Apariencia = { tema: 'sistema', acento: 'aqua', temporada: true };
+export const APARIENCIA_INICIAL: Apariencia = { tema: 'sistema', acento: 'aqua', temporada: true, avatar: null };
 
 export const esquemaApariencia = z.object({
   tema: z.enum(TEMAS, 'Modo no válido.'),
   acento: z.enum(ACENTOS, 'Color no válido.'),
   // Las apariencias guardadas antes de existir las temporadas no lo traen: se toman como encendidas.
   temporada: z.boolean('Valor no válido.').default(true),
+  // Igual que temporada: lo guardado antes no lo trae y se toma como "iniciales".
+  avatar: z.enum(AVATARES, 'Avatar no válido.').nullable().default(null),
 });
 
 /** Lo guardado (o nada, o un valor viejo) convertido siempre en una apariencia válida. */

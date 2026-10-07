@@ -1,7 +1,9 @@
 // Ventana "Apariencia": modo claro/oscuro y paleta de color de cada usuario. Cada opción se aplica al
 // instante (la página entera es la vista previa) y se guarda para el usuario en el servidor.
 import { useState } from 'react';
-import { TEMPORADAS, temporadaEn, type Acento, type Apariencia, type Tema, type Temporada } from '@mesa/shared';
+import { AVATARES, TEMPORADAS, temporadaEn, type Acento, type Apariencia, type Avatar, type Tema, type Temporada } from '@mesa/shared';
+import { iniciales } from '../lib/formato';
+import { DibujoAvatar, NOMBRE_AVATAR } from './Avatares';
 import { mensajeDe } from '../api/cliente';
 import { useSesion } from '../sesion/Sesion';
 import { Icono } from './Icono';
@@ -22,6 +24,7 @@ const PALETAS: { valor: Acento; nombre: string }[] = [
   { valor: 'coral', nombre: 'Coral' },
   { valor: 'grafito', nombre: 'Grafito' },
   { valor: 'rosa', nombre: 'Rosa' },
+  { valor: 'vino', nombre: 'Vino' },
 ];
 
 const GRUPO_COLORES = PALETAS.map((p) => p.valor);
@@ -57,7 +60,7 @@ export function VentanaApariencia({ alCerrar }: { alCerrar: () => void }) {
   const actual = usuario.apariencia;
 
   const elegir = async (a: Apariencia) => {
-    if (guardando || (a.tema === actual.tema && a.acento === actual.acento && a.temporada === actual.temporada)) return;
+    if (guardando || (a.tema === actual.tema && a.acento === actual.acento && a.temporada === actual.temporada && a.avatar === actual.avatar)) return;
     setGuardando(true);
     try {
       await cambiarApariencia(a);
@@ -150,6 +153,32 @@ export function VentanaApariencia({ alCerrar }: { alCerrar: () => void }) {
                   <small>{m.detalle}</small>
                 </span>
                 {activo && <Icono n="check" t="s" />}
+              </button>
+            );
+          })}
+        </div>
+
+        <h3 id="ap-avatar">
+          Avatar <span className="ap-beta">Beta</span>
+        </h3>
+        <p className="apariencia-nota">Por ahora solo lo ves tú, en tu tarjeta de la barra lateral.</p>
+        <div className="ap-avatares" role="radiogroup" aria-labelledby="ap-avatar" onKeyDown={moverConFlechas}>
+          {([null, ...AVATARES] as (Avatar | null)[]).map((av) => {
+            const activo = actual.avatar === av;
+            const nombre = av ? NOMBRE_AVATAR[av] : 'Mis iniciales';
+            return (
+              <button
+                key={av ?? 'iniciales'}
+                type="button"
+                role="radio"
+                aria-checked={activo}
+                aria-label={nombre}
+                title={nombre}
+                tabIndex={activo ? 0 : -1}
+                className="ap-avatar"
+                onClick={() => void elegir({ ...actual, avatar: av })}
+              >
+                <span className="ap-avatar-cara">{av ? <DibujoAvatar avatar={av} /> : iniciales(usuario.nombre)}</span>
               </button>
             );
           })}

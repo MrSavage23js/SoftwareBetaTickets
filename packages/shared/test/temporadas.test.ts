@@ -25,17 +25,13 @@ describe('temporadas', () => {
 
   it('solo cambia a quien usa Aqua con las temporadas encendidas', () => {
     const noviembre = dia(11, 1);
-    expect(acentoVisible({ tema: 'sistema', acento: 'aqua', temporada: true }, noviembre)).toBe('muertos');
-    expect(acentoVisible({ tema: 'sistema', acento: 'aqua', temporada: false }, noviembre)).toBe('aqua');
-    expect(acentoVisible({ tema: 'sistema', acento: 'bosque', temporada: true }, noviembre)).toBe('bosque');
-    expect(acentoVisible({ tema: 'sistema', acento: 'aqua', temporada: true }, dia(7, 1))).toBe('aqua');
+    expect(acentoVisible({ tema: 'sistema', acento: 'aqua', temporada: true, avatar: null }, noviembre)).toBe('muertos');
+    expect(acentoVisible({ tema: 'sistema', acento: 'aqua', temporada: false, avatar: null }, noviembre)).toBe('aqua');
+    expect(acentoVisible({ tema: 'sistema', acento: 'bosque', temporada: true, avatar: null }, noviembre)).toBe('bosque');
+    expect(acentoVisible({ tema: 'sistema', acento: 'aqua', temporada: true, avatar: null }, dia(7, 1))).toBe('aqua');
   });
 
   it('una apariencia guardada antes de las temporadas las trae encendidas', () => {
-    expect(leerApariencia({ tema: 'oscuro', acento: 'coral' })).toEqual({
-      tema: 'oscuro',
-      acento: 'coral',
-      temporada: true,
-    });
+    expect(leerApariencia({ tema: 'oscuro', acento: 'coral' })).toEqual({ tema: 'oscuro', acento: 'coral', temporada: true, avatar: null });
   });
 });

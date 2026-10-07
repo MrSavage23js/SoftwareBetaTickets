@@ -15,6 +15,7 @@ const COLOR_BARRA: Record<Acento, string> = {
   coral: '#c4403a',
   grafito: '#5f6f79',
   rosa: '#c42f7c',
+  vino: '#7a1533',
   muertos: '#4a1f73',
   navidad: '#1d5c3c',
   patrias: '#8a1424',
