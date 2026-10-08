@@ -50,9 +50,11 @@ export interface Apariencia {
   temporada: boolean;
   /** Dibujo de la galería en lugar de las iniciales; lo ven también los demás (tickets, conversación, usuarios). */
   avatar: Avatar | null;
+  /** Animaciones decorativas (transición al cambiar de tema, adornos, gestos de avatar, brillo). */
+  animaciones: boolean;
 }
 
-export const APARIENCIA_INICIAL: Apariencia = { tema: 'sistema', acento: 'aqua', temporada: true, avatar: null };
+export const APARIENCIA_INICIAL: Apariencia = { tema: 'sistema', acento: 'aqua', temporada: true, avatar: null, animaciones: true };
 
 export const esquemaApariencia = z.object({
   tema: z.enum(TEMAS, 'Modo no válido.'),
@@ -61,6 +63,7 @@ export const esquemaApariencia = z.object({
   temporada: z.boolean('Valor no válido.').default(true),
   // Igual que temporada: lo guardado antes no lo trae y se toma como "iniciales".
   avatar: z.enum(AVATARES, 'Avatar no válido.').nullable().default(null),
+  animaciones: z.boolean('Valor no válido.').default(true),
 });
 
 /** Lo guardado (o nada, o un valor viejo) convertido siempre en una apariencia válida. */

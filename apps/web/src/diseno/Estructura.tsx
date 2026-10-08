@@ -5,6 +5,7 @@ import { Campana } from '../componentes/Campana';
 import { Icono, type NombreIcono } from '../componentes/Icono';
 import { Cargando, EstadoVacio } from '../componentes/ui';
 import { iniciales } from '../lib/formato';
+import { Ambiente } from '../componentes/Ambiente';
 import { VentanaApariencia } from '../componentes/Apariencia';
 import { DibujoAvatar } from '../componentes/Avatares';
 import { CambioObligatorio, VentanaCambiarPassword } from '../paginas/CambiarPassword';
@@ -75,7 +76,11 @@ export function Estructura() {
 
   return (
     <div className={`app${iconos ? ' contraido' : ''}`}>
+      <Ambiente />
       <aside className={`side${abierto ? ' abierto' : ''}`}>
+        {/* Capas decorativas detrás del contenido: brillo que recorre la barra y adorno de temporada. */}
+        <span className="side-brillo" aria-hidden="true" />
+        <span className="side-adorno" aria-hidden="true" />
         <button
           type="button"
           className="side-toggle"

@@ -4,7 +4,8 @@
 import type { ReactNode } from 'react';
 import type { Avatar } from '@mesa/shared';
 
-const ojo = (x: number, y: number, r = 1.1) => <circle cx={x} cy={y} r={r} fill="currentColor" stroke="none" />;
+// Los ojos llevan la clase "ojo" para el parpadeo al pasar el mouse (estilos/app.css).
+const ojo = (x: number, y: number, r = 1.1) => <circle className="ojo" cx={x} cy={y} r={r} fill="currentColor" stroke="none" />;
 
 const TRAZOS: Record<Avatar, ReactNode> = {
   gato: (
@@ -32,7 +33,7 @@ const TRAZOS: Record<Avatar, ReactNode> = {
       <path d="M10 17l6 2 6-2" />
       {ojo(12.5, 15.5)}
       {ojo(19.5, 15.5)}
-      {ojo(16, 22.5, 1.2)}
+      <circle cx="16" cy="22.5" r="1.2" fill="currentColor" stroke="none" />
     </>
   ),
   oso: (
@@ -41,7 +42,7 @@ const TRAZOS: Record<Avatar, ReactNode> = {
       <circle cx="23" cy="9.5" r="3" />
       <circle cx="16" cy="17" r="9" />
       <ellipse cx="16" cy="20.5" rx="4" ry="3" />
-      {ojo(16, 19.6, 1.1)}
+      <circle cx="16" cy="19.6" r="1.1" fill="currentColor" stroke="none" />
       {ojo(12.5, 15)}
       {ojo(19.5, 15)}
     </>
@@ -160,7 +161,7 @@ export const NOMBRE_AVATAR: Record<Avatar, string> = {
 /** El dibujo del avatar; se coloca dentro de un círculo con el degradado de la paleta (.face, .avatar.on, .ap-avatar). */
 export function DibujoAvatar({ avatar }: { avatar: Avatar }) {
   return (
-    <svg className="avatar-dibujo" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg className="avatar-dibujo" data-avatar={avatar} viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       {TRAZOS[avatar]}
     </svg>
   );

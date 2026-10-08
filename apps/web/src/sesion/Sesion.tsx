@@ -2,10 +2,11 @@
 // La inactividad se mide con la actividad REAL del usuario (ratón, teclado, toques); tener la pestaña
 // abierta no mantiene la sesión. Un minuto antes del cierre se muestra un aviso para continuar.
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { flushSync } from 'react-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import type { Apariencia, RespuestaSesion, UsuarioSesion } from '@mesa/shared';
+import { acentoVisible, type Apariencia, type RespuestaSesion, type UsuarioSesion } from '@mesa/shared';
 import { api, ErrorCliente, EVENTO_SESION_EXPIRADA, fijarCsrf } from '../api/cliente';
-import { aplicarApariencia } from '../lib/apariencia';
+import { aplicarApariencia, transicionTema } from '../lib/apariencia';
 
 type Estado = 'cargando' | 'anonimo' | 'autenticado' | 'sin-servidor';
 
@@ -18,8 +19,11 @@ interface Sesion {
   entrar: (username: string, password: string) => Promise<void>;
   /** Aplica una respuesta de sesión nueva (p. ej. después de cambiar la contraseña). */
   actualizar: (r: RespuestaSesion) => void;
-  /** Aplica al instante el modo/paleta y lo guarda para el usuario; si no se guarda, vuelve al anterior. */
-  cambiarApariencia: (a: Apariencia) => Promise<void>;
+  /**
+   * Aplica al instante el modo/paleta y lo guarda para el usuario; si no se guarda, vuelve al anterior.
+   * `origen`: punto del clic, desde donde se expande la transición del tema.
+   */
+  cambiarApariencia: (a: Apariencia, origen?: { x: number; y: number }) => Promise<void>;
   salir: () => Promise<void>;
   reintentar: () => void;
 }
@@ -120,11 +124,17 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
       puede: (p) => permisos.has(p),
       entrar: async (username, password) => aplicar(await api.post<RespuestaSesion>('/auth/login', { username, password })),
       actualizar: aplicar,
-      cambiarApariencia: async (a) => {
+      cambiarApariencia: async (a, origen) => {
         if (!usuario) return;
         const anterior = usuario.apariencia;
-        aplicarApariencia(a);
-        setUsuario({ ...usuario, apariencia: a });
+        const aplicarTodo = () =>
+          flushSync(() => {
+            aplicarApariencia(a);
+            setUsuario({ ...usuario, apariencia: a });
+          });
+        // Con transición solo si cambia lo que se ve (modo o paleta visible), no al elegir avatar u opciones.
+        if (a.tema !== anterior.tema || acentoVisible(a) !== acentoVisible(anterior)) transicionTema(aplicarTodo, a, origen);
+        else aplicarTodo();
         try {
           await api.put('/auth/apariencia', a);
         } catch (e) {

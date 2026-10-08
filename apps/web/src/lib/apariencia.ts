@@ -2,6 +2,7 @@
 // viven en estilos/app.css). La elección se guarda en el servidor por usuario y se copia en este navegador
 // para aplicarla antes de dibujar la página (sin destello de otro color al cargar).
 import { acentoVisible, APARIENCIA_INICIAL, leerApariencia, type Acento, type Apariencia } from '@mesa/shared';
+import { menosMovimiento } from './movimiento';
 
 const CLAVE = 'mesa.apariencia';
 
@@ -40,9 +41,36 @@ export function aplicarApariencia(a: Apariencia): void {
   if (acento === 'aqua') raiz.removeAttribute('data-acento');
   else raiz.setAttribute('data-acento', acento);
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', COLOR_BARRA[acento]);
+  // Animaciones decorativas apagadas por el usuario (el CSS también respeta "reducir movimiento").
+  if (a.animaciones) raiz.removeAttribute('data-animaciones');
+  else raiz.setAttribute('data-animaciones', 'no');
   try {
     localStorage.setItem(CLAVE, JSON.stringify(a));
   } catch {
     /* sin almacenamiento: se aplica igual, solo no se recuerda en este navegador */
   }
+}
+
+/**
+ * Cambia el tema con un círculo que se expande desde `origen` (donde se hizo clic) usando View Transitions.
+ * Sin soporte del navegador, con "reducir movimiento" o con las animaciones apagadas, cambia al instante.
+ */
+export function transicionTema(cambiar: () => void, a: Apariencia, origen?: { x: number; y: number }): void {
+  if (!('startViewTransition' in document) || !a.animaciones || menosMovimiento()) return cambiar();
+  const raiz = document.documentElement;
+  const x = origen?.x ?? innerWidth / 2;
+  const y = origen?.y ?? innerHeight / 2;
+  const radio = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+  // Marca la transición como de tema: así no se activa la animación de cambio de página (.main).
+  raiz.dataset.transicion = 'tema';
+  const t = document.startViewTransition(cambiar);
+  t.ready
+    .then(() =>
+      raiz.animate(
+        { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radio}px at ${x}px ${y}px)`] },
+        { duration: 600, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)', pseudoElement: '::view-transition-new(root)' },
+      ),
+    )
+    .catch(() => undefined);
+  void t.finished.finally(() => delete raiz.dataset.transicion);
 }

@@ -59,11 +59,17 @@ export function VentanaApariencia({ alCerrar }: { alCerrar: () => void }) {
   if (!usuario) return null;
   const actual = usuario.apariencia;
 
-  const elegir = async (a: Apariencia) => {
-    if (guardando || (a.tema === actual.tema && a.acento === actual.acento && a.temporada === actual.temporada && a.avatar === actual.avatar)) return;
+  /** `e`: el clic que eligió la opción; la transición del tema se expande desde ahí (con teclado, desde su centro). */
+  const elegir = async (a: Apariencia, e?: React.MouseEvent<HTMLElement>) => {
+    if (guardando || (a.tema === actual.tema && a.acento === actual.acento && a.temporada === actual.temporada && a.avatar === actual.avatar && a.animaciones === actual.animaciones)) return;
     setGuardando(true);
     try {
-      await cambiarApariencia(a);
+      let origen: { x: number; y: number } | undefined;
+      if (e) {
+        const r = e.currentTarget.getBoundingClientRect();
+        origen = e.clientX || e.clientY ? { x: e.clientX, y: e.clientY } : { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      }
+      await cambiarApariencia(a, origen);
     } catch (e) {
       avisar(`No se guardó la apariencia: ${mensajeDe(e)}`, 'mal');
     } finally {
@@ -87,7 +93,7 @@ export function VentanaApariencia({ alCerrar }: { alCerrar: () => void }) {
         aria-checked={activo}
         tabIndex={enfocable ? 0 : -1}
         className="ap-paleta"
-        onClick={() => void elegir({ ...actual, acento: valor })}
+        onClick={(e) => void elegir({ ...actual, acento: valor }, e)}
       >
         {/* Miniatura del sistema con esta paleta: barra lateral, página y botón principal. */}
         <span className="mini" data-acento={valor} aria-hidden="true">
@@ -139,7 +145,7 @@ export function VentanaApariencia({ alCerrar }: { alCerrar: () => void }) {
                 aria-checked={activo}
                 tabIndex={activo ? 0 : -1}
                 className="ap-modo"
-                onClick={() => void elegir({ ...actual, tema: m.valor })}
+                onClick={(e) => void elegir({ ...actual, tema: m.valor }, e)}
               >
                 <span className={`ap-modo-vista ${m.valor}`} aria-hidden="true">
                   <span className="lado" />
@@ -208,6 +214,19 @@ export function VentanaApariencia({ alCerrar }: { alCerrar: () => void }) {
         <div className="ap-paletas" role="radiogroup" aria-labelledby="ap-temporada" onKeyDown={moverConFlechas}>
           {TEMPORADAS.map((t) => paleta(t.acento, t.nombre, GRUPO_TEMPORADAS, fechas(t)))}
         </div>
+
+        <h3 id="ap-movimiento">Movimiento</h3>
+        <label className="ap-interruptor">
+          <input type="checkbox" checked={actual.animaciones} onChange={(e) => void elegir({ ...actual, animaciones: e.target.checked })} />
+          <span>
+            <b>Animaciones</b>
+            <small>
+              Partículas en el fondo (cempasúchil, nieve, confeti, burbujas…), transición al cambiar de color o modo, adornos de temporada con
+              movimiento, gestos de los avatares y un brillo suave en la barra lateral. Se apagan solas si tu equipo tiene activado "reducir
+              movimiento".
+            </small>
+          </span>
+        </label>
       </div>
     </Modal>
   );
