@@ -7,6 +7,7 @@ import {
   type UsuarioCrearEntrada,
   type UsuarioEditarEntrada,
   type UsuarioFila,
+  leerApariencia,
   esquemaUsuarioCrear,
   esquemaUsuarioEditar,
 } from '@mesa/shared';
@@ -80,6 +81,7 @@ export async function listarUsuarios(q?: string): Promise<UsuarioFila[]> {
       'u.activo',
       'u.ultimo_login_at',
       'u.creado_at',
+      'u.apariencia',
       'r.id as rol_id',
       'r.codigo as rol_codigo',
       'r.nombre as rol_nombre',
@@ -114,6 +116,7 @@ export async function listarUsuarios(q?: string): Promise<UsuarioFila[]> {
     rol: { id: f.rol_id, codigo: f.rol_codigo, nombre: f.rol_nombre },
     departamento: f.dp_id === null ? null : { id: f.dp_id, nombre: f.dp_nombre! },
     empresas: empresas.filter((e) => e.usuario_id === f.id).map((e) => ({ id: e.id, nombre: e.nombre })),
+    avatar: leerApariencia(f.apariencia).avatar,
     activo: !!f.activo,
     ultimoLoginAt: f.ultimo_login_at?.toISOString() ?? null,
     enLinea: enLinea.has(f.id),

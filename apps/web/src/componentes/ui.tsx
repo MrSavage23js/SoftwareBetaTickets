@@ -1,8 +1,9 @@
 // Piezas de interfaz reutilizables: estados de carga/vacío/error, ventanas, confirmaciones y avisos.
 import { createContext, useCallback, useContext, useEffect, useId, useRef, useState, type ReactNode } from 'react';
-import { INFO_ESTATUS, type Estatus } from '@mesa/shared';
+import { INFO_ESTATUS, type Avatar as IdAvatar, type Estatus } from '@mesa/shared';
 import { mensajeDe } from '../api/cliente';
 import { menosMovimiento } from '../lib/movimiento';
+import { DibujoAvatar } from './Avatares';
 import { Ilustracion, type Dibujo } from './Dibujos';
 import { Icono, type NombreIcono } from './Icono';
 
@@ -92,10 +93,11 @@ export function PillEstatus({ estatus }: { estatus: Estatus }) {
   return <span className={`pill ${i?.clase ?? 'pend'}`}>{i?.nombre ?? estatus}</span>;
 }
 
-export function Avatar({ activo, grande }: { activo?: boolean; grande?: boolean }) {
+/** Círculo de una persona: su avatar de la galería si eligió uno (con el degradado de la paleta), si no el ícono. */
+export function Avatar({ activo, grande, avatar }: { activo?: boolean; grande?: boolean; avatar?: IdAvatar | null }) {
   return (
-    <span className={['avatar', grande && 'big', activo && 'on'].filter(Boolean).join(' ')} aria-hidden="true">
-      <Icono n="user" />
+    <span className={['avatar', grande && 'big', (activo || avatar) && 'on'].filter(Boolean).join(' ')} aria-hidden="true">
+      {avatar ? <DibujoAvatar avatar={avatar} /> : <Icono n="user" />}
     </span>
   );
 }

@@ -48,7 +48,7 @@ export interface Apariencia {
   acento: Acento;
   /** Si usa la paleta de omisión (Aqua), en cada temporada cambia sola a la de temporada. */
   temporada: boolean;
-  /** Dibujo de la galería en lugar de las iniciales (por ahora solo lo ve el propio usuario). */
+  /** Dibujo de la galería en lugar de las iniciales; lo ven también los demás (tickets, conversación, usuarios). */
   avatar: Avatar | null;
 }
 

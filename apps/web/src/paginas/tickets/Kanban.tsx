@@ -52,13 +52,13 @@ function Columna({ estatus, filtros, abrir }: { estatus: Estatus; filtros: Filtr
           </div>
           <div className="f">
             <span>
-              <Avatar />
+              <Avatar avatar={t.solicitante.avatar} />
               {t.solicitante.nombre}
             </span>
             <span>
               {t.asignado ? (
                 <>
-                  <Avatar activo />
+                  <Avatar activo avatar={t.asignado.avatar} />
                   {t.asignado.nombre}
                 </>
               ) : (

@@ -92,13 +92,13 @@ function Contenido({ t }: { t: TicketDetalle }) {
 
       <div className="meta">
         <Celda titulo="Solicitante">
-          <Avatar grande />
+          <Avatar grande avatar={t.solicitante.avatar} />
           {t.solicitante.nombre}
         </Celda>
         <Celda titulo="Asignado a">
           {t.asignado ? (
             <>
-              <Avatar grande activo />
+              <Avatar grande activo avatar={t.asignado.avatar} />
               {t.asignado.nombre}
             </>
           ) : (
@@ -215,7 +215,7 @@ function Conversacion({ t }: { t: TicketDetalle }) {
       {t.mensajes.map((m) => (
         <div key={m.id} className={`msg ${m.esSoporte ? 'sup' : 'usr'} ${m.tipo === 'RESOLUCION' ? 'res' : ''}`}>
           <header>
-            <Avatar activo={m.esSoporte} />
+            <Avatar activo={m.esSoporte} avatar={m.autor.avatar} />
             <b>{m.autor.nombre}</b>
             <span className="ph">· {fmtFechaHora(m.creadoAt)}</span>
             {m.esSoporte && <span className="count">{m.tipo === 'RESOLUCION' ? 'Resolución' : 'Soporte'}</span>}

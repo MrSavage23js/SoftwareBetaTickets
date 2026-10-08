@@ -1,5 +1,5 @@
 // Formas de las respuestas de la API (contrato entre servidor y web). Las fechas viajan como ISO 8601 UTC.
-import type { Apariencia } from './apariencia';
+import type { Apariencia, Avatar } from './apariencia';
 import type { Estatus } from './estatus';
 import type { Accion } from './maquina-estados';
 import type { Urgencia } from './urgencia';
@@ -26,6 +26,8 @@ export interface Ref {
 
 export interface UsuarioRef extends Ref {
   username: string;
+  /** Avatar de la galería que eligió (null = sin avatar: se muestra el ícono genérico). */
+  avatar?: Avatar | null;
 }
 
 export interface UsuarioSesion {
@@ -61,6 +63,8 @@ export interface UsuarioFila {
   rol: { id: number; codigo: string; nombre: string };
   departamento: Ref | null;
   empresas: Ref[];
+  /** Avatar de la galería que eligió (null = sus iniciales). */
+  avatar: Avatar | null;
   activo: boolean;
   ultimoLoginAt: string | null;
   enLinea: boolean;

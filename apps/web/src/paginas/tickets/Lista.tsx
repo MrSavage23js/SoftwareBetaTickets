@@ -26,7 +26,7 @@ export function TarjetaTicket({ t, sel, mostrarTecnico, alAbrir }: { t: TicketRe
       </span>
       <span className="row">
         <span className="s">
-          <Avatar />
+          <Avatar avatar={t.solicitante.avatar} />
           {t.solicitante.nombre}
         </span>
         <span className="s">{fmtHora(t.creadoAt)}</span>

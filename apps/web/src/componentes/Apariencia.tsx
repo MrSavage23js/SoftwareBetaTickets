@@ -161,7 +161,7 @@ export function VentanaApariencia({ alCerrar }: { alCerrar: () => void }) {
         <h3 id="ap-avatar">
           Avatar <span className="ap-beta">Beta</span>
         </h3>
-        <p className="apariencia-nota">Por ahora solo lo ves tú, en tu tarjeta de la barra lateral.</p>
+        <p className="apariencia-nota">Lo verán también los demás: en tus tickets, en la conversación y en la lista de usuarios.</p>
         <div className="ap-avatares" role="radiogroup" aria-labelledby="ap-avatar" onKeyDown={moverConFlechas}>
           {([null, ...AVATARES] as (Avatar | null)[]).map((av) => {
             const activo = actual.avatar === av;

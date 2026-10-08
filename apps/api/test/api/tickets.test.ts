@@ -229,6 +229,26 @@ describe('visibilidad: nadie ve tickets ajenos', () => {
   });
 });
 
+describe('avatares', () => {
+  it('el avatar que cada quien eligió llega en la lista, el detalle, la conversación y la lista de usuarios', async () => {
+    await u1.put('/auth/apariencia', { tema: 'sistema', acento: 'aqua', temporada: true, avatar: 'gato' }).expect(200);
+    const admin = await entrar('admin_prueba');
+    const { id } = (await u1.form('/tickets', ticketValido(f))).body;
+    await admin.post(`/tickets/${id}/tomar`).expect(204);
+    await admin.form(`/tickets/${id}/respuestas`, { html: '<p>Hola</p>' }).expect(204);
+
+    const fila = (await admin.get('/tickets')).body.datos[0];
+    expect(fila.solicitante.avatar).toBe('gato');
+    expect(fila.asignado.avatar).toBeNull();
+    const d = (await admin.get(`/tickets/${id}`)).body;
+    expect(d.solicitante.avatar).toBe('gato');
+    expect(d.mensajes[0].autor.avatar).toBeNull();
+    const usuarios = (await admin.get('/usuarios')).body as { username: string; avatar: string | null }[];
+    expect(usuarios.find((x) => x.username === 'usuario_uno')!.avatar).toBe('gato');
+    expect(usuarios.find((x) => x.username === 'admin_prueba')!.avatar).toBeNull();
+  });
+});
+
 describe('lista, búsqueda y filtros', () => {
   beforeEach(async () => {
     await quitarDepartamento(f.u1);

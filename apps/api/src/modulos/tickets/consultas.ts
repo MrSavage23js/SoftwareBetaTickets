@@ -12,6 +12,7 @@ import {
   type TicketDetalle,
   type TicketResumen,
   type UsuarioRef,
+  leerApariencia,
 } from '@mesa/shared';
 import { db } from '../../db/conexion';
 import type { BD } from '../../db/tipos';
@@ -23,8 +24,11 @@ import { aInfo } from '../adjuntos/servicio';
 import { nombreVisible, type UsuarioActual } from '../auth/contexto';
 import { empresasDe, filtroVisibles, puedeVerTicket } from './acceso';
 
-const ref = (id: number | null, username: string | null, nombre: string | null): UsuarioRef | null =>
-  id === null || username === null ? null : { id, username, nombre: nombreVisible({ username, nombre }) };
+/** Persona tal como la ve la web: nombre visible y el avatar que eligió en Apariencia (si se pasa su apariencia). */
+const ref = (id: number | null, username: string | null, nombre: string | null, apariencia?: unknown): UsuarioRef | null =>
+  id === null || username === null
+    ? null
+    : { id, username, nombre: nombreVisible({ username, nombre }), ...(apariencia !== undefined ? { avatar: leerApariencia(apariencia).avatar } : {}) };
 
 type Base = SelectQueryBuilder<
   BD & { t: BD['tickets']; dp: BD['departamentos']; ti: BD['tipos_solicitud']; e: BD['empresas']; m: BD['modulos']; s: BD['usuarios']; a: BD['usuarios'] },
@@ -208,9 +212,11 @@ export async function listarTickets(
         's.id as s_id',
         's.username as s_username',
         's.nombre as s_nombre',
+        's.apariencia as s_apariencia',
         'a.id as a_id',
         'a.username as a_username',
         'a.nombre as a_nombre',
+        'a.apariencia as a_apariencia',
       ])
       .execute();
   filas.sort((x, y) => orden.get(x.id)! - orden.get(y.id)!);
@@ -233,8 +239,8 @@ export async function listarTickets(
       tipo: { id: r.tipo_id, nombre: r.tipo_nombre },
       empresa: { id: r.empresa_id, nombre: r.empresa_nombre },
       modulo: r.modulo_id === null ? null : { id: r.modulo_id, nombre: r.modulo_nombre! },
-      solicitante: ref(r.s_id, r.s_username, r.s_nombre)!,
-      asignado: ref(r.a_id, r.a_username, r.a_nombre),
+      solicitante: ref(r.s_id, r.s_username, r.s_nombre, r.s_apariencia)!,
+      asignado: ref(r.a_id, r.a_username, r.a_nombre, r.a_apariencia),
     })),
     total: f.estatus ? contadores[f.estatus as Estatus] : contadores.total,
     pagina: f.pagina,
@@ -266,8 +272,10 @@ export async function detalleTicket(u: UsuarioActual, id: number): Promise<Ticke
       'm.nombre as modulo_nombre',
       's.username as s_username',
       's.nombre as s_nombre',
+      's.apariencia as s_apariencia',
       'a.username as a_username',
       'a.nombre as a_nombre',
+      'a.apariencia as a_apariencia',
       'c.username as c_username',
       'c.nombre as c_nombre',
       'cp.username as cp_username',
@@ -288,7 +296,7 @@ export async function detalleTicket(u: UsuarioActual, id: number): Promise<Ticke
     db
       .selectFrom('ticket_mensajes as tm')
       .innerJoin('usuarios as au', 'au.id', 'tm.autor_id')
-      .select(['tm.id', 'tm.tipo', 'tm.cuerpo_html', 'tm.creado_at', 'au.id as autor_id', 'au.username', 'au.nombre'])
+      .select(['tm.id', 'tm.tipo', 'tm.cuerpo_html', 'tm.creado_at', 'au.id as autor_id', 'au.username', 'au.nombre', 'au.apariencia'])
       .where('tm.ticket_id', '=', id)
       .orderBy('tm.creado_at')
       .orderBy('tm.id')
@@ -311,9 +319,9 @@ export async function detalleTicket(u: UsuarioActual, id: number): Promise<Ticke
     concepto: r.concepto,
     foliosRef: r.folios_ref,
     descripcionHtml: r.descripcion_html,
-    solicitante: ref(r.solicitante_id, r.s_username, r.s_nombre)!,
+    solicitante: ref(r.solicitante_id, r.s_username, r.s_nombre, r.s_apariencia)!,
     creadoPor: ref(r.creado_por_id, r.c_username, r.c_nombre)!,
-    asignado: ref(r.asignado_a_id, r.a_username, r.a_nombre),
+    asignado: ref(r.asignado_a_id, r.a_username, r.a_nombre, r.a_apariencia),
     creadoAt: r.creado_at.toISOString(),
     tomadoAt: r.tomado_at?.toISOString() ?? null,
     primeraRespuestaAt: r.primera_respuesta_at?.toISOString() ?? null,
@@ -326,7 +334,7 @@ export async function detalleTicket(u: UsuarioActual, id: number): Promise<Ticke
     mensajes: mensajes.map((m) => ({
       id: m.id,
       tipo: m.tipo,
-      autor: ref(m.autor_id, m.username, m.nombre)!,
+      autor: ref(m.autor_id, m.username, m.nombre, m.apariencia)!,
       esSoporte: m.tipo !== 'COMENTARIO',
       html: m.cuerpo_html,
       creadoAt: m.creado_at.toISOString(),

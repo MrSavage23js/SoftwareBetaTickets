@@ -157,7 +157,7 @@ export const NOMBRE_AVATAR: Record<Avatar, string> = {
   planta: 'Planta',
 };
 
-/** El dibujo del avatar; se coloca dentro de un círculo con el degradado de la paleta (.face, .ap-avatar). */
+/** El dibujo del avatar; se coloca dentro de un círculo con el degradado de la paleta (.face, .avatar.on, .ap-avatar). */
 export function DibujoAvatar({ avatar }: { avatar: Avatar }) {
   return (
     <svg className="avatar-dibujo" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

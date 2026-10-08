@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Catalogos, UsuarioFila } from '@mesa/shared';
 import { api, camposDe, mensajeDe } from '../api/cliente';
+import { DibujoAvatar } from '../componentes/Avatares';
 import { Icono } from '../componentes/Icono';
 import { Cargando, Confirmar, EstadoError, EstadoVacio, Modal, useAvisos } from '../componentes/ui';
 import { fmtFechaCorta, iniciales, plural } from '../lib/formato';
@@ -89,8 +90,8 @@ export function Usuarios() {
                       <td className="ph">#{u.id}</td>
                       <td>
                         <div className="quien">
-                          <span className="avatar" aria-hidden="true">
-                            {iniciales(u.nombre || u.username)}
+                          <span className={u.avatar ? 'avatar on' : 'avatar'} aria-hidden="true">
+                            {u.avatar ? <DibujoAvatar avatar={u.avatar} /> : iniciales(u.nombre || u.username)}
                           </span>
                           <div>
                             <div style={{ fontWeight: 600 }}>{u.username}</div>
