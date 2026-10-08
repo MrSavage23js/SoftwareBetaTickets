@@ -17,8 +17,8 @@ Todo se configura en **Ajustes → Correos**. El texto de los correos se edita e
 
 Agregado el 2026-10-03 (commit `d970a27`).
 
-- Asunto: `Ticket cerrado: <folio> — <estatus>` (Completado o No procede).
-- Cuerpo: quién lo cerró, de quién era el ticket (nombre y correo), fecha de cierre, resolución, datos del ticket y el botón "Ver ticket en el sistema".
+- Asunto: `Ticket cerrado: <folio> — <solicitante> — <estatus>` (Completado o No procede).
+- Cuerpo: recuadro destacado con el solicitante (nombre en grande y correo), quién lo cerró, fecha de cierre, resolución, datos del ticket y el botón "Ver ticket en el sistema".
 - El correo de cierre al solicitante (`TICKET_CERRADO`) no cambió.
 
 ## Dónde está en el código

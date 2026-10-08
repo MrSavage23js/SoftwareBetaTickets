@@ -129,8 +129,9 @@ describe('flujo completo', () => {
       .executeTakeFirstOrThrow();
     const para = (typeof aviso.para === 'string' ? JSON.parse(aviso.para) : aviso.para) as { email: string }[];
     expect(para.map((d) => d.email)).toEqual(['admin_prueba@prueba.local', 'tecnico_prueba@prueba.local', 'uno@prueba.local', 'dos@prueba.local']);
-    // Asunto con folio y urgencia; el cuerpo dice quién lo reportó (con su correo) y a quién se envió copia.
-    expect(aviso.asunto).toMatch(new RegExp(`^Nuevo ticket: ${folio} — Urgencia \\S+`));
+    // Asunto con folio, solicitante y urgencia; el cuerpo destaca quién lo reportó (con su correo) y a quién se envió copia.
+    expect(aviso.asunto).toMatch(new RegExp(`^Nuevo ticket: ${folio} — .+ — Urgencia \\S+`));
+    expect(aviso.cuerpo_html).toContain('>Solicitante</div>');
     expect(aviso.cuerpo_html).toContain('usuario_uno@prueba.local');
     expect(aviso.cuerpo_html).toContain('En copia: externo@prueba.local');
   });

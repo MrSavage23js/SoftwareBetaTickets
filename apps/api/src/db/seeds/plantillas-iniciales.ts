@@ -44,6 +44,17 @@ const tablaDatos = `
         <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%">${fila('Folio', 'folio')}${fila('Departamento', 'departamento')}${fila('Urgencia', 'urgencia')}${fila('Tipo', 'tipo')}${fila('Empresa', 'empresa')}${fila('Módulo', 'modulo')}${fila('Concepto', 'concepto')}${fila('Folio(s)', 'folios')}${fila('Estatus', 'estatus')}
         </table>`;
 
+// Recuadro con el nombre del solicitante en grande, para los avisos a soporte. Si cambia, cambiar también
+// la migración 0005_solicitante_destacado (que lo aplica a las plantillas ya guardadas en la base).
+const bloqueSolicitante = `
+        <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;margin:0 0 16px;background:#EAF3F3;border-left:4px solid #028183">
+          <tr><td style="padding:12px 16px">
+            <div style="color:#4A5966;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase">Solicitante</div>
+            <div style="color:#12202B;font-size:22px;font-weight:700;margin-top:2px">{{solicitante}}</div>
+            <div style="color:#4A5966;font-size:14px">{{solicitante_email}}</div>
+          </td></tr>
+        </table>`;
+
 export const PLANTILLAS = [
   {
     codigo: 'TICKET_CREADO',
@@ -93,7 +104,7 @@ export const PLANTILLAS = [
     codigo: 'TICKET_NUEVO_SOPORTE',
     nombre: 'Aviso de ticket nuevo a soporte',
     descripcion: 'Se envía a todos los admins (y a los correos extra de Ajustes) cuando se crea un ticket (solo si el ajuste "correo.aviso_soporte_activo" está encendido).',
-    asunto: 'Nuevo ticket: {{folio}} — Urgencia {{urgencia}}',
+    asunto: 'Nuevo ticket: {{folio}} — {{solicitante}} — Urgencia {{urgencia}}',
     variables: [
       ...VARIABLES_TICKET,
       { nombre: 'copias', descripcion: 'Correos que recibieron copia (o "—")' },
@@ -101,7 +112,7 @@ export const PLANTILLAS = [
     ],
     cuerpoHtml: envoltura(
       'Nuevo ticket pendiente',
-      `        <p style="margin:0 0 16px;color:#17222D;font-size:15px">{{solicitante}} ({{solicitante_email}}) creó un ticket nuevo.</p>
+      `${bloqueSolicitante}
         <p style="margin:0 0 16px;color:#4A5966;font-size:14px">En copia: {{copias}}</p>${tablaDatos}
         <div style="margin:16px 0 0;padding:14px 16px;background:#FAFBFC;border:1px solid #DDE3E9;border-radius:8px;color:#17222D;font-size:14px">{{{descripcion_html}}}</div>${boton}`,
     ),
@@ -110,7 +121,7 @@ export const PLANTILLAS = [
     codigo: 'TICKET_CERRADO_SOPORTE',
     nombre: 'Aviso de ticket cerrado a soporte',
     descripcion: 'Se envía a todos los admins (y a los correos extra de Ajustes) cuando se cierra un ticket o se marca "No procede" (solo si el ajuste "correo.aviso_cierre_activo" está encendido).',
-    asunto: 'Ticket cerrado: {{folio}} — {{estatus}}',
+    asunto: 'Ticket cerrado: {{folio}} — {{solicitante}} — {{estatus}}',
     variables: [
       ...VARIABLES_TICKET,
       { nombre: 'tecnico', descripcion: 'Quién cerró el ticket' },
@@ -119,7 +130,8 @@ export const PLANTILLAS = [
     ],
     cuerpoHtml: envoltura(
       'Ticket cerrado',
-      `        <p style="margin:0 0 16px;color:#17222D;font-size:15px"><strong>{{tecnico}}</strong> cerró el ticket <strong>{{folio}}</strong> de {{solicitante}} ({{solicitante_email}}) el {{fecha_cierre}}.</p>
+      `${bloqueSolicitante}
+        <p style="margin:0 0 16px;color:#17222D;font-size:15px"><strong>{{tecnico}}</strong> cerró el ticket <strong>{{folio}}</strong> el {{fecha_cierre}}.</p>
         <div style="margin:0 0 16px;padding:14px 16px;background:#EAF3F3;border:1px solid #BFDCDC;border-radius:8px;color:#17222D;font-size:14px"><div style="font-weight:700;margin-bottom:6px">Resolución</div>{{{resolucion_html}}}</div>${tablaDatos}${boton}`,
     ),
   },
