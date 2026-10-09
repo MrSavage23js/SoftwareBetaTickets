@@ -12,6 +12,7 @@ import { ProveedorAvisos } from './componentes/ui';
 import { Estructura, NoEncontrado, Protegida, RedireccionInicial } from './diseno/Estructura';
 import { ErrorDePagina } from './diseno/ErrorDePagina';
 import { Ajustes } from './paginas/Ajustes';
+import { Anuncios } from './paginas/Anuncios';
 import { Panel } from './paginas/Panel';
 import { Catalogos } from './paginas/Catalogos';
 import { Correos } from './paginas/Correos';
@@ -65,6 +66,7 @@ createRoot(document.getElementById('raiz')!).render(
                   <Route path="usuarios" element={<Protegida permisos={[PERMISOS.USUARIOS_ADMINISTRAR]}><Usuarios /></Protegida>} />
                   <Route path="catalogos" element={<Protegida permisos={[PERMISOS.CATALOGOS_ADMINISTRAR]}><Catalogos /></Protegida>} />
                   <Route path="correos" element={<Protegida permisos={[PERMISOS.CORREOS_COLA, PERMISOS.CORREOS_PLANTILLAS]}><Correos /></Protegida>} />
+                  <Route path="anuncios" element={<Protegida permisos={[PERMISOS.AJUSTES_ADMINISTRAR]}><Anuncios /></Protegida>} />
                   <Route path="ajustes" element={<Protegida permisos={[PERMISOS.AJUSTES_ADMINISTRAR]}><Ajustes /></Protegida>} />
                   <Route path="*" element={<NoEncontrado />} />
                 </Route>

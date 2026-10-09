@@ -21,6 +21,9 @@ export const ANIO = anioEnZona(new Date(), 'America/Mexico_City');
 export const folio = (departamento: string, n: number) => formatearFolio(departamento, n);
 
 const TABLAS = [
+  'anuncio_cerrados',
+  'anuncio_departamentos',
+  'anuncios',
   'respuestas_guardadas',
   'notificaciones',
   'ticket_eventos',

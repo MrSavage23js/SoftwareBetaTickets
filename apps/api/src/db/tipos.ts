@@ -296,6 +296,28 @@ export interface RespuestasGuardadasTabla {
   actualizado_at: Generated<Date>;
 }
 
+export interface AnunciosTabla {
+  id: Generated<number>;
+  titulo: string;
+  mensaje: string;
+  tipo: 'INFO' | 'ADVERTENCIA' | 'URGENTE';
+  activo: Generated<number>;
+  creado_por_id: number | null;
+  creado_at: Generated<Date>;
+  retirado_at: FechaNula;
+}
+
+export interface AnuncioDepartamentosTabla {
+  anuncio_id: number;
+  departamento_id: number;
+}
+
+export interface AnuncioCerradosTabla {
+  anuncio_id: number;
+  usuario_id: number;
+  cerrado_at: Generated<Date>;
+}
+
 export interface BD {
   roles: RolesTabla;
   permisos: PermisosTabla;
@@ -321,6 +343,9 @@ export interface BD {
   notificaciones: NotificacionesTabla;
   auditoria: AuditoriaTabla;
   respuestas_guardadas: RespuestasGuardadasTabla;
+  anuncios: AnunciosTabla;
+  anuncio_departamentos: AnuncioDepartamentosTabla;
+  anuncio_cerrados: AnuncioCerradosTabla;
 }
 
 export type Usuario = Selectable<UsuariosTabla>;

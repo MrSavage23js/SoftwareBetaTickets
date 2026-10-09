@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { NavLink, Navigate, Outlet, useLocation } from 'react-router';
 import { PERMISOS } from '@mesa/shared';
+import { BannerAnuncios } from '../componentes/Anuncios';
 import { Campana } from '../componentes/Campana';
 import { Icono, type NombreIcono } from '../componentes/Icono';
 import { Cargando, EstadoVacio } from '../componentes/ui';
@@ -26,6 +27,7 @@ const MENU: ItemMenu[] = [
   { a: '/usuarios', texto: 'Usuarios', icono: 'users', permisos: [PERMISOS.USUARIOS_ADMINISTRAR], etiqueta: 'Admin' },
   { a: '/catalogos', texto: 'Catálogos', icono: 'catalog', permisos: [PERMISOS.CATALOGOS_ADMINISTRAR], etiqueta: 'Admin' },
   { a: '/correos', texto: 'Correos', icono: 'mail', permisos: [PERMISOS.CORREOS_COLA, PERMISOS.CORREOS_PLANTILLAS], etiqueta: 'Admin' },
+  { a: '/anuncios', texto: 'Anuncios', icono: 'megafono', permisos: [PERMISOS.AJUSTES_ADMINISTRAR], etiqueta: 'Admin' },
   { a: '/ajustes', texto: 'Ajustes', icono: 'settings', permisos: [PERMISOS.AJUSTES_ADMINISTRAR], etiqueta: 'Admin' },
 ];
 
@@ -152,6 +154,7 @@ export function Estructura() {
         </div>
       </aside>
       <div className="main">
+        <BannerAnuncios />
         <Outlet />
       </div>
       {cambiarPassword && <VentanaCambiarPassword alCerrar={() => setCambiarPassword(false)} />}

@@ -3,6 +3,7 @@ import type { Apariencia, Avatar } from './apariencia';
 import type { Estatus } from './estatus';
 import type { Accion } from './maquina-estados';
 import type { Urgencia } from './urgencia';
+import type { TipoAnuncio } from './esquemas';
 
 export interface ErrorApi {
   error: {
@@ -298,4 +299,25 @@ export interface RespuestaGuardada {
   id: number;
   titulo: string;
   cuerpoHtml: string;
+}
+
+/** Anuncio que un admin publica como banner arriba de la pantalla. */
+export interface Anuncio {
+  id: number;
+  titulo: string;
+  mensaje: string;
+  tipo: TipoAnuncio;
+  /** Los urgentes no se pueden cerrar: se quitan solo cuando un admin los retira. */
+  cerrable: boolean;
+  creadoAt: string;
+}
+
+/** Anuncio visto desde la administración: a quién va, quién lo mandó y cuántos lo han cerrado. */
+export interface AnuncioAdmin extends Anuncio {
+  activo: boolean;
+  /** Vacío = para todos. */
+  departamentos: { id: number; nombre: string }[];
+  autor: string | null;
+  cerrados: number;
+  retiradoAt: string | null;
 }

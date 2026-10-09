@@ -363,6 +363,19 @@ table.tabla { width: 100%; border-collapse: collapse; font-size: 14px; }
 .panel-filtros { margin: 0 32px 16px; padding: 16px 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px 16px; align-items: end; }
 .paginacion { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--line-2); font-size: 13px; color: var(--muted); flex-wrap: wrap; }
 .paginacion div { display: flex; gap: 8px; }
+/* Anuncios de los admins: franja arriba del contenido. Azul informativo, ámbar advertencia, rojo urgente. */
+.anuncios { display: flex; flex-direction: column; gap: 8px; padding: 16px 32px 0; }
+.anuncio { display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; border-radius: 12px; border: 1px solid transparent; font-size: 14px; line-height: 1.45; }
+.anuncio > svg { flex: none; margin-top: 1px; }
+.anuncio-txt { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 2px; overflow-wrap: anywhere; white-space: pre-line; }
+.anuncio-txt b { font-weight: 700; }
+.anuncio button { flex: none; margin: -4px -6px -4px 0; width: 32px; height: 32px; display: grid; place-items: center; border: 0; border-radius: 8px; background: transparent; color: inherit; cursor: pointer; }
+.anuncio button:hover { background: color-mix(in srgb, currentColor 12%, transparent); }
+.anuncio.info { background: var(--p-proc-bg); color: var(--p-proc-fg); border-color: color-mix(in srgb, var(--p-proc-fg) 22%, transparent); }
+.anuncio.advertencia { background: var(--p-pend-bg); color: var(--p-pend-fg); border-color: color-mix(in srgb, var(--p-pend-fg) 25%, transparent); }
+.anuncio.urgente { background: var(--danger-soft); color: var(--danger); border-color: var(--danger-line); }
+@media (max-width: 900px) { .anuncios { padding: 12px 20px 0; } }
+
 .avisos { position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 80; display: flex; flex-direction: column; gap: 10px; max-width: min(420px, calc(100vw - 32px)); }
 .aviso { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border-radius: 12px; background: var(--ink-strong); color: var(--surface); box-shadow: var(--sombra-flotante); font-size: 14px; }
 .aviso.mal { background: var(--danger); color: #fff; }

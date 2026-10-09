@@ -48,6 +48,7 @@ const TRAZOS = {
   // Marca del sistema: una vela sencilla (llama, mecha, cuerpo y base).
   vela: <><path d="M12 2.8c1.5 1.7 2.3 2.9 2.3 4a2.3 2.3 0 01-4.6 0c0-1.1.8-2.3 2.3-4z" /><path d="M12 9.1v1.4" /><rect x="8.5" y="10.5" width="7" height="9.5" rx="1.5" /><path d="M6 20h12" /></>,
   descargar: <path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 20h14" />,
+  megafono: <><path d="M4 10v4h3l7 4V6L7 10z" /><path d="M17.5 9a4 4 0 010 6M7 14l1.5 5h2.5l-1-4.5" /></>,
 } as const;
 
 export type NombreIcono = keyof typeof TRAZOS;

@@ -16,6 +16,7 @@ import { limiteGeneral } from './middleware/limites';
 import { cargarSesion, requiereSesion } from './middleware/sesion';
 import { rutasAdjuntos } from './modulos/adjuntos/rutas';
 import { rutasAjustes } from './modulos/ajustes/rutas';
+import { rutasAnuncios } from './modulos/anuncios/rutas';
 import { rutasAuth } from './modulos/auth/rutas';
 import { rutasCatalogos } from './modulos/catalogos/rutas';
 import { rutasCorreos } from './modulos/correos/rutas';
@@ -134,6 +135,7 @@ export function crearApp() {
   api.use('/ajustes', rutasAjustes);
   api.use('/panel', rutasPanel);
   api.use('/notificaciones', rutasNotificaciones);
+  api.use('/anuncios', rutasAnuncios);
   api.use(rutaNoEncontrada);
 
   app.use('/api', api);

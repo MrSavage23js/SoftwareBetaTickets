@@ -219,6 +219,24 @@ export const esquemaRespuestaGuardada = z.object({
 });
 export type RespuestaGuardadaEntrada = z.input<typeof esquemaRespuestaGuardada>;
 
+// ---------------------------------------------------------------- Anuncios (banner)
+export const TIPOS_ANUNCIO = ['INFO', 'ADVERTENCIA', 'URGENTE'] as const;
+export type TipoAnuncio = (typeof TIPOS_ANUNCIO)[number];
+export const NOMBRE_TIPO_ANUNCIO: Record<TipoAnuncio, string> = {
+  INFO: 'Informativo',
+  ADVERTENCIA: 'Advertencia',
+  URGENTE: 'Urgente',
+};
+
+export const esquemaAnuncio = z.object({
+  titulo: texto('El título', 100),
+  mensaje: texto('El mensaje', 500),
+  tipo: z.enum(TIPOS_ANUNCIO, { error: 'Elige el tipo de anuncio.' }),
+  /** Vacío = para todos los usuarios. */
+  departamentoIds: z.array(idEntero).max(50).optional().default([]),
+});
+export type AnuncioEntrada = z.input<typeof esquemaAnuncio>;
+
 // ---------------------------------------------------------------- Plantillas y ajustes
 export const esquemaPlantilla = z.object({
   asunto: texto('El asunto', 255),
