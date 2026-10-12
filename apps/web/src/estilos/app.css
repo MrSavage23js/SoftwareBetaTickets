@@ -363,18 +363,68 @@ table.tabla { width: 100%; border-collapse: collapse; font-size: 14px; }
 .panel-filtros { margin: 0 32px 16px; padding: 16px 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px 16px; align-items: end; }
 .paginacion { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--line-2); font-size: 13px; color: var(--muted); flex-wrap: wrap; }
 .paginacion div { display: flex; gap: 8px; }
-/* Anuncios de los admins: franja arriba del contenido. Azul informativo, ámbar advertencia, rojo urgente. */
+/* Anuncios de los admins: franja de color sólido arriba del contenido, para que no pase desapercibida.
+   Turquesa de la marca = informativo, ámbar = advertencia, rojo = urgente (con pulso en el ícono). */
 .anuncios { display: flex; flex-direction: column; gap: 8px; padding: 16px 32px 0; }
-.anuncio { display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; border-radius: 12px; border: 1px solid transparent; font-size: 14px; line-height: 1.45; }
-.anuncio > svg { flex: none; margin-top: 1px; }
-.anuncio-txt { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 2px; overflow-wrap: anywhere; white-space: pre-line; }
-.anuncio-txt b { font-weight: 700; }
-.anuncio button { flex: none; margin: -4px -6px -4px 0; width: 32px; height: 32px; display: grid; place-items: center; border: 0; border-radius: 8px; background: transparent; color: inherit; cursor: pointer; }
-.anuncio button:hover { background: color-mix(in srgb, currentColor 12%, transparent); }
-.anuncio.info { background: var(--p-proc-bg); color: var(--p-proc-fg); border-color: color-mix(in srgb, var(--p-proc-fg) 22%, transparent); }
-.anuncio.advertencia { background: var(--p-pend-bg); color: var(--p-pend-fg); border-color: color-mix(in srgb, var(--p-pend-fg) 25%, transparent); }
-.anuncio.urgente { background: var(--danger-soft); color: var(--danger); border-color: var(--danger-line); }
+.anuncio {
+  --an-fondo: var(--grad-acento); --an-tinta: var(--accent-ink); --an-sombra: rgba(2, 129, 131, 0.35);
+  position: relative; display: flex; align-items: center; gap: 16px; padding: 14px 18px 14px 16px; border-radius: 14px;
+  background: var(--an-fondo); color: var(--an-tinta); box-shadow: 0 10px 28px -10px var(--an-sombra), 0 2px 6px -2px var(--an-sombra);
+  font-size: 14.5px; line-height: 1.45; overflow: hidden;
+}
+/* Brillo diagonal sutil para dar volumen. */
+.anuncio::before { content: ''; position: absolute; inset: 0; background: linear-gradient(110deg, rgba(255, 255, 255, 0.16), transparent 45%); pointer-events: none; }
+.anuncio.advertencia { --an-fondo: linear-gradient(135deg, #ffc23d 0%, #f59e0b 100%); --an-tinta: #2e1b00; --an-sombra: rgba(217, 119, 6, 0.45); }
+.anuncio.urgente { --an-fondo: linear-gradient(135deg, #e53935 0%, #b3261e 100%); --an-tinta: #ffffff; --an-sombra: rgba(179, 38, 30, 0.5); }
+.anuncio-ico { position: relative; flex: none; width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; background: rgba(255, 255, 255, 0.28); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35); }
+.anuncio-txt { position: relative; min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 1px; overflow-wrap: anywhere; white-space: pre-line; }
+.anuncio-txt small { font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.8; }
+.anuncio-txt b { font-size: 16px; font-weight: 800; line-height: 1.3; }
+.anuncio-acc { position: relative; flex: none; display: flex; align-items: center; gap: 6px; }
+.anuncio-nav { display: flex; align-items: center; gap: 2px; padding: 2px; border-radius: 10px; background: rgba(255, 255, 255, 0.22); font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.anuncio-nav span { padding: 0 4px; }
+.anuncio-nav button.sig svg { transform: scaleX(-1); }
+.anuncio button { flex: none; width: 32px; height: 32px; display: grid; place-items: center; border: 0; border-radius: 8px; background: transparent; color: inherit; cursor: pointer; }
+.anuncio button:hover { background: rgba(255, 255, 255, 0.3); }
+.anuncio button:focus-visible { outline: 2px solid currentColor; outline-offset: 1px; }
 @media (max-width: 900px) { .anuncios { padding: 12px 20px 0; } }
+/* En celular, ‹ 1 de 3 › baja a su propio renglón y la ✕ se queda arriba a la derecha. */
+@media (max-width: 600px) {
+  .anuncio { flex-wrap: wrap; align-items: flex-start; gap: 12px; padding: 14px; }
+  .anuncio-ico { width: 36px; height: 36px; }
+  .anuncio-txt { flex-basis: calc(100% - 96px); }
+  .anuncio-acc { display: contents; }
+  .anuncio-acc > button { position: relative; margin: -6px -6px 0 0; }
+  .anuncio-nav { position: relative; order: 3; margin-left: auto; }
+}
+/* Destello que recorre la franja (oculto hasta que se anima). */
+.anuncio::after { content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 35%; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.32), transparent); transform: translateX(-120%) skewX(-12deg); opacity: 0; pointer-events: none; }
+/* Animaciones de los anuncios: solo si el equipo no pide "reducir movimiento" y no se apagaron en Apariencia. */
+@media (prefers-reduced-motion: no-preference) {
+  /* Entrada: cae desde arriba con un pequeño rebote; al cambiar con ‹ ›, se desliza de lado. */
+  :root:not([data-animaciones='no']) .anuncio { animation: anuncio-entra 420ms cubic-bezier(0.3, 1.4, 0.5, 1) both; }
+  :root:not([data-animaciones='no']) .anuncio.desde-sig { animation: anuncio-desde-der 300ms var(--curva) both; }
+  :root:not([data-animaciones='no']) .anuncio.desde-ant { animation: anuncio-desde-izq 300ms var(--curva) both; }
+  :root:not([data-animaciones='no']) .anuncio.saliendo { animation: anuncio-sale 220ms ease-in both; }
+  @keyframes anuncio-entra { from { opacity: 0; transform: translateY(-14px) scale(0.97); } }
+  @keyframes anuncio-desde-der { from { opacity: 0; transform: translateX(28px); } }
+  @keyframes anuncio-desde-izq { from { opacity: 0; transform: translateX(-28px); } }
+  @keyframes anuncio-sale { to { opacity: 0; transform: translateX(40px) scale(0.98); } }
+
+  /* Destello cada 7 s (empieza al segundo de aparecer). */
+  :root:not([data-animaciones='no']) .anuncio::after { animation: anuncio-destello 7s ease-in-out 1s infinite; }
+  @keyframes anuncio-destello { 0% { opacity: 1; transform: translateX(-120%) skewX(-12deg); } 18%, 100% { opacity: 1; transform: translateX(320%) skewX(-12deg); } }
+
+  /* Íconos: el urgente late con un anillo, la advertencia se balancea, el megáfono "grita" al aparecer. */
+  :root:not([data-animaciones='no']) .anuncio.urgente .anuncio-ico::after { content: ''; position: absolute; inset: 0; border-radius: 50%; box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); animation: anuncio-pulso 1.6s ease-out infinite; }
+  :root:not([data-animaciones='no']) .anuncio.urgente .anuncio-ico svg { animation: anuncio-latido 1.6s ease-in-out infinite; }
+  :root:not([data-animaciones='no']) .anuncio.advertencia .anuncio-ico svg { transform-origin: 50% 85%; animation: anuncio-balanceo 4s ease-in-out 0.5s infinite; }
+  :root:not([data-animaciones='no']) .anuncio.info .anuncio-ico svg { animation: anuncio-grito 0.9s ease-in-out 0.35s 2; }
+  @keyframes anuncio-pulso { to { box-shadow: 0 0 0 13px rgba(255, 255, 255, 0); } }
+  @keyframes anuncio-latido { 0%, 40%, 100% { transform: scale(1); } 15% { transform: scale(1.18); } }
+  @keyframes anuncio-balanceo { 0%, 20%, 100% { transform: rotate(0); } 5% { transform: rotate(-12deg); } 10% { transform: rotate(10deg); } 15% { transform: rotate(-6deg); } }
+  @keyframes anuncio-grito { 0%, 100% { transform: scale(1) rotate(0); } 30% { transform: scale(1.2) rotate(-10deg); } 60% { transform: scale(0.95) rotate(4deg); } }
+}
 
 .avisos { position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 80; display: flex; flex-direction: column; gap: 10px; max-width: min(420px, calc(100vw - 32px)); }
 .aviso { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border-radius: 12px; background: var(--ink-strong); color: var(--surface); box-shadow: var(--sombra-flotante); font-size: 14px; }

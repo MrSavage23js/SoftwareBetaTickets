@@ -11,8 +11,8 @@ import { useCatalogos } from './tickets/datos';
 
 const CLAVE = ['anuncios', 'admin'] as const;
 const AYUDA_TIPO: Record<TipoAnuncio, string> = {
-  INFO: 'Azul. Cada quien lo puede cerrar.',
-  ADVERTENCIA: 'Amarillo. Cada quien lo puede cerrar.',
+  INFO: 'Color del sistema. Cada quien lo puede cerrar.',
+  ADVERTENCIA: 'Ámbar. Cada quien lo puede cerrar.',
   URGENTE: 'Rojo. No se puede cerrar: se quita cuando lo retiras.',
 };
 const PILL: Record<TipoAnuncio, string> = { INFO: 'proc', ADVERTENCIA: 'pend', URGENTE: 'mal' };
@@ -79,7 +79,7 @@ export function Anuncios() {
                         {fmtFechaHora(a.creadoAt)}
                         {a.autor && <div>por {a.autor}</div>}
                       </td>
-                      <td className="ph">{a.cerrable ? `${a.cerrados.toLocaleString('es-MX')} ${a.cerrados === 1 ? 'persona' : 'personas'}` : '—'}</td>
+                      <td className="ph" style={{ whiteSpace: 'nowrap' }}>{a.cerrable ? `${a.cerrados.toLocaleString('es-MX')} ${a.cerrados === 1 ? 'persona' : 'personas'}` : '—'}</td>
                       <td>
                         {a.activo ? (
                           <span className="pill on">Visible</span>
