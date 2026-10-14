@@ -7,6 +7,7 @@ import { join } from 'node:path';
 import nodemailer, { type Transporter } from 'nodemailer';
 import { env, RUTAS } from '../../config/env';
 import type { Destinatario } from '../../db/tipos';
+import type { CabecerasHilo } from './hilos';
 
 export interface CorreoListo {
   id: number;
@@ -15,6 +16,8 @@ export interface CorreoListo {
   asunto: string;
   html: string;
   texto: string;
+  /** Cabeceras para que el correo aparezca como respuesta en la conversación del ticket. */
+  hilo?: CabecerasHilo | null;
 }
 
 export interface Transporte {
@@ -24,6 +27,11 @@ export interface Transporte {
 
 const remitente = () => ({ name: env.MAIL_FROM_NAME, address: env.MAIL_FROM });
 const direccion = (d: Destinatario) => (d.nombre ? { name: d.nombre, address: d.email } : d.email);
+
+const hiloNodemailer = (c: CorreoListo) =>
+  c.hilo
+    ? { messageId: c.hilo.messageId, inReplyTo: c.hilo.inReplyTo, references: c.hilo.references, headers: c.hilo.headers }
+    : {};
 
 function transporteConsola(): Transporte {
   const t = nodemailer.createTransport({ streamTransport: true, buffer: true, newline: 'windows' });
@@ -37,6 +45,7 @@ function transporteConsola(): Transporte {
         subject: c.asunto,
         html: c.html,
         text: c.texto,
+        ...hiloNodemailer(c),
       });
       const archivo = join(RUTAS.correosConsola, `${new Date().toISOString().replace(/[:.]/g, '-')}_${c.id}.eml`);
       await writeFile(archivo, info.message as Buffer);
@@ -68,6 +77,7 @@ function transporteSmtp(): Transporte {
         subject: c.asunto,
         html: c.html,
         text: c.texto,
+        ...hiloNodemailer(c),
       });
       return { idMensaje: info.messageId ?? null };
     },
@@ -113,6 +123,7 @@ function transporteGraph(): Transporte {
             body: { contentType: 'HTML', content: c.html },
             toRecipients: destinatarios(c.para),
             ccRecipients: destinatarios(c.cc),
+            // Graph solo deja poner cabeceras "x-…": aquí el hilo se arma solo con el asunto "RE: …".
           },
           saveToSentItems: true,
         }),

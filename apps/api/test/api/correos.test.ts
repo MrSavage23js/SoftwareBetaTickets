@@ -90,6 +90,31 @@ describe('cola de salida', () => {
     expect((await correo()).estado).toBe('ENVIADO');
   });
 
+  it('el aviso de cierre llega como respuesta al de "ticket creado" (mismo hilo en Outlook)', async () => {
+    const r = await u1.form('/tickets', ticketValido(f)).expect(201);
+    await admin.post(`/tickets/${r.body.id}/tomar`).expect(204);
+    const v = (await admin.get(`/tickets/${r.body.id}`)).body.version;
+    await admin.form(`/tickets/${r.body.id}/cerrar`, { resolucionHtml: '<p>ok</p>', version: v }).expect(204);
+    const filas = await db.selectFrom('correos_salida').select(['plantilla_codigo', 'asunto']).orderBy('id').execute();
+    const asunto = (p: string) => filas.find((x) => x.plantilla_codigo === p)!.asunto;
+    expect(asunto('TICKET_CERRADO')).toBe(`RE: ${asunto('TICKET_CREADO')}`);
+
+    await procesarCola();
+    const emls = readdirSync(RUTAS.correosConsola)
+      .filter((n) => n.endsWith('.eml'))
+      .sort()
+      .map((n) => readFileSync(join(RUTAS.correosConsola, n), 'utf8'));
+    const raiz = `<ticket-${r.body.id}.solicitante@localhost>`;
+    const creado = emls.find((e) => e.includes(`Message-ID: ${raiz}`))!;
+    const cerrado = emls.find((e) => e.includes('In-Reply-To:') && e.includes('.solicitante.'))!;
+    expect(creado).toBeDefined();
+    expect(cerrado).toMatch(new RegExp(`^In-Reply-To: ${raiz}`, 'm'));
+    expect(cerrado).toMatch(new RegExp(`^References: ${raiz}`, 'm'));
+    const indice = (e: string) => Buffer.from(/^Thread-Index: (\S+)/m.exec(e)![1]!, 'base64');
+    expect(indice(creado)).toHaveLength(22);
+    expect(indice(cerrado).subarray(0, 22)).toEqual(indice(creado));
+  });
+
   it('a un usuario dado de baja no se le envían correos', async () => {
     const r = await u1.form('/tickets', ticketValido(f));
     await admin.del(`/usuarios/${f.u1}`).expect(204);

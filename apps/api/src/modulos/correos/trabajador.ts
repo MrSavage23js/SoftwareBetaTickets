@@ -4,6 +4,7 @@ import { sql } from 'kysely';
 import { db } from '../../db/conexion';
 import { logger } from '../../lib/logger';
 import { registrarEvento, TIPOS_EVENTO } from '../eventos/servicio';
+import { cabecerasHilo } from './hilos';
 import { transporte } from './transportes';
 
 /** Minutos de espera antes de cada reintento: 1 min, 5 min, 15 min, 1 h, 6 h, 24 h. */
@@ -47,7 +48,8 @@ async function enviarUno(id: number): Promise<void> {
   if (!c) return;
   const t = transporte();
   try {
-    const r = await t.enviar({ id: c.id, para: c.para, cc: c.cc ?? [], asunto: c.asunto, html: c.cuerpo_html, texto: c.cuerpo_texto });
+    const hilo = cabecerasHilo({ correoId: c.id, ticketId: c.ticket_id, plantilla: c.plantilla_codigo, asunto: c.asunto });
+    const r = await t.enviar({ id: c.id, para: c.para, cc: c.cc ?? [], asunto: c.asunto, html: c.cuerpo_html, texto: c.cuerpo_texto, hilo });
     await db
       .updateTable('correos_salida')
       .set({

@@ -4,6 +4,7 @@ import { env } from '../../config/env';
 import type { Ejecutor } from '../../db/conexion';
 import type { Destinatario } from '../../db/tipos';
 import { htmlATexto } from '../../lib/sanitizar';
+import { asuntoRespuesta, plantillaRaiz } from './hilos';
 import { renderizarHtml, renderizarTexto, type Variables } from './plantillas';
 
 export const CODIGOS_PLANTILLA = {
@@ -48,6 +49,19 @@ export async function encolarCorreo(
   let asunto = renderizarTexto(p.asunto, variables);
   const folio = typeof variables.folio === 'string' ? variables.folio : null;
   if (folio && !asunto.includes(folio)) asunto = `[${folio}] ${asunto}`.slice(0, 250);
+  // Avisos posteriores del ticket (cierre, respuestas): mismo asunto que el primero con "RE:", para
+  // que Outlook los muestre como respuesta en esa conversación (cabeceras del hilo: hilos.ts).
+  const raiz = plantillaRaiz(c.plantilla);
+  if (c.ticketId && raiz && raiz !== c.plantilla) {
+    const primero = await ex
+      .selectFrom('correos_salida')
+      .select('asunto')
+      .where('ticket_id', '=', c.ticketId)
+      .where('plantilla_codigo', '=', raiz)
+      .orderBy('id')
+      .executeTakeFirst();
+    if (primero) asunto = asuntoRespuesta(primero.asunto);
+  }
   await ex
     .insertInto('correos_salida')
     .values({
