@@ -57,9 +57,11 @@ if ((await sha256(archivo)) !== manifiesto.bd.sha256) {
 }
 console.log('✔ Integridad verificada');
 
-// Esquema al día en la base destino, con las migraciones del propio sistema (compiladas o desde el código).
+// Esquema al día en la base destino, con las migraciones del propio sistema. Primero desde el código:
+// un dist/ viejo (compilado antes de la última migración) dejaría la base sin tablas que el respaldo sí trae.
 const API = join(RAIZ, 'apps', 'api');
-const cli = existsSync(join(API, 'dist', 'cli.js')) ? ['dist/cli.js'] : ['--import', 'tsx', 'src/db/cli.ts'];
+const hayCodigo = existsSync(join(API, 'src', 'db', 'cli.ts')) && existsSync(join(RAIZ, 'node_modules', 'tsx'));
+const cli = hayCodigo ? ['--import', 'tsx', 'src/db/cli.ts'] : ['dist/cli.js'];
 const mig = spawnSync(process.execPath, [...cli, 'migrar'], {
   cwd: API,
   // Solo migra: lo demás de la configuración no importa, pero debe ser válido aunque no haya .env.
