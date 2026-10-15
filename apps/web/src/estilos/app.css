@@ -1034,3 +1034,15 @@ div.tarjeta { cursor: default; }
   .sello { animation: sellar 460ms cubic-bezier(0.2, 0.9, 0.3, 1.25) 380ms backwards; }
   @keyframes sellar { from { opacity: 0; transform: rotate(-16deg) scale(1.9); } 55% { opacity: 1; transform: rotate(-6deg) scale(0.93); } }
 }
+
+/* ---------- avatar exclusivo (ninja del usuario #1) ---------- */
+.ap-avatar.exclusivo { position: relative; }
+.ap-avatar.exclusivo::after {
+  content: '★'; position: absolute; top: 0; right: 2px; width: 18px; height: 18px; border-radius: 999px;
+  background: var(--ink-strong); color: #ffd54a; font-size: 11px; line-height: 18px; text-align: center; box-shadow: 0 0 0 2px var(--surface);
+}
+@media (prefers-reduced-motion: no-preference) {
+  /* Gesto del ninja: desaparece en una nube de humo y reaparece. */
+  :root:not([data-animaciones='no']) :is(.face, .avatar, .ap-avatar):hover .avatar-dibujo[data-avatar='ninja'] { animation: gesto-ninja 0.75s ease-in-out; }
+  @keyframes gesto-ninja { 30% { opacity: 0; transform: translateY(-3px) scale(0.6) rotate(-20deg); filter: blur(2px); } 55% { opacity: 0; transform: translateX(4px) scale(0.6); } }
+}

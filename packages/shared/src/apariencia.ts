@@ -37,7 +37,17 @@ export const AVATARES = [
   'estrella',
   'rayo',
   'planta',
+  'ninja',
 ] as const;
+
+/** Avatares que solo puede elegir un usuario (por id). El ninja es del usuario #1. */
+export const AVATARES_EXCLUSIVOS: Partial<Record<(typeof AVATARES)[number], number>> = { ninja: 1 };
+
+/** Si este usuario puede usar el avatar (los exclusivos solo su dueño; null = iniciales, siempre). */
+export function avatarPermitido(avatar: (typeof AVATARES)[number] | null, usuarioId: number): boolean {
+  const dueno = avatar ? AVATARES_EXCLUSIVOS[avatar] : undefined;
+  return dueno === undefined || dueno === usuarioId;
+}
 
 export type Tema = (typeof TEMAS)[number];
 export type Acento = (typeof ACENTOS)[number];

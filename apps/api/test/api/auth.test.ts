@@ -1,5 +1,6 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { sql } from 'kysely';
+import { avatarPermitido } from '@mesa/shared';
 import { db } from '../../src/db/conexion';
 import { anonimo, entrar, PASSWORD, reiniciarBD, type Fixtures } from '../ayudas';
 
@@ -226,6 +227,17 @@ describe('cambio de contraseña', () => {
 });
 
 describe('apariencia', () => {
+  it('el avatar ninja solo lo puede usar el usuario #1', async () => {
+    const u1 = await entrar('usuario_uno');
+    expect((await u1.get('/auth/yo')).body.usuario.id).not.toBe(1);
+    const r = await u1.put('/auth/apariencia', { tema: 'claro', acento: 'aqua', avatar: 'ninja' });
+    expect(r.status).toBe(400);
+    expect(r.body.error.campos.avatar).toMatch(/exclusivo/);
+    expect((await u1.get('/auth/yo')).body.usuario.apariencia.avatar).toBeNull();
+    expect(avatarPermitido('ninja', 1)).toBe(true);
+    expect(avatarPermitido('zorro', 7)).toBe(true);
+  });
+
   it('cada usuario guarda su modo y su paleta; viaja con la sesión y no afecta a los demás', async () => {
     const u1 = await entrar('usuario_uno');
     expect((await u1.get('/auth/yo')).body.usuario.apariencia).toEqual({ tema: 'sistema', acento: 'aqua', temporada: true, avatar: null, animaciones: true });

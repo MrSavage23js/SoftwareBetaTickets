@@ -1,7 +1,7 @@
 // Ventana "Apariencia": modo claro/oscuro y paleta de color de cada usuario. Cada opción se aplica al
 // instante (la página entera es la vista previa) y se guarda para el usuario en el servidor.
 import { useState } from 'react';
-import { AVATARES, TEMPORADAS, temporadaEn, type Acento, type Apariencia, type Avatar, type Tema, type Temporada } from '@mesa/shared';
+import { AVATARES, AVATARES_EXCLUSIVOS, avatarPermitido, TEMPORADAS, temporadaEn, type Acento, type Apariencia, type Avatar, type Tema, type Temporada } from '@mesa/shared';
 import { iniciales } from '../lib/formato';
 import { DibujoAvatar, NOMBRE_AVATAR } from './Avatares';
 import { mensajeDe } from '../api/cliente';
@@ -169,9 +169,10 @@ export function VentanaApariencia({ alCerrar }: { alCerrar: () => void }) {
         </h3>
         <p className="apariencia-nota">Lo verán también los demás: en tus tickets, en la conversación y en la lista de usuarios.</p>
         <div className="ap-avatares" role="radiogroup" aria-labelledby="ap-avatar" onKeyDown={moverConFlechas}>
-          {([null, ...AVATARES] as (Avatar | null)[]).map((av) => {
+          {([null, ...AVATARES.filter((a) => avatarPermitido(a, usuario.id))] as (Avatar | null)[]).map((av) => {
             const activo = actual.avatar === av;
-            const nombre = av ? NOMBRE_AVATAR[av] : 'Mis iniciales';
+            const exclusivo = av !== null && AVATARES_EXCLUSIVOS[av] !== undefined;
+            const nombre = av ? `${NOMBRE_AVATAR[av]}${exclusivo ? ' (exclusivo tuyo)' : ''}` : 'Mis iniciales';
             return (
               <button
                 key={av ?? 'iniciales'}
@@ -181,7 +182,7 @@ export function VentanaApariencia({ alCerrar }: { alCerrar: () => void }) {
                 aria-label={nombre}
                 title={nombre}
                 tabIndex={activo ? 0 : -1}
-                className="ap-avatar"
+                className={`ap-avatar ${exclusivo ? 'exclusivo' : ''}`}
                 onClick={() => void elegir({ ...actual, avatar: av })}
               >
                 <span className="ap-avatar-cara">{av ? <DibujoAvatar avatar={av} /> : iniciales(usuario.nombre)}</span>

@@ -1,6 +1,7 @@
 import { Router, type Request } from 'express';
 import argon2 from 'argon2';
 import {
+  avatarPermitido,
   esquemaApariencia,
   esquemaCambiarPassword,
   esquemaLogin,
@@ -235,6 +236,7 @@ rutasAuth.post('/cambiar-password', limiteLogin, requiereSesion, requierePermiso
 /** Guarda el modo claro/oscuro y la paleta del propio usuario (no requiere permisos: es su preferencia). */
 rutasAuth.put('/apariencia', requiereSesion, async (req, res) => {
   const d = validar(esquemaApariencia, req.body);
+  if (!avatarPermitido(d.avatar, actor(req).id)) throw errores.validacion('Ese avatar es exclusivo de otro usuario.', { avatar: 'Ese avatar es exclusivo de otro usuario.' });
   await db.updateTable('usuarios').set({ apariencia: JSON.stringify(d) }).where('id', '=', actor(req).id).execute();
   res.json(d);
 });

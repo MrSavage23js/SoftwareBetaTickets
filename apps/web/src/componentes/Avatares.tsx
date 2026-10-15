@@ -137,6 +137,18 @@ const TRAZOS: Record<Avatar, ReactNode> = {
       <path d="M10.5 25h11l-1.5 3.5h-8z" />
     </>
   ),
+  // Exclusivo del usuario #1 (AVATARES_EXCLUSIVOS en @mesa/shared).
+  ninja: (
+    <>
+      <circle cx="16" cy="16" r="10" />
+      <path d="M7.1 11.5h17.8" />
+      <path d="M25.3 11.2l4-2.6M25.6 12.6l4 .9" />
+      <rect x="8.5" y="13.4" width="15" height="5" rx="2.5" />
+      <path d="M10.8 14.4l3.2 1M21.2 14.4l-3.2 1" />
+      {ojo(12.8, 16.4)}
+      {ojo(19.2, 16.4)}
+    </>
+  ),
 };
 
 export const NOMBRE_AVATAR: Record<Avatar, string> = {
@@ -156,6 +168,7 @@ export const NOMBRE_AVATAR: Record<Avatar, string> = {
   estrella: 'Estrella',
   rayo: 'Rayo',
   planta: 'Planta',
+  ninja: 'Ninja',
 };
 
 /** El dibujo del avatar; se coloca dentro de un círculo con el degradado de la paleta (.face, .avatar.on, .ap-avatar). */
