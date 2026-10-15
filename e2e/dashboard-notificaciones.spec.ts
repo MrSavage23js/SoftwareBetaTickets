@@ -15,7 +15,7 @@ test('ticket crítico → aviso al admin → dashboard → atenderlo → aviso a
   await ventana.getByLabel(/^Concepto/).fill('Servidor de facturación caído');
   await escribirEnEditor(page, 'nt-desc', 'No podemos facturar desde las 9 a. m.');
   await ventana.getByRole('button', { name: 'Crear ticket' }).click();
-  const folio = (await page.getByRole('dialog', { name: 'Ticket creado' }).locator('.bol-folio').textContent())!.trim();
+  const folio = (await page.getByRole('dialog', { name: 'Ticket creado' }).locator('.folio').textContent())!.trim();
   await page.getByRole('button', { name: 'Ver ticket' }).click();
   const detalle = page.getByRole('region', { name: 'Detalle del ticket' });
   await expect(detalle.locator('.urg').filter({ hasText: 'Crítica' })).toBeVisible();

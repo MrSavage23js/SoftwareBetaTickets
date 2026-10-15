@@ -30,10 +30,9 @@ function depurar(lista: Destinatario[], excluir: Set<string> = new Set()): Desti
 const PLANTILLAS_CIERRE = new Set<string>([CODIGOS_PLANTILLA.TICKET_CERRADO, CODIGOS_PLANTILLA.TICKET_CERRADO_SOPORTE]);
 
 /**
- * Avisos de cierre: el asunto es "RE: …" (para seguir en la conversación) y ya no dice cómo terminó,
- * así que el estatus final va al principio del cuerpo: un texto oculto que Outlook muestra en la vista
- * previa de la bandeja y un recuadro grande bajo el título. Se pone aquí y no en la plantilla para que
- * no se pierda si alguien la edita.
+ * Avisos de cierre: además del asunto (que dice cómo terminó), el estatus final va al principio del
+ * cuerpo: un texto oculto que Outlook muestra en la vista previa de la bandeja y un recuadro grande
+ * bajo el título. Se pone aquí y no en la plantilla para que no se pierda si alguien la edita.
  */
 function conEstatusFinal(html: string, variables: Variables): string {
   const estatus = typeof variables.estatus === 'string' ? variables.estatus : '';
@@ -76,10 +75,11 @@ export async function encolarCorreo(
   let asunto = renderizarTexto(p.asunto, variables);
   const folio = typeof variables.folio === 'string' ? variables.folio : null;
   if (folio && !asunto.includes(folio)) asunto = `[${folio}] ${asunto}`.slice(0, 250);
-  // Avisos posteriores del ticket (cierre, respuestas): mismo asunto que el primero con "RE:", para
-  // que Outlook los muestre como respuesta en esa conversación (cabeceras del hilo: hilos.ts).
+  // Respuestas de soporte: mismo asunto que el primer aviso con "RE:", para que Outlook las muestre
+  // en esa conversación (cabeceras del hilo: hilos.ts). Los cierres conservan su propio asunto
+  // ("Ticket cerrado: … — Completado"): se pidió que el estatus final siempre se vea en la bandeja.
   const raiz = plantillaRaiz(c.plantilla);
-  if (c.ticketId && raiz && raiz !== c.plantilla) {
+  if (c.ticketId && raiz && raiz !== c.plantilla && !PLANTILLAS_CIERRE.has(c.plantilla)) {
     const primero = await ex
       .selectFrom('correos_salida')
       .select('asunto')

@@ -13,7 +13,7 @@ async function crearTicket(page: Page): Promise<string> {
   await escribirEnEditor(page, 'nt-desc', 'No puedo cancelar la factura A777.');
   await ventana.getByRole('button', { name: 'Crear ticket' }).click();
   const confirmacion = page.getByRole('dialog', { name: 'Ticket creado' });
-  const folio = (await confirmacion.locator('.bol-folio').textContent())!.trim();
+  const folio = (await confirmacion.locator('.folio').textContent())!.trim();
   await confirmacion.getByRole('button', { name: 'Cerrar' }).first().click();
   await cerrarSesion(page);
   return folio;
@@ -28,7 +28,7 @@ test('guardar una respuesta e insertarla al responder', async ({ page }) => {
   await page.getByRole('button', { name: new RegExp(folio) }).click();
   const detalle = page.getByRole('region', { name: 'Detalle del ticket' });
   await detalle.getByRole('button', { name: 'Tomar ticket' }).click();
-  await expect(detalle.locator('.sello').filter({ hasText: 'En proceso' }).first()).toBeVisible();
+  await expect(detalle.locator('.pill').filter({ hasText: 'En proceso' }).first()).toBeVisible();
 
   await detalle.getByRole('button', { name: 'Respuestas' }).click();
   const ventana = page.getByRole('dialog', { name: 'Respuestas guardadas' });

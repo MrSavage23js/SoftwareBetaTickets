@@ -90,14 +90,15 @@ describe('cola de salida', () => {
     expect((await correo()).estado).toBe('ENVIADO');
   });
 
-  it('el aviso de cierre llega como respuesta al de "ticket creado" (mismo hilo en Outlook)', async () => {
+  it('el aviso de cierre va en el hilo del de "ticket creado" pero conserva su asunto con el estatus', async () => {
     const r = await u1.form('/tickets', ticketValido(f)).expect(201);
     await admin.post(`/tickets/${r.body.id}/tomar`).expect(204);
     const v = (await admin.get(`/tickets/${r.body.id}`)).body.version;
     await admin.form(`/tickets/${r.body.id}/cerrar`, { resolucionHtml: '<p>ok</p>', version: v }).expect(204);
     const filas = await db.selectFrom('correos_salida').select(['plantilla_codigo', 'asunto']).orderBy('id').execute();
     const asunto = (p: string) => filas.find((x) => x.plantilla_codigo === p)!.asunto;
-    expect(asunto('TICKET_CERRADO')).toBe(`RE: ${asunto('TICKET_CREADO')}`);
+    expect(asunto('TICKET_CERRADO')).toBe(`[${folio('SIS', 1)}] Ticket cerrado`);
+    expect(asunto('TICKET_CERRADO_SOPORTE')).toMatch(/^Ticket cerrado: .* — Completado$/);
 
     await procesarCola();
     const emls = readdirSync(RUTAS.correosConsola)
