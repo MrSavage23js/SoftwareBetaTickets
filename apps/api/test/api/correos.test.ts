@@ -115,6 +115,23 @@ describe('cola de salida', () => {
     expect(indice(cerrado).subarray(0, 22)).toEqual(indice(creado));
   });
 
+  it('el aviso de cierre dice el estatus final al principio (se ve en la vista previa de Outlook)', async () => {
+    const r = await u1.form('/tickets', ticketValido(f)).expect(201);
+    await admin.post(`/tickets/${r.body.id}/tomar`).expect(204);
+    const v = (await admin.get(`/tickets/${r.body.id}`)).body.version;
+    await admin.form(`/tickets/${r.body.id}/cerrar`, { resolucionHtml: '<p>ok</p>', version: v }).expect(204);
+    const c = await db.selectFrom('correos_salida').selectAll().where('plantilla_codigo', '=', 'TICKET_CERRADO').executeTakeFirstOrThrow();
+    expect(c.cuerpo_texto.trimStart()).toMatch(/^✔ COMPLETADO/);
+    expect(c.cuerpo_html).toMatch(/<\/h1>\s*<table[^>]*>\s*<tr><td[^>]*>✔ COMPLETADO<\/td>/);
+
+    const otro = await u1.form('/tickets', ticketValido(f)).expect(201);
+    await admin.post(`/tickets/${otro.body.id}/tomar`).expect(204);
+    const v2 = (await admin.get(`/tickets/${otro.body.id}`)).body.version;
+    await admin.post(`/tickets/${otro.body.id}/no-procede`, { motivo: 'Duplicado', version: v2 }).expect(204);
+    const n = await db.selectFrom('correos_salida').select('cuerpo_texto').where('ticket_id', '=', otro.body.id).where('plantilla_codigo', '=', 'TICKET_CERRADO').executeTakeFirstOrThrow();
+    expect(n.cuerpo_texto.trimStart()).toMatch(/^✖ NO PROCEDE/);
+  });
+
   it('a un usuario dado de baja no se le envían correos', async () => {
     const r = await u1.form('/tickets', ticketValido(f));
     await admin.del(`/usuarios/${f.u1}`).expect(204);
