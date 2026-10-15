@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { PERMISOS, pasosCompletados, INFO_ESTATUS, type EventoInfo, type TicketDetalle } from '@mesa/shared';
 import { api, camposDe, ErrorCliente, mensajeDe } from '../../api/cliente';
 import { ListaAdjuntos, SelectorArchivos } from '../../componentes/Archivos';
+import { Boleto } from '../../componentes/Boleto';
 import { Editor } from '../../componentes/Editor';
 import { BotonRespuestas } from '../../componentes/RespuestasGuardadas';
 import { Icono, type NombreIcono } from '../../componentes/Icono';
-import { Avatar, Cargando, EstadoError, Modal, PillEstatus, useAvisos } from '../../componentes/ui';
-import { BadgeUrgencia } from '../../componentes/Urgencia';
+import { Avatar, Cargando, EstadoError, Modal, useAvisos } from '../../componentes/ui';
 import { fmtFechaHora } from '../../lib/formato';
 import { useSesion } from '../../sesion/Sesion';
 import { useDetalle, useHistorial, useRefrescarTickets, useTecnicos } from './datos';
@@ -58,14 +58,7 @@ function Contenido({ t }: { t: TicketDetalle }) {
 
   return (
     <div className="detail">
-      <div className="top">
-        <div className="l">
-          <span className="folio">{t.folio}</span>
-          {/* Se vuelve a montar al cambiar de estatus: la etiqueta "sella" el nuevo valor. */}
-          <PillEstatus key={t.estatus} estatus={t.estatus} />
-          <span className="pill type">{t.tipo.nombre}</span>
-          <BadgeUrgencia urgencia={t.urgencia} />
-        </div>
+      <div className="top acciones">
         <div className="r">
           {a.has('tomar') && botonAccion('check', 'Tomar ticket', () => void ejecutar('tomar', {}, `Tomaste el ticket ${t.folio}.`), true)}
           {a.has('pausar') && botonAccion('pause', 'Pausar', () => setVentana('pausar'))}
@@ -78,6 +71,8 @@ function Contenido({ t }: { t: TicketDetalle }) {
         </div>
       </div>
 
+      <Boleto t={t} />
+
       <div className="steps" aria-label="Avance del ticket">
         {['Creado', 'Tomado', 'En proceso', t.estatus === 'NO_PROCEDE' ? 'No procede' : 'Cerrado'].map((nombre, i) => (
           <span key={nombre} style={{ display: 'contents' }}>
@@ -88,32 +83,6 @@ function Contenido({ t }: { t: TicketDetalle }) {
             </span>
           </span>
         ))}
-      </div>
-
-      <div className="meta">
-        <Celda titulo="Solicitante">
-          <Avatar grande avatar={t.solicitante.avatar} />
-          {t.solicitante.nombre}
-        </Celda>
-        <Celda titulo="Asignado a">
-          {t.asignado ? (
-            <>
-              <Avatar grande activo avatar={t.asignado.avatar} />
-              {t.asignado.nombre}
-            </>
-          ) : (
-            <span className="ph">Sin asignar</span>
-          )}
-        </Celda>
-        <Celda titulo="Fecha de creación">{fmtFechaHora(t.creadoAt)}</Celda>
-        <Celda titulo="Estatus">
-          <PillEstatus estatus={t.estatus} />
-        </Celda>
-        <Celda titulo="Departamento">{t.departamento.nombre}</Celda>
-        <Celda titulo="Empresa">{t.empresa.nombre}</Celda>
-        <Celda titulo="Módulo">{t.modulo?.nombre ?? <span className="ph">—</span>}</Celda>
-        <Celda titulo="Concepto">{t.concepto ?? <span className="ph">—</span>}</Celda>
-        <Celda titulo="Folio(s)">{t.foliosRef ?? <span className="ph">—</span>}</Celda>
       </div>
 
       <div className="box">
@@ -179,15 +148,6 @@ function Contenido({ t }: { t: TicketDetalle }) {
       {ventana === 'reasignar' && <VentanaReasignar t={t} alCerrar={() => setVentana(null)} ejecutar={ejecutar} />}
       {ventana === 'cerrar' && <VentanaCerrar t={t} alCerrar={() => setVentana(null)} />}
       {ventana === 'noProcede' && <VentanaNoProcede t={t} alCerrar={() => setVentana(null)} ejecutar={ejecutar} />}
-    </div>
-  );
-}
-
-function Celda({ titulo, children }: { titulo: string; children: React.ReactNode }) {
-  return (
-    <div className="cell">
-      <small>{titulo}</small>
-      <div>{children}</div>
     </div>
   );
 }

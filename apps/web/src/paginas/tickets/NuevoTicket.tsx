@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { PERMISOS, URGENCIA_POR_OMISION, type TicketCreado, type Urgencia } from '@mesa/shared';
 import { api, camposDe, mensajeDe } from '../../api/cliente';
 import { SelectorArchivos } from '../../componentes/Archivos';
+import { TalonFolio } from '../../componentes/Boleto';
 import { SelectorContactos, type Contacto } from '../../componentes/Contactos';
 import { Editor } from '../../componentes/Editor';
 import { SelectorUrgencia } from '../../componentes/Urgencia';
@@ -115,10 +116,7 @@ export function NuevoTicket({ alCerrar, alCrear }: { alCerrar: () => void; alCre
           <span className="ico">
             <Icono n="check" />
           </span>
-          <b>Tu folio es</b>
-          <span className="folio" style={{ fontSize: 22, color: 'var(--ink-strong)' }}>
-            {creado.folio}
-          </span>
+          <TalonFolio folio={creado.folio} />
         </div>
         <div className="notice">
           <Icono n="mail" t="l" />

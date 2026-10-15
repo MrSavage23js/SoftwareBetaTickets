@@ -27,7 +27,7 @@ test('ciclo de vida completo de un ticket', async ({ page }) => {
 
   const confirmacion = page.getByRole('dialog', { name: 'Ticket creado' });
   await expect(confirmacion).toBeVisible();
-  const folio = (await confirmacion.locator('.folio').textContent())!.trim();
+  const folio = (await confirmacion.locator('.bol-folio').textContent())!.trim();
   // Formato DEPTO-CONSECUTIVO (sin año); el departamento del usuario viene preseleccionado (SIS).
   expect(folio).toMatch(/^SIS-\d{4,}$/);
   await expect(confirmacion.getByText(/Enviamos una copia a usuario_uno@prueba\.local/)).toBeVisible();
@@ -50,7 +50,7 @@ test('ciclo de vida completo de un ticket', async ({ page }) => {
   await expect(detalle.getByText('Toma el ticket para poder responder o cerrarlo.')).toBeVisible();
   await detalle.getByRole('button', { name: 'Tomar ticket' }).click();
   await expect(page.getByText(`Tomaste el ticket ${folio}.`)).toBeVisible();
-  await expect(detalle.locator('.pill').filter({ hasText: 'En proceso' }).first()).toBeVisible();
+  await expect(detalle.locator('.sello').filter({ hasText: 'En proceso' }).first()).toBeVisible();
 
   await escribirEnEditor(page, `redactar-respuesta-${page.url().split('/').pop()!.split('?')[0]}`, 'Ya lo estoy revisando.');
   await detalle.getByRole('button', { name: 'Responder' }).click();
@@ -64,7 +64,7 @@ test('ciclo de vida completo de un ticket', async ({ page }) => {
   await escribirEnEditor(page, `resolucion-${page.url().split('/').pop()!.split('?')[0]}`, 'Carta porte cancelada y reemplazada.');
   await cierre.getByRole('button', { name: 'Cerrar ticket' }).click();
   await expect(page.getByText(`Ticket ${folio} cerrado.`)).toBeVisible();
-  await expect(detalle.locator('.pill').filter({ hasText: 'Completado' }).first()).toBeVisible();
+  await expect(detalle.locator('.sello').filter({ hasText: 'Completado' }).first()).toBeVisible();
 
   // Historial con quién hizo qué.
   await detalle.getByRole('button', { name: 'Ver historial' }).click();
@@ -75,13 +75,13 @@ test('ciclo de vida completo de un ticket', async ({ page }) => {
 
   // ---------------------------------------------------------------- El correo de cierre está en la cola
   await page.getByRole('link', { name: /Correos/ }).click();
-  const fila = page.getByRole('row').filter({ hasText: `[${folio}] Ticket cerrado` });
+  const fila = page.getByRole('row').filter({ hasText: `RE: [${folio}]` });
   await expect(fila).toBeVisible();
   await expect(fila.getByText('usuario_uno@prueba.local')).toBeVisible();
   // El trabajador lo envía en segundos (modo consola en pruebas).
   await expect(async () => {
     await page.reload();
-    await expect(page.getByRole('row').filter({ hasText: `[${folio}] Ticket cerrado` }).getByText('Enviado')).toBeVisible({ timeout: 1000 });
+    await expect(page.getByRole('row').filter({ hasText: `RE: [${folio}]` }).getByText('Enviado')).toBeVisible({ timeout: 1000 });
   }).toPass({ timeout: 20_000 });
   await cerrarSesion(page);
 
