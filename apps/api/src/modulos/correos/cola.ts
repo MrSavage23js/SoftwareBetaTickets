@@ -31,8 +31,8 @@ const PLANTILLAS_CIERRE = new Set<string>([CODIGOS_PLANTILLA.TICKET_CERRADO, COD
 
 /**
  * Avisos de cierre: además del asunto (que dice cómo terminó), el estatus final va al principio del
- * cuerpo: un texto oculto que Outlook muestra en la vista previa de la bandeja y un recuadro grande
- * bajo el título. Se pone aquí y no en la plantilla para que no se pierda si alguien la edita.
+ * cuerpo: un texto oculto que Outlook muestra en la vista previa de la bandeja y una etiqueta chica
+ * bajo el título (lo que debe resaltar es la resolución, no el estatus). Se pone aquí y no en la plantilla para que no se pierda si alguien la edita.
  */
 function conEstatusFinal(html: string, variables: Variables): string {
   const estatus = typeof variables.estatus === 'string' ? variables.estatus : '';
@@ -45,8 +45,8 @@ function conEstatusFinal(html: string, variables: Variables): string {
   const previa = `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all">${marca} ${e}${folio}${quien}</div>`;
   const [fondo, borde, tinta] = noProcede ? ['#FBE9E8', '#C62828', '#8C1F1F'] : ['#E3F5EA', '#1E8E4E', '#146038'];
   const recuadro = `
-        <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;margin:0 0 16px;background:${fondo};border:2px solid ${borde};border-radius:8px">
-          <tr><td style="padding:12px 16px;color:${tinta};font-size:22px;font-weight:800;letter-spacing:1px">${marca} ${e}</td></tr>
+        <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 16px;background:${fondo};border:1px solid ${borde};border-radius:6px">
+          <tr><td style="padding:5px 12px;color:${tinta};font-size:13px;font-weight:700;letter-spacing:1px">${marca} ${e}</td></tr>
         </table>`;
   const conRecuadro = /<\/h1>/i.test(html) ? html.replace(/<\/h1>/i, (m) => m + recuadro) : recuadro + html;
   return previa + conRecuadro;
