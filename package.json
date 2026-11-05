@@ -29,6 +29,7 @@
     "test:e2e": "playwright test",
     "ci": "node scripts/ci-local.mjs",
     "respaldo": "node scripts/respaldo.mjs",
+    "respaldo:produccion": "node scripts/respaldo-produccion.mjs",
     "restaurar": "node scripts/restaurar.mjs",
     "tunel": "node scripts/tunel.mjs"
   },
