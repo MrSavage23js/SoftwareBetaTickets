@@ -16,3 +16,4 @@ e2e/.auth/
 # Capturas del sistema anterior: contienen datos reales de empleados
 referencia/*.png
 
+.neon
