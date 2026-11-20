@@ -1,0 +1,310 @@
+/* =====================================================================
+   Estilo "Cristal" (vidrio líquido). Capa opcional encima de app.css: solo actúa con
+   <html data-estilo="cristal">, así el diseño de siempre queda intacto.
+   - Fondo: manchas de color de la paleta, fijas, para que el vidrio tenga algo que refractar.
+   - Superficies translúcidas con desenfoque y saturación (backdrop-filter) solo en las capas de arriba
+     (barra lateral, paneles, ventanas, menús); lo que va dentro es vidrio claro sin desenfoque (rinde mejor).
+   - Bordes de luz: un filo blanco arriba (reflejo) y un contorno tenue, como el vidrio de Apple.
+   - Formas más redondas: botones en píldora, paneles de 22 px.
+   Estatus, urgencia y gráficas no cambian: informan.
+   ===================================================================== */
+:root[data-estilo='cristal'] {
+  --vidrio: color-mix(in srgb, color-mix(in oklab, var(--marca-2) 9%, #fff) 52%, transparent);
+  --vidrio-fuerte: color-mix(in srgb, color-mix(in oklab, var(--marca-2) 6%, #fff) 74%, transparent);
+  --vidrio-tenue: color-mix(in srgb, color-mix(in oklab, var(--marca-2) 8%, #fff) 34%, transparent);
+  --vidrio-filo: rgba(255, 255, 255, 0.85);
+  --vidrio-contorno: rgba(255, 255, 255, 0.55);
+  --vidrio-desenfoque: blur(26px) saturate(185%);
+  --vidrio-sombra: 0 10px 34px -12px rgba(8, 40, 50, 0.28), 0 2px 6px rgba(8, 40, 50, 0.06);
+  --vidrio-luz: inset 0 1px 0 var(--vidrio-filo), inset 0 0 0 1px var(--vidrio-contorno), inset 0 -10px 24px -18px rgba(255, 255, 255, 0.9);
+
+  --surface: var(--vidrio); --surface-2: var(--vidrio-tenue); --field: color-mix(in srgb, #fff 60%, transparent);
+  --line: rgba(10, 50, 60, 0.11); --line-2: rgba(10, 50, 60, 0.07); --field-line: rgba(10, 50, 60, 0.15);
+  --chip: color-mix(in srgb, #fff 45%, transparent); --toolbar: color-mix(in srgb, #fff 35%, transparent);
+  --sel: color-mix(in srgb, #fff 80%, transparent); --overlay: rgba(10, 35, 42, 0.22);
+  --fondo-cristal:
+    radial-gradient(42vw 42vw at 8% 12%, color-mix(in srgb, var(--marca-1) 55%, transparent), transparent 70%),
+    radial-gradient(38vw 38vw at 92% 8%, color-mix(in srgb, var(--marca-3) 42%, transparent), transparent 70%),
+    radial-gradient(46vw 46vw at 78% 92%, color-mix(in srgb, var(--marca-2) 52%, transparent), transparent 70%),
+    radial-gradient(34vw 34vw at 18% 88%, color-mix(in srgb, var(--marca-1) 42%, transparent), transparent 70%),
+    linear-gradient(160deg, color-mix(in srgb, var(--marca-1) 18%, #f3f8fa), color-mix(in srgb, var(--marca-3) 14%, #eef3f8));
+}
+
+/* Oscuro: vidrio ahumado. Se repite para el modo elegido y para el Automático de Windows/Android. */
+:root[data-estilo='cristal'][data-theme='dark'] {
+  --vidrio: color-mix(in srgb, color-mix(in oklab, var(--marca-3) 24%, #0a0f12) 52%, transparent);
+  --vidrio-fuerte: color-mix(in srgb, color-mix(in oklab, var(--marca-3) 20%, #0a0f12) 76%, transparent);
+  --vidrio-tenue: color-mix(in srgb, #ffffff 6%, transparent);
+  --vidrio-filo: rgba(255, 255, 255, 0.22);
+  --vidrio-contorno: rgba(255, 255, 255, 0.09);
+  --vidrio-sombra: 0 14px 40px -12px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.25);
+  --vidrio-luz: inset 0 1px 0 var(--vidrio-filo), inset 0 0 0 1px var(--vidrio-contorno), inset 0 -12px 26px -20px rgba(255, 255, 255, 0.35);
+  --surface: var(--vidrio); --surface-2: var(--vidrio-tenue); --field: color-mix(in srgb, #000 28%, transparent);
+  --line: rgba(255, 255, 255, 0.1); --line-2: rgba(255, 255, 255, 0.06); --field-line: rgba(255, 255, 255, 0.16);
+  --chip: color-mix(in srgb, #fff 9%, transparent); --toolbar: color-mix(in srgb, #fff 5%, transparent);
+  --sel: color-mix(in srgb, #fff 14%, transparent); --overlay: rgba(0, 0, 0, 0.4);
+  --fondo-cristal:
+    radial-gradient(42vw 42vw at 8% 12%, color-mix(in srgb, var(--marca-3) 60%, transparent), transparent 70%),
+    radial-gradient(38vw 38vw at 92% 8%, color-mix(in srgb, var(--marca-1) 34%, transparent), transparent 70%),
+    radial-gradient(46vw 46vw at 78% 92%, color-mix(in srgb, var(--marca-2) 38%, transparent), transparent 70%),
+    radial-gradient(34vw 34vw at 18% 88%, color-mix(in srgb, var(--marca-3) 55%, transparent), transparent 70%),
+    linear-gradient(160deg, color-mix(in oklab, var(--marca-3) 24%, #05080a), color-mix(in oklab, var(--marca-3) 12%, #05080a));
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-estilo='cristal']:not([data-theme='light']) {
+    --vidrio: color-mix(in srgb, color-mix(in oklab, var(--marca-3) 24%, #0a0f12) 52%, transparent);
+    --vidrio-fuerte: color-mix(in srgb, color-mix(in oklab, var(--marca-3) 20%, #0a0f12) 76%, transparent);
+    --vidrio-tenue: color-mix(in srgb, #ffffff 6%, transparent);
+    --vidrio-filo: rgba(255, 255, 255, 0.22);
+    --vidrio-contorno: rgba(255, 255, 255, 0.09);
+    --vidrio-sombra: 0 14px 40px -12px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.25);
+    --vidrio-luz: inset 0 1px 0 var(--vidrio-filo), inset 0 0 0 1px var(--vidrio-contorno), inset 0 -12px 26px -20px rgba(255, 255, 255, 0.35);
+    --surface: var(--vidrio); --surface-2: var(--vidrio-tenue); --field: color-mix(in srgb, #000 28%, transparent);
+    --line: rgba(255, 255, 255, 0.1); --line-2: rgba(255, 255, 255, 0.06); --field-line: rgba(255, 255, 255, 0.16);
+    --chip: color-mix(in srgb, #fff 9%, transparent); --toolbar: color-mix(in srgb, #fff 5%, transparent);
+    --sel: color-mix(in srgb, #fff 14%, transparent); --overlay: rgba(0, 0, 0, 0.4);
+    --fondo-cristal:
+      radial-gradient(42vw 42vw at 8% 12%, color-mix(in srgb, var(--marca-3) 60%, transparent), transparent 70%),
+      radial-gradient(38vw 38vw at 92% 8%, color-mix(in srgb, var(--marca-1) 34%, transparent), transparent 70%),
+      radial-gradient(46vw 46vw at 78% 92%, color-mix(in srgb, var(--marca-2) 38%, transparent), transparent 70%),
+      radial-gradient(34vw 34vw at 18% 88%, color-mix(in srgb, var(--marca-3) 55%, transparent), transparent 70%),
+      linear-gradient(160deg, color-mix(in oklab, var(--marca-3) 24%, #05080a), color-mix(in oklab, var(--marca-3) 12%, #05080a));
+  }
+}
+
+/* ---------- fondo ---------- */
+[data-estilo='cristal'] body { background: var(--fondo-cristal); background-attachment: fixed; }
+
+/* ---------- capas de vidrio con desenfoque ---------- */
+[data-estilo='cristal'] :is(.panel, .modal, .tarjeta, .col, .notif-panel, .combo .opciones, .side, .panel-filtros, .aviso) {
+  -webkit-backdrop-filter: var(--vidrio-desenfoque);
+  backdrop-filter: var(--vidrio-desenfoque);
+}
+[data-estilo='cristal'] :is(.panel, .tarjeta, .col, .panel-filtros) {
+  background: var(--vidrio); border: 0; border-radius: 22px; box-shadow: var(--vidrio-luz), var(--vidrio-sombra);
+}
+[data-estilo='cristal'] .panel-h { border-bottom-color: var(--line-2); }
+[data-estilo='cristal'] .tarjeta { padding-top: 18px; }
+[data-estilo='cristal'] .tarjeta.alerta { box-shadow: var(--vidrio-luz), inset 0 0 0 2px var(--accent-line), var(--vidrio-sombra); }
+
+/* Barra lateral flotante */
+[data-estilo='cristal'] .app { grid-template-columns: 264px minmax(0, 1fr); }
+[data-estilo='cristal'] .app.contraido { grid-template-columns: 92px minmax(0, 1fr); }
+[data-estilo='cristal'] .side {
+  --side-ink: var(--ink); --side-muted: var(--muted); --side-2: var(--chip); --side-on: color-mix(in srgb, var(--accent) 18%, transparent);
+  margin: 12px 0 12px 12px; top: 12px; height: calc(100vh - 24px); border-radius: 26px;
+  background: var(--vidrio); box-shadow: var(--vidrio-luz), var(--vidrio-sombra);
+}
+[data-estilo='cristal'] .side .logo, [data-estilo='cristal'] .me b { color: var(--ink-strong); }
+[data-estilo='cristal'] .navbtn { border-radius: 14px; }
+[data-estilo='cristal'] .navbtn[aria-current='page'] {
+  background: var(--vidrio-fuerte); color: var(--ink-strong);
+  box-shadow: var(--vidrio-luz), 0 4px 14px -6px rgba(8, 40, 50, 0.3);
+}
+[data-estilo='cristal'] .navbtn[aria-current='page'] .ic { color: var(--accent-text); }
+[data-estilo='cristal'] .navbtn::before { display: none; }
+[data-estilo='cristal'] .me { border-radius: 18px; background: var(--vidrio-tenue); box-shadow: inset 0 0 0 1px var(--vidrio-contorno); }
+[data-estilo='cristal'] .side-toggle { background: var(--vidrio-fuerte); border: 0; box-shadow: var(--vidrio-luz), var(--vidrio-sombra); -webkit-backdrop-filter: var(--vidrio-desenfoque); backdrop-filter: var(--vidrio-desenfoque); }
+
+/* ---------- ventanas y menús ---------- */
+[data-estilo='cristal'] .overlay { -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+[data-estilo='cristal'] :is(.modal, .notif-panel, .combo .opciones) {
+  --surface: var(--vidrio-fuerte);
+  background: var(--vidrio-fuerte); border: 0; border-radius: 24px; box-shadow: var(--vidrio-luz), var(--sombra-flotante);
+}
+[data-estilo='cristal'] .combo .opciones { border-radius: 16px; }
+[data-estilo='cristal'] .modal-f { background: transparent; }
+[data-estilo='cristal'] .modal-h .ico, [data-estilo='cristal'] .empty .ico { box-shadow: var(--vidrio-luz); }
+[data-estilo='cristal'] .aviso { border-radius: 18px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), var(--sombra-flotante); }
+
+/* ---------- botones: píldoras de vidrio ---------- */
+[data-estilo='cristal'] :is(.btn, .icon-btn, .filters button) {
+  border: 0; border-radius: 999px; background: var(--vidrio-fuerte); box-shadow: var(--vidrio-luz), 0 2px 8px -2px rgba(8, 40, 50, 0.16);
+  transition: transform var(--t-rapido) var(--curva), box-shadow var(--t-rapido) var(--curva), background var(--t-rapido) var(--curva);
+}
+[data-estilo='cristal'] :is(.btn, .icon-btn, .filters button):hover:not(:disabled) { box-shadow: var(--vidrio-luz), 0 6px 16px -4px rgba(8, 40, 50, 0.22); }
+[data-estilo='cristal'] :is(.btn, .icon-btn, .filters button):active:not(:disabled) { transform: scale(0.97); }
+[data-estilo='cristal'] .btn.p, [data-estilo='cristal'] .filters button[aria-pressed='true'] {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0) 55%), var(--grad-acento);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), inset 0 0 0 1px rgba(255, 255, 255, 0.28), var(--sombra-acento);
+}
+[data-estilo='cristal'] .btn.p:hover:not(:disabled) { background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 55%), var(--grad-acento-hover); }
+[data-estilo='cristal'] .btn.o { box-shadow: var(--vidrio-luz), inset 0 0 0 1.5px var(--accent); }
+[data-estilo='cristal'] .btn.peligro { background: linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 55%), var(--danger); }
+[data-estilo='cristal'] .icon-btn[aria-pressed='true'] { background: var(--accent-soft); box-shadow: var(--vidrio-luz), inset 0 0 0 1px var(--accent-line); }
+[data-estilo='cristal'] .tabla td.acc .icon-btn { box-shadow: none; background: transparent; }
+[data-estilo='cristal'] .seg { border-radius: 999px; background: var(--vidrio-tenue); box-shadow: inset 0 0 0 1px var(--vidrio-contorno), inset 0 1px 3px rgba(8, 40, 50, 0.08); }
+[data-estilo='cristal'] .seg button { border-radius: 999px; }
+[data-estilo='cristal'] .seg button[aria-pressed='true'], [data-estilo='cristal'] .seg button[aria-selected='true'] {
+  background: var(--vidrio-fuerte); box-shadow: var(--vidrio-luz), 0 3px 10px -3px rgba(8, 40, 50, 0.25);
+}
+
+/* ---------- campos ---------- */
+[data-estilo='cristal'] :is(.inp, .rte, .lista-checks) { border-radius: 14px; border-color: var(--field-line); box-shadow: inset 0 1px 2px rgba(8, 40, 50, 0.06); }
+[data-estilo='cristal'] .inp:focus-visible { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent); }
+[data-estilo='cristal'] .rte .tb button { border-radius: 10px; }
+[data-estilo='cristal'] .urg-selector label { border-radius: 14px; background: var(--vidrio-tenue); }
+
+/* ---------- tarjetas internas (vidrio claro, sin desenfoque) ---------- */
+[data-estilo='cristal'] :is(.tk, .kc, .msg, .cell, .box, .archivo, .steps) {
+  border-color: var(--vidrio-contorno); background: var(--vidrio-tenue); box-shadow: inset 0 1px 0 var(--vidrio-filo);
+}
+[data-estilo='cristal'] :is(.tk, .kc) { border-radius: 16px; transition: transform var(--t-rapido) var(--curva), box-shadow var(--t-rapido) var(--curva); }
+[data-estilo='cristal'] :is(.tk, .kc):hover { border-color: var(--vidrio-contorno); background: var(--vidrio); box-shadow: inset 0 1px 0 var(--vidrio-filo), 0 6px 18px -8px rgba(8, 40, 50, 0.3); }
+[data-estilo='cristal'] :is(.cell, .box, .msg, .steps) { border-radius: 18px; }
+[data-estilo='cristal'] .msg.sup { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+/* Los realces con borde de degradado usan padding-box opaco: en vidrio se cambian por contorno de acento. */
+[data-estilo='cristal'] .tk.sel, [data-estilo='cristal'] .msg.res, [data-estilo='cristal'] .urg-selector label.activo {
+  border: 1.5px solid var(--accent); background: var(--sel);
+  box-shadow: inset 0 1px 0 var(--vidrio-filo), 0 0 0 4px color-mix(in srgb, var(--accent) 16%, transparent), 0 8px 22px -10px rgba(8, 40, 50, 0.35);
+}
+[data-estilo='cristal'] .tk.sel { padding: 13.5px 15.5px; }
+[data-estilo='cristal'] .top .folio { border-radius: 999px; background: var(--vidrio-fuerte); border-color: transparent; box-shadow: var(--vidrio-luz); }
+[data-estilo='cristal'] .tabla th { background: transparent; }
+[data-estilo='cristal'] .notice { border-radius: 16px; }
+[data-estilo='cristal'] .col .h .count { background: var(--vidrio-fuerte); }
+[data-estilo='cristal'] .esqueleto { border-radius: 16px; }
+
+/* ---------- inicio de sesión: el formulario en una tarjeta de vidrio ---------- */
+[data-estilo='cristal'] .login .formside form {
+  padding: 36px 32px; border-radius: 28px; background: var(--vidrio);
+  -webkit-backdrop-filter: var(--vidrio-desenfoque); backdrop-filter: var(--vidrio-desenfoque);
+  box-shadow: var(--vidrio-luz), var(--vidrio-sombra);
+}
+[data-estilo='cristal'] .login .brandside { margin: 12px; border-radius: 30px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), var(--vidrio-sombra); }
+
+/* ---------- celular: la barra lateral es una franja arriba ---------- */
+@media (max-width: 900px) {
+  [data-estilo='cristal'] .app, [data-estilo='cristal'] .app.contraido { grid-template-columns: minmax(0, 1fr); }
+  [data-estilo='cristal'] .side { margin: 8px 8px 0; top: 8px; height: auto; border-radius: 22px; }
+  [data-estilo='cristal'] .login .brandside { margin: 8px 8px 0; border-radius: 24px; }
+  [data-estilo='cristal'] .login .formside form { padding: 28px 20px; }
+}
+
+/* Sin soporte de desenfoque (navegadores viejos): superficies casi opacas para que el texto se lea. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root[data-estilo='cristal'] { --vidrio: rgba(255, 255, 255, 0.9); --vidrio-fuerte: rgba(255, 255, 255, 0.96); }
+}
+
+/* =====================================================================
+   Vidrio líquido: luz, gota deslizante, lente y movimiento (lib/cristal.ts pone la gota y --mx/--my).
+   ===================================================================== */
+:root[data-estilo='cristal'] {
+  --resorte: linear(0, 0.013 0.6%, 0.05 1.2%, 0.2 2.6%, 0.43 4.4%, 0.74 6.9%, 0.97 9.4%, 1.1 11.7%, 1.16 13.7%, 1.17 15.3%, 1.15 17.5%, 1.03 23.6%, 0.99 27%, 0.98 30.6%, 1.002 41.7%, 1);
+  --resorte-suave: linear(0, 0.06 2%, 0.24 5%, 0.55 10%, 0.85 16%, 1.02 22%, 1.06 27%, 1.04 33%, 1 45%, 0.995 60%, 1);
+  /* Reflejo bajo el puntero (fuera de la vista mientras no hay puntero encima). */
+  --reflejo: radial-gradient(260px circle at var(--mx, -400px) var(--my, -400px), rgba(255, 255, 255, 0.3), transparent 70%);
+  --reflejo-chico: radial-gradient(90px circle at var(--mx, -200px) var(--my, -200px), rgba(255, 255, 255, 0.55), transparent 70%);
+  /* Canto de luz: más brillante arriba a la izquierda y abajo a la derecha, como un vidrio grueso. */
+  --canto: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.15) 28%, rgba(255, 255, 255, 0.05) 60%, rgba(255, 255, 255, 0.55));
+}
+:root[data-estilo='cristal'][data-theme='dark'] {
+  --reflejo: radial-gradient(260px circle at var(--mx, -400px) var(--my, -400px), rgba(255, 255, 255, 0.09), transparent 70%);
+  --reflejo-chico: radial-gradient(90px circle at var(--mx, -200px) var(--my, -200px), rgba(255, 255, 255, 0.2), transparent 70%);
+  --canto: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.06) 28%, rgba(255, 255, 255, 0.02) 60%, rgba(255, 255, 255, 0.2));
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-estilo='cristal']:not([data-theme='light']) {
+    --reflejo: radial-gradient(260px circle at var(--mx, -400px) var(--my, -400px), rgba(255, 255, 255, 0.09), transparent 70%);
+    --reflejo-chico: radial-gradient(90px circle at var(--mx, -200px) var(--my, -200px), rgba(255, 255, 255, 0.2), transparent 70%);
+    --canto: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.06) 28%, rgba(255, 255, 255, 0.02) 60%, rgba(255, 255, 255, 0.2));
+  }
+}
+
+/* ---------- reflejo bajo el puntero ---------- */
+[data-estilo='cristal'] :is(.panel, .tarjeta, .col, .panel-filtros, .side) { background: var(--reflejo), var(--vidrio); }
+[data-estilo='cristal'] :is(.modal, .notif-panel) { background: var(--reflejo), var(--vidrio-fuerte); }
+[data-estilo='cristal'] :is(.tk, .kc) { background: var(--reflejo-chico), var(--vidrio-tenue); }
+[data-estilo='cristal'] :is(.tk, .kc):hover { background: var(--reflejo-chico), var(--vidrio); }
+[data-estilo='cristal'] .tk.sel { background: var(--reflejo-chico), var(--sel); }
+[data-estilo='cristal'] :is(.btn, .icon-btn, .filters button):not(.p):not(.peligro):not([aria-pressed='true']) { background: var(--reflejo-chico), var(--vidrio-fuerte); }
+[data-estilo='cristal'] .btn.p { background: var(--reflejo-chico), linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0) 55%), var(--grad-acento); }
+[data-estilo='cristal'] .tabla td.acc .icon-btn { background: transparent; }
+
+/* ---------- canto de luz (borde degradado con máscara, encima del contenido y sin eventos) ---------- */
+[data-estilo='cristal'] :is(.panel, .tarjeta, .col, .modal, .panel-filtros, .notif-panel, .btn, .icon-btn) { position: relative; }
+[data-estilo='cristal'] .split > .panel:first-child { position: sticky; }
+[data-estilo='cristal'] .login .formside form { position: relative; }
+[data-estilo='cristal'] :is(.panel, .tarjeta, .col, .modal, .side, .panel-filtros, .notif-panel, .btn, .icon-btn)::after,
+[data-estilo='cristal'] .login .formside form::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none; z-index: 3;
+  background: var(--canto);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+
+/* ---------- gota: la selección es una pieza de vidrio que se desliza ---------- */
+[data-estilo='cristal'] .con-gota { position: relative; isolation: isolate; }
+[data-estilo='cristal'] .gota { position: absolute; left: 0; top: 0; z-index: -1; pointer-events: none; will-change: transform, width; }
+[data-estilo='cristal'] .gota-in {
+  position: absolute; inset: 0; border-radius: 999px; background: var(--vidrio-fuerte);
+  box-shadow: var(--vidrio-luz), 0 6px 18px -6px rgba(8, 40, 50, 0.35);
+}
+[data-estilo='cristal'] .side nav .gota-in { border-radius: 14px; }
+[data-estilo='cristal'] .filters .gota-in {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0) 55%), var(--grad-acento);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), inset 0 0 0 1px rgba(255, 255, 255, 0.28), var(--sombra-acento);
+}
+/* Con gota, la opción elegida ya no pinta su propio fondo (la gota va debajo). */
+[data-estilo='cristal'] .con-gota > :is([aria-current='page'], [aria-pressed='true'], [aria-selected='true'], [aria-checked='true']) { background: transparent; box-shadow: none; }
+[data-estilo='cristal'] .con-gota > [aria-pressed='true']::after { display: none; }
+/* El lente: en Chromium la gota deforma un poco lo que tiene detrás, como una lupa de vidrio. */
+[data-estilo='cristal'][data-lente] .gota-in {
+  -webkit-backdrop-filter: url(#cristal-lente) blur(1.5px) saturate(170%) brightness(1.06);
+  backdrop-filter: url(#cristal-lente) blur(1.5px) saturate(170%) brightness(1.06);
+}
+
+/* ---------- fondo vivo: las manchas de color se mueven muy despacio ---------- */
+[data-estilo='cristal'] body { background: var(--bg); }
+[data-estilo='cristal'] body::before { content: ''; position: fixed; inset: -12%; z-index: -2; pointer-events: none; background: var(--fondo-cristal); }
+
+/* ---------- movimiento con resorte ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  :root[data-estilo='cristal']:not([data-animaciones='no']) body::before { animation: cristal-deriva 38s ease-in-out infinite alternate; }
+  @keyframes cristal-deriva {
+    0% { transform: translate(0, 0) scale(1) rotate(0deg); }
+    50% { transform: translate(-3%, 2%) scale(1.06) rotate(4deg); }
+    100% { transform: translate(3%, -2%) scale(1.03) rotate(-3deg); }
+  }
+
+  /* Al presionar, el vidrio se hunde y al soltar rebota (la curva de resorte se pasa un poco y regresa). */
+  [data-estilo='cristal'] :is(.btn, .icon-btn, .filters button, .seg button, .navbtn, .tk, .kc, .ap-modo, .ap-paleta) {
+    transition: transform 520ms var(--resorte), box-shadow var(--t-medio) var(--curva), color var(--t-medio) var(--curva), filter var(--t-medio);
+  }
+  [data-estilo='cristal'] :is(.btn, .icon-btn, .filters button, .seg button, .navbtn):active:not(:disabled) {
+    transform: scale(0.94); transition-duration: 90ms; transition-timing-function: ease-out; filter: brightness(1.08);
+  }
+  [data-estilo='cristal'] :is(.icon-btn, .side-toggle):hover:not(:disabled) { transform: scale(1.08); }
+  [data-estilo='cristal'] :is(.tk, .kc):hover { transform: translateY(-2px); }
+  [data-estilo='cristal'] :is(.tk, .kc):active { transform: scale(0.985); transition-duration: 90ms; }
+  [data-estilo='cristal'] .tarjeta { transition: transform 520ms var(--resorte); }
+  [data-estilo='cristal'] .tarjeta:hover { transform: translateY(-3px) scale(1.01); }
+
+  /* Ventanas y menús: brotan del vidrio con resorte. */
+  [data-estilo='cristal'] .overlay .modal { animation: cristal-brota 560ms var(--resorte-suave) backwards; }
+  [data-estilo='cristal'] .overlay.saliendo .modal { animation: cristal-se-va 200ms var(--curva-salida) both; }
+  [data-estilo='cristal'] :is(.notif-panel, .combo .opciones) { animation: cristal-despliega 480ms var(--resorte-suave) both; }
+  @keyframes cristal-brota { from { opacity: 0; transform: translateY(24px) scale(0.86); } 40% { opacity: 1; } }
+  @keyframes cristal-se-va { to { opacity: 0; transform: translateY(10px) scale(0.92); } }
+  @keyframes cristal-despliega { from { opacity: 0; transform: translateY(-10px) scale(0.9); } 45% { opacity: 1; } }
+
+  /* Tarjetas de la lista, del tablero y del dashboard: aparecen en cascada. */
+  [data-estilo='cristal'] :is(.list, .col) > :is(.tk, .kc), [data-estilo='cristal'] .tarjetas > .tarjeta, [data-estilo='cristal'] .detail {
+    animation: cristal-aparece 560ms var(--resorte-suave) backwards;
+  }
+  [data-estilo='cristal'] :is(.list, .col, .tarjetas) > :nth-child(2) { animation-delay: 35ms; }
+  [data-estilo='cristal'] :is(.list, .col, .tarjetas) > :nth-child(3) { animation-delay: 70ms; }
+  [data-estilo='cristal'] :is(.list, .col, .tarjetas) > :nth-child(4) { animation-delay: 105ms; }
+  [data-estilo='cristal'] :is(.list, .col, .tarjetas) > :nth-child(5) { animation-delay: 140ms; }
+  [data-estilo='cristal'] :is(.list, .col, .tarjetas) > :nth-child(n + 6) { animation-delay: 175ms; }
+  @keyframes cristal-aparece { from { opacity: 0; transform: translateY(14px) scale(0.96); } }
+}
+
+/* ---------- el color del usuario manda ---------- */
+/* La barra lateral es vidrio teñido con la paleta (antes era el bloque de color sólido de la marca). */
+[data-estilo='cristal'] .app .side { background: var(--reflejo), color-mix(in srgb, var(--marca-2) 16%, var(--vidrio)); }
+[data-estilo='cristal'] .side nav .gota-in { background: color-mix(in srgb, var(--marca-2) 24%, var(--vidrio-fuerte)); }
+[data-estilo='cristal'] .navbtn[aria-current='page'] { color: var(--accent-text); }
+[data-estilo='cristal'] .navbtn .tag { background: color-mix(in srgb, var(--marca-2) 20%, transparent); color: var(--accent-text); }
+/* Encabezados de los paneles con un velo del color, para que la paleta se lea también en el contenido. */
+[data-estilo='cristal'] .panel-h { background: linear-gradient(90deg, color-mix(in srgb, var(--marca-2) 12%, transparent), transparent 70%); }

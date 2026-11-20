@@ -5,8 +5,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 // Archivo variable con eje de ancho: expandida en títulos y folios, normal en el texto.
 import '@fontsource-variable/archivo/wdth.css';
 import './estilos/app.css';
+import './estilos/cristal.css';
 import { PERMISOS } from '@mesa/shared';
 import { ErrorCliente } from './api/cliente';
+import { iniciarCristal } from './lib/cristal';
 import { aparienciaGuardada, aplicarApariencia } from './lib/apariencia';
 import { ProveedorAvisos } from './componentes/ui';
 import { Estructura, NoEncontrado, Protegida, RedireccionInicial } from './diseno/Estructura';
@@ -23,6 +25,7 @@ import { ProveedorSesion } from './sesion/Sesion';
 
 // Modo y paleta de la última vez en este navegador, antes de dibujar (la sesión trae la del usuario).
 aplicarApariencia(aparienciaGuardada());
+iniciarCristal();
 
 // Instalable como aplicación (PWA). Solo en la compilación: en desarrollo Vite recarga los módulos por su cuenta.
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
